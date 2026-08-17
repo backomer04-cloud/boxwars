@@ -35,6 +35,36 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     bullets: []
   })
 
+  // --- TAM EKRAN (FULLSCREEN) ENTEGRASYONU ---
+  useEffect(() => {
+    const enterFullscreen = () => {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(() => {});
+      } else if (elem.webkitRequestFullscreen) { /* Safari */
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) { /* IE/Edge */
+        elem.msRequestFullscreen();
+      }
+    };
+
+    const exitFullscreen = () => {
+      if (document.fullscreenElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+    };
+
+    enterFullscreen();
+
+    return () => {
+      exitFullscreen();
+    };
+  }, []);
+
   useEffect(() => {
     async function initRoomAndChannel() {
       if (!roomId || !userId) return
@@ -125,7 +155,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
-  // --- XP VE SKOR HESAPLAMASI (DÜZELTİLDİ) ---
+  // --- XP VE SKOR HESAPLAMASI ---
   const applyPenaltiesAndDatabase = async (resultType) => {
     let newXp = userData.xp || 0
     let newLevel = userData.level || 1
