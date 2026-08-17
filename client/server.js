@@ -3,6 +3,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path"); // <-- 1. BU SATIRI EKLEDİK
 
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +12,15 @@ const io = new Server(server);
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// <-- 2. BU SATIRI EKLEDİK (Client klasörünü sunucuya bağlıyoruz)
+// (Eğer client klasörün server.js ile aynı dizindeyse veya bir üst dizindeyse yolunu buna göre okutuyoruz)
+app.use(express.static(path.join(__dirname, "../client"))); 
+// Not: Eğer client klasörün server.js ile birebir aynı klasörün içindeyse "../client" yerine sadece "client" yazabilirsin.
+
+
+
+
 
 // MongoDB Bağlantısı
 mongoose.connect("mongodb://backomer04_db_user:lO8onjPE3MRZrSuv@ac-oqgbfqp-shard-00-00.cdq5jn8.mongodb.net:27017,ac-oqgbfqp-shard-00-01.cdq5jn8.mongodb.net:27017,ac-oqgbfqp-shard-00-02.cdq5jn8.mongodb.net:27017/boxwars?ssl=true&replicaSet=atlas-10bnl8-shard-0&authSource=admin&appName=BoxWarsCluster")
