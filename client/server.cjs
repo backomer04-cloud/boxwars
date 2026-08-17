@@ -8,6 +8,9 @@ const path = require("path"); // <-- 1. BU SATIRI EKLEDİK
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+const path = require('path');
+// Vite'ın build ettiği 'dist' klasörünü dışarıya açıyoruz:
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // Middleware
 app.use(cors());
