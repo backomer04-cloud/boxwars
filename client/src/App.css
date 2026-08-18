@@ -175,7 +175,7 @@ body {
   background-image: radial-gradient(circle at 80% 20%, #141c2a 0%, #07070c 100%);
   padding: 1.5rem 2rem;
   animation: fadeIn 0.5s ease-out;
-  overflow-y: auto; /* Anasayfanın mobilde rahatça kaydırılabilmesini sağlar */
+  overflow-y: auto;
 }
 
 .lobby-header {
@@ -400,7 +400,7 @@ body {
   margin-top: 0.3rem;
 }
 
-/* ── OYUN EKRANI & MOBİL KONTROL AYARLARI (SADECE OYUNDA KİLİTLİ) ── */
+/* ── OYUN EKRANI & MOBİL KONTROL AYARLARI ── */
 .game-container-root {
   position: fixed;
   top: 0;
@@ -430,7 +430,7 @@ body {
   .game-wrapper { display: none !important; }
 }
 
-/* ── OYUN KAPSAYICISI (Masaüstü ve Mobil Ortalanmış) ── */
+/* ── OYUN KAPSAYICISI ── */
 .game-wrapper {
   position: relative;
   width: 100vw;
@@ -467,93 +467,105 @@ body {
   border-radius: 20px;
   cursor: pointer;
   backdrop-filter: blur(4px);
+  font-size: 0.85rem;
 }
 
 .back-btn-overlay:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* ── ŞEFFAF MOBİL KONTROLLER (Tarayıcı bar payı bırakıldı) ── */
+/* ── MOBİL & TABLET DOKUNMATİK KONTROLLER (GÜÇLENDİRİLDİ) ── */
 .mobile-controls-overlay {
   position: absolute;
-  bottom: calc(15px + env(safe-area-inset-bottom, 0px));
-  left: 20px;
-  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 25px;
+  right: 25px;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   pointer-events: none;
-  z-index: 10;
+  z-index: 100;
 }
 
-/* BİLGİSAYARDA / MOUSE OLAN CİHAZLARDA DOKUNMATİK TUŞLARI GİZLE */
+/* MOUSE / BİLGİSAYAR CİHAZLARINDA GİZLE */
 @media (hover: hover) and (pointer: fine) {
   .mobile-controls-overlay {
     display: none !important;
   }
 }
 
-/* Sol Alt Yön Tuşları (D-Pad) */
+/* Sol D-Pad (Yön Tuşları) - Tablet/Mobil için büyütüldü ve güvenli konuma alındı */
 .dpad {
   pointer-events: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  opacity: 0.75;
-  transform: scale(1.05);
+  opacity: 0.85;
+  transform: scale(1.25); /* Tablet ve telefonlarda parmak sığması için büyütüldü */
   transform-origin: bottom left;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: none;
 }
 
 .dpad-row {
   display: flex;
-  gap: 1rem;
+  gap: 1.2rem;
+  margin: 0.2rem 0;
 }
 
 .dpad button {
-  background: rgba(0, 245, 212, 0.15);
-  border: 1px solid rgba(0, 245, 212, 0.4);
+  background: rgba(0, 245, 212, 0.2);
+  border: 2px solid rgba(0, 245, 212, 0.6);
   color: #00f5d4;
-  padding: 0.7rem 1.1rem;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  touch-action: manipulation;
-  backdrop-filter: blur(4px);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  font-size: 1.3rem;
+  touch-action: none;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0, 245, 212, 0.2);
 }
 
-.dpad button:active {
-  background: rgba(0, 245, 212, 0.4);
-  transform: scale(0.95);
+.dpad button:active, .dpad button.active-touch {
+  background: rgba(0, 245, 212, 0.6);
+  transform: scale(0.92);
+  box-shadow: 0 0 15px rgba(0, 245, 212, 0.5);
 }
 
-/* Sağ Alt Ateş Butonu */
+/* Sağ Alt Ateş Butonu - Tablet/Mobil için daha büyük ve konforlu */
 .shoot-btn {
   pointer-events: auto;
-  opacity: 0.8;
-  background: rgba(255, 46, 147, 0.25);
-  border: 2px solid #ff2e93;
+  opacity: 0.9;
+  background: rgba(255, 46, 147, 0.3);
+  border: 3px solid #ff2e93;
   color: #ff2e93;
-  font-weight: bold;
+  font-weight: 800;
   border-radius: 50%;
-  width: 70px;
-  height: 70px;
-  font-size: 1.1rem;
-  box-shadow: 0 0 15px rgba(255, 46, 147, 0.3);
-  touch-action: manipulation;
-  backdrop-filter: blur(4px);
+  width: 95px;  /* Tablette kaçma/küçük kalma sorunu olmasın diye büyütüldü */
+  height: 95px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(255, 46, 147, 0.4);
+  touch-action: none;
+  backdrop-filter: blur(6px);
   user-select: none;
   -webkit-user-select: none;
 }
 
-.shoot-btn:active {
+.shoot-btn:active, .shoot-btn.active-touch {
   opacity: 1;
-  background: rgba(255, 46, 147, 0.5);
+  background: rgba(255, 46, 147, 0.6);
   transform: scale(0.92);
+  box-shadow: 0 0 30px rgba(255, 46, 147, 0.7);
 }
 
 /* ── MAÇ SONU BİLDİRİM VE MODAL TASARIMI ── */
-
 .round-banner {
   position: absolute;
   top: 25%;
