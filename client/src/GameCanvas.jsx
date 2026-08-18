@@ -82,7 +82,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       const side = hosting ? 'left' : 'right'
       setPlayerSide(side)
 
-      // İlk pozisyonları tarafa göre ayarla
       gameStateRef.current.myPos.x = side === 'left' ? 80 : 850
       gameStateRef.current.enemyPos.x = side === 'left' ? 850 : 80
 
@@ -201,7 +200,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   }
 
   const reloadGun = () => {
-    if (isReloading || ammo === maxAmmo) return
+    if (isReloading) return
     setIsReloading(true)
     setTimeout(() => {
       setAmmo(maxAmmo)
@@ -209,7 +208,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }, 1200)
   }
 
-  // --- ANA OYUN DÖNGÜSÜ (IŞINLANMA HATASI GİDERİLDİ) ---
+  // --- ANA OYUN DÖNGÜSÜ ---
   useEffect(() => {
     if (gameOverData) return
 
@@ -239,6 +238,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     const shoot = () => {
       if (isReloading) return
 
+      // Eğer mermi bittiyse direkt reload başlat ve çık
       if (ammo <= 0) {
         reloadGun()
         return
@@ -248,13 +248,18 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (now - lastShotTime.current < 250) return
       lastShotTime.current = now
 
+      // Mermiyi güvenli bir şekilde azalt (0'ın altına asla düşemez)
+      let currentAmmoLeft = 6
       setAmmo((prev) => {
-        const nextAmmo = prev - 1
-        if (nextAmmo === 0) {
-          setTimeout(() => reloadGun(), 300)
-        }
-        return nextAmmo
+        const next = Math.max(0, prev - 1)
+        currentAmmoLeft = next
+        return next
       })
+
+      // Eğer son mermi atıldıysa otomatik reload tetikle
+      if (currentAmmoLeft === 0) {
+        setTimeout(() => reloadGun(), 100)
+      }
 
       const myP = gameStateRef.current.myPos
       const enP = gameStateRef.current.enemyPos
@@ -461,7 +466,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId])
+  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId, ammo, isReloading])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
@@ -479,7 +484,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setRoundMessage('')
         setCurrentRound(2)
         setAmmo(maxAmmo)
-        // 2. Round için pozisyonları güvenli şekilde ters çevir
+        setIsReloading(false)
         const isR2Round2 = playerSide === 'left'
         gameStateRef.current.myPos.x = isR2Round2 ? 850 : 80
         gameStateRef.current.myPos.y = 250
@@ -534,7 +539,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       <div className="game-wrapper" style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#0f172a', overflow: 'hidden' }}>
         <button className="back-btn-overlay" onClick={handleEarlyLeave}>⬅ Lobiye Dön (Terket)</button>
 
-        {/* --- DÜZELTİLMİŞ & GARANTİ AMMO HUD --- */}
         <div style={{
           position: 'fixed',
           top: '20px',
@@ -552,7 +556,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           fontWeight: 'bold',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
         }}>
-          <div style={{ fontSize: '0.8rem', color: '#38bdf8', marginBottom: '4px', letterSpacing: '1px' }}>
+          <div style={{ fontSize: '0.8rem', color: isReloading ? '#e71d36' : '#38bdf8', marginBottom: '4px', letterSpacing: '1px' }}>
             {isReloading ? 'RELOADING...' : `AMMO: ${ammo} / ${maxAmmo}`}
           </div>
           <div style={{ display: 'flex', gap: '5px' }}>
