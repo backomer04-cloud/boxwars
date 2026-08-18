@@ -29,7 +29,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [scores, setScores] = useState({ player1: 0, player2: 0 })
   const [gameOverData, setGameOverData] = useState(null)
 
-  // --- ŞARJÖR (MAGAZINE) STATE'LERİ ---
   const [ammo, setAmmo] = useState(6)
   const maxAmmo = 6
   const [isReloading, setIsReloading] = useState(false)
@@ -80,7 +79,12 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (!roomData) return
       const hosting = roomData.host_id === userId
       setIsHost(hosting)
-      setPlayerSide(hosting ? 'left' : 'right')
+      const side = hosting ? 'left' : 'right'
+      setPlayerSide(side)
+
+      // İlk pozisyonları tarafa göre ayarla
+      gameStateRef.current.myPos.x = side === 'left' ? 80 : 850
+      gameStateRef.current.enemyPos.x = side === 'left' ? 850 : 80
 
       const { data: invites } = await supabase.from('invites').select('*').eq('room_id', roomId).eq('status', 'accepted').single()
       const enemyId = hosting ? invites?.receiver_id : roomData.host_id
@@ -196,31 +200,22 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     return { addedXp }
   }
 
-  // --- RELOAD (ŞARJÖR YENİLEME) FONKSİYONU ---
   const reloadGun = () => {
     if (isReloading || ammo === maxAmmo) return
     setIsReloading(true)
     setTimeout(() => {
       setAmmo(maxAmmo)
       setIsReloading(false)
-    }, 1200) // 1.2 saniye şarjör doldurma süresi
+    }, 1200)
   }
 
+  // --- ANA OYUN DÖNGÜSÜ (IŞINLANMA HATASI GİDERİLDİ) ---
   useEffect(() => {
     if (gameOverData) return
 
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-
-    const isRound2 = currentRound === 2
-    gameStateRef.current.myPos.x = playerSide === 'left' ? (isRound2 ? 850 : 80) : (isRound2 ? 80 : 850)
-    gameStateRef.current.myPos.y = 250
-    gameStateRef.current.myPos.hp = 200
-
-    gameStateRef.current.enemyPos.x = playerSide === 'left' ? (isRound2 ? 80 : 850) : (isRound2 ? 850 : 80)
-    gameStateRef.current.enemyPos.y = 250
-    gameStateRef.current.enemyPos.hp = 200
 
     const mapObstacles = [
       { x: 280, y: 0, w: 20, h: 180 },
@@ -241,7 +236,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
 
-    // --- ŞARJÖRLÜ ATEŞ ETME MEKANİĞİ ---
     const shoot = () => {
       if (isReloading) return
 
@@ -251,13 +245,13 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
 
       const now = Date.now()
-      if (now - lastShotTime.current < 250) return // Hızlı tıklama koruması
+      if (now - lastShotTime.current < 250) return
       lastShotTime.current = now
 
       setAmmo((prev) => {
         const nextAmmo = prev - 1
         if (nextAmmo === 0) {
-          setTimeout(() => reloadGun(), 300) // Mermi bittiğinde otomatik şarjör dolumunu tetikle
+          setTimeout(() => reloadGun(), 300)
         }
         return nextAmmo
       })
@@ -467,7 +461,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId, ammo, isReloading])
+  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
@@ -485,6 +479,15 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setRoundMessage('')
         setCurrentRound(2)
         setAmmo(maxAmmo)
+        // 2. Round için pozisyonları güvenli şekilde ters çevir
+        const isR2Round2 = playerSide === 'left'
+        gameStateRef.current.myPos.x = isR2Round2 ? 850 : 80
+        gameStateRef.current.myPos.y = 250
+        gameStateRef.current.myPos.hp = 200
+        gameStateRef.current.enemyPos.x = isR2Round2 ? 80 : 850
+        gameStateRef.current.enemyPos.y = 250
+        gameStateRef.current.enemyPos.hp = 200
+        gameStateRef.current.bullets = []
       }, 2000)
     } else {
       let hostResultType = 'lose'
@@ -528,37 +531,38 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     <>
       <div className="portrait-warning">Lütfen Telefonu Yan Çevirin 🔄</div>
 
-      <div className="game-wrapper">
+      <div className="game-wrapper" style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#0f172a', overflow: 'hidden' }}>
         <button className="back-btn-overlay" onClick={handleEarlyLeave}>⬅ Lobiye Dön (Terket)</button>
 
-        {/* --- ŞARJÖR / AMMO HUD GÖSTERGESİ --- */}
+        {/* --- DÜZELTİLMİŞ & GARANTİ AMMO HUD --- */}
         <div style={{
-          position: 'absolute',
-          top: '15px',
-          right: '20px',
-          background: 'rgba(15, 23, 42, 0.8)',
-          border: '1px solid rgba(0, 245, 212, 0.3)',
-          padding: '0.5rem 1rem',
-          borderRadius: '12px',
+          position: 'fixed',
+          top: '20px',
+          right: '25px',
+          background: 'rgba(15, 23, 42, 0.9)',
+          border: '2px solid rgba(0, 245, 212, 0.5)',
+          padding: '0.6rem 1.2rem',
+          borderRadius: '14px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          backdropFilter: 'blur(6px)',
-          zIndex: 20,
+          backdropFilter: 'blur(8px)',
+          zIndex: 99999,
           color: '#fff',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
         }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '2px' }}>
+          <div style={{ fontSize: '0.8rem', color: '#38bdf8', marginBottom: '4px', letterSpacing: '1px' }}>
             {isReloading ? 'RELOADING...' : `AMMO: ${ammo} / ${maxAmmo}`}
           </div>
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ display: 'flex', gap: '5px' }}>
             {Array.from({ length: maxAmmo }).map((_, i) => (
               <div key={i} style={{
-                width: '8px',
-                height: '16px',
+                width: '9px',
+                height: '18px',
                 backgroundColor: i < ammo ? '#00f5d4' : 'rgba(255,255,255,0.2)',
-                borderRadius: '2px',
-                boxShadow: i < ammo ? '0 0 8px rgba(0, 245, 212, 0.5)' : 'none'
+                borderRadius: '3px',
+                boxShadow: i < ammo ? '0 0 10px rgba(0, 245, 212, 0.7)' : 'none'
               }} />
             ))}
           </div>
@@ -617,10 +621,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
                 background: 'rgba(56, 189, 248, 0.2)',
                 border: '2px solid #38bdf8',
                 color: '#38bdf8',
-                padding: '0.4rem 0.8rem',
+                padding: '0.5rem 1rem',
                 borderRadius: '12px',
                 fontWeight: 'bold',
-                fontSize: '0.8rem',
+                fontSize: '0.85rem',
                 backdropFilter: 'blur(4px)',
                 cursor: 'pointer'
               }}
