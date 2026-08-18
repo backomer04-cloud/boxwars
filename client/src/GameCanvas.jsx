@@ -29,6 +29,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [scores, setScores] = useState({ player1: 0, player2: 0 })
   const [gameOverData, setGameOverData] = useState(null)
 
+  // --- ŞARJÖR (MAGAZINE) STATE'LERİ ---
+  const [ammo, setAmmo] = useState(6)
+  const maxAmmo = 6
+  const [isReloading, setIsReloading] = useState(false)
+
   const socketRef = useRef(null)
   const gameStateRef = useRef({
     myPos: { x: 80, y: 250, hp: 200, maxHp: 200 },
@@ -114,7 +119,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         handleRoundEndRemote(payload.winnerId, payload.scores)
       })
 
-      // HAKEM SİSTEMİ: Host kararı netleştirir, burası ortak senkronize olur
       socket.on('game_over_sync', (payload) => {
         setGameOverData(payload.gameOverData)
         setScores(payload.scores)
@@ -156,7 +160,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
-  // --- XP VE SKOR HESAPLAMASI ---
   const applyPenaltiesAndDatabase = async (resultType) => {
     let newXp = userData.xp || 0
     let newLevel = userData.level || 1
@@ -193,6 +196,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     return { addedXp }
   }
 
+  // --- RELOAD (ŞARJÖR YENİLEME) FONKSİYONU ---
+  const reloadGun = () => {
+    if (isReloading || ammo === maxAmmo) return
+    setIsReloading(true)
+    setTimeout(() => {
+      setAmmo(maxAmmo)
+      setIsReloading(false)
+    }, 1200) // 1.2 saniye şarjör doldurma süresi
+  }
+
   useEffect(() => {
     if (gameOverData) return
 
@@ -221,21 +234,33 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault()
       keysPressed.current[e.code] = true
       if (e.code === 'Space') shoot()
+      if (e.code === 'KeyR') reloadGun()
     }
     const handleKeyUp = (e) => { keysPressed.current[e.code] = false }
 
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
 
-    // --- GÜÇLENDİRİLMİŞ MERMİ SPAM KORUMASI (SUNUCU YÜKÜNÜ AZALTIR) ---
+    // --- ŞARJÖRLÜ ATEŞ ETME MEKANİĞİ ---
     const shoot = () => {
+      if (isReloading) return
+
+      if (ammo <= 0) {
+        reloadGun()
+        return
+      }
+
       const now = Date.now()
-      if (now - lastShotTime.current < 280) return // Saniyede en fazla ~3.5 mermi sınırı
-
-      const myBulletsCount = gameStateRef.current.bullets.filter(b => b.senderId === userId).length
-      if (myBulletsCount >= 4) return // Ekranda aynı anda max 4 aktif mermi
-
+      if (now - lastShotTime.current < 250) return // Hızlı tıklama koruması
       lastShotTime.current = now
+
+      setAmmo((prev) => {
+        const nextAmmo = prev - 1
+        if (nextAmmo === 0) {
+          setTimeout(() => reloadGun(), 300) // Mermi bittiğinde otomatik şarjör dolumunu tetikle
+        }
+        return nextAmmo
+      })
 
       const myP = gameStateRef.current.myPos
       const enP = gameStateRef.current.enemyPos
@@ -283,6 +308,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
     window.mobileMove = (dir, active) => { keysPressed.current[dir] = active }
     window.mobileShoot = shoot
+    window.mobileReload = reloadGun
 
     const checkRectCollision = (r1, r2) => {
       return r1.x < r2.x + r2.w && r1.x + 32 > r2.x && r1.y < r2.y + r2.h && r1.y + 32 > r2.y
@@ -441,7 +467,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId])
+  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId, ammo, isReloading])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
@@ -452,16 +478,15 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
-  // HAKEM SİSTEMİ MERKEZİ: Sadece Host (Hakem) tüm maç sonuçlarını hesaplayıp kararı kilitler ve senkronize eder
   const handleRoundTransition = async (currentScores) => {
     if (currentRound === 1) {
       setRoundMessage('1. Round Bitti! Taraf Değiştiriliyor...')
       setTimeout(() => {
         setRoundMessage('')
         setCurrentRound(2)
+        setAmmo(maxAmmo)
       }, 2000)
     } else {
-      // 2. Round bittiğinde Hakem (Host) tüm sonuçları kesinleştirir
       let hostResultType = 'lose'
       if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
       else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
@@ -477,7 +502,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
       setGameOverData(hostFinalData)
 
-      // Eğer bu cihaz Hakemse (Host), rakibin sonuçlarını da hesaplayıp kesin olarak emir verir (Hakem Kararı)
       if (isHost && socketRef.current) {
         let enemyResultType = 'lose'
         if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
@@ -506,6 +530,39 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       <div className="game-wrapper">
         <button className="back-btn-overlay" onClick={handleEarlyLeave}>⬅ Lobiye Dön (Terket)</button>
+
+        {/* --- ŞARJÖR / AMMO HUD GÖSTERGESİ --- */}
+        <div style={{
+          position: 'absolute',
+          top: '15px',
+          right: '20px',
+          background: 'rgba(15, 23, 42, 0.8)',
+          border: '1px solid rgba(0, 245, 212, 0.3)',
+          padding: '0.5rem 1rem',
+          borderRadius: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          backdropFilter: 'blur(6px)',
+          zIndex: 20,
+          color: '#fff',
+          fontWeight: 'bold'
+        }}>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '2px' }}>
+            {isReloading ? 'RELOADING...' : `AMMO: ${ammo} / ${maxAmmo}`}
+          </div>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {Array.from({ length: maxAmmo }).map((_, i) => (
+              <div key={i} style={{
+                width: '8px',
+                height: '16px',
+                backgroundColor: i < ammo ? '#00f5d4' : 'rgba(255,255,255,0.2)',
+                borderRadius: '2px',
+                boxShadow: i < ammo ? '0 0 8px rgba(0, 245, 212, 0.5)' : 'none'
+              }} />
+            ))}
+          </div>
+        </div>
 
         {roundMessage && <div className="round-banner">{roundMessage}</div>}
 
@@ -553,7 +610,25 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             <button onTouchStart={(e) => { e.preventDefault(); window.mobileMove('DOWN', true) }} onTouchEnd={(e) => { e.preventDefault(); window.mobileMove('DOWN', false) }}>▼</button>
           </div>
 
-          <button className="shoot-btn" onTouchStart={(e) => { e.preventDefault(); window.mobileShoot() }}>Ateş</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-end' }}>
+            <button 
+              onClick={() => window.mobileReload()} 
+              style={{
+                background: 'rgba(56, 189, 248, 0.2)',
+                border: '2px solid #38bdf8',
+                color: '#38bdf8',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '12px',
+                fontWeight: 'bold',
+                fontSize: '0.8rem',
+                backdropFilter: 'blur(4px)',
+                cursor: 'pointer'
+              }}
+            >
+              🔄 Reload
+            </button>
+            <button className="shoot-btn" onTouchStart={(e) => { e.preventDefault(); window.mobileShoot() }}>Ateş</button>
+          </div>
         </div>
       </div>
     </>
