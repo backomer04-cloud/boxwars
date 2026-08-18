@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
-import { io } from 'socket.io-client' // <-- Socket.io client eklendi
+import { io } from 'socket.io-client'
 
 export default function GameCanvas({ onBack, userId, roomId, profile, refreshProfile }) {
   const canvasRef = useRef(null)
@@ -29,7 +29,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [scores, setScores] = useState({ player1: 0, player2: 0 })
   const [gameOverData, setGameOverData] = useState(null)
 
-  const socketRef = useRef(null) // <-- Supabase channel yerine socket ref kullanıyoruz
+  const socketRef = useRef(null)
   const gameStateRef = useRef({
     myPos: { x: 80, y: 250, hp: 200, maxHp: 200 },
     enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200 },
@@ -42,9 +42,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
         elem.requestFullscreen().catch(() => {});
-      } else if (elem.webkitRequestFullscreen) { /* Safari */
+      } else if (elem.webkitRequestFullscreen) {
         elem.webkitRequestFullscreen();
-      } else if (elem.msRequestFullscreen) { /* IE/Edge */
+      } else if (elem.msRequestFullscreen) {
         elem.msRequestFullscreen();
       }
     };
@@ -91,8 +91,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         }
       }
 
-      // Render üzerindeki Socket.io sunucumuza bağlanıyoruz
-      // BURADAKİ URL'İ KENDİ RENDER URL'İN İLE DEĞİŞTİR:
       const socket = io('https://boxwars-server.onrender.com')
       socketRef.current = socket
 
@@ -116,6 +114,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         handleRoundEndRemote(payload.winnerId, payload.scores)
       })
 
+      // HAKEM SİSTEMİ: Host kararı netleştirir, burası ortak senkronize olur
       socket.on('game_over_sync', (payload) => {
         setGameOverData(payload.gameOverData)
         setScores(payload.scores)
@@ -228,9 +227,14 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
 
+    // --- GÜÇLENDİRİLMİŞ MERMİ SPAM KORUMASI (SUNUCU YÜKÜNÜ AZALTIR) ---
     const shoot = () => {
       const now = Date.now()
-      if (now - lastShotTime.current < 180) return
+      if (now - lastShotTime.current < 280) return // Saniyede en fazla ~3.5 mermi sınırı
+
+      const myBulletsCount = gameStateRef.current.bullets.filter(b => b.senderId === userId).length
+      if (myBulletsCount >= 4) return // Ekranda aynı anda max 4 aktif mermi
+
       lastShotTime.current = now
 
       const myP = gameStateRef.current.myPos
@@ -315,7 +319,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (canMoveY) myP.y = nextY
 
       const now = Date.now()
-      if (now - lastMoveSend > 15 && socketRef.current) {
+      if (now - lastMoveSend > 20 && socketRef.current) {
         lastMoveSend = now
         socketRef.current.emit('player_move', { roomId, x: myP.x, y: myP.y, hp: myP.hp })
       }
@@ -448,6 +452,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
+  // HAKEM SİSTEMİ MERKEZİ: Sadece Host (Hakem) tüm maç sonuçlarını hesaplayıp kararı kilitler ve senkronize eder
   const handleRoundTransition = async (currentScores) => {
     if (currentRound === 1) {
       setRoundMessage('1. Round Bitti! Taraf Değiştiriliyor...')
@@ -456,21 +461,23 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setCurrentRound(2)
       }, 2000)
     } else {
-      let resultType = 'lose'
-      if (currentScores.player1 > currentScores.player2) resultType = 'win'
-      else if (currentScores.player1 === currentScores.player2) resultType = 'draw'
+      // 2. Round bittiğinde Hakem (Host) tüm sonuçları kesinleştirir
+      let hostResultType = 'lose'
+      if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
+      else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
 
-      const { addedXp } = await applyPenaltiesAndDatabase(resultType)
+      const { addedXp } = await applyPenaltiesAndDatabase(hostResultType)
 
-      const myFinalData = {
-        resultType,
+      const hostFinalData = {
+        resultType: hostResultType,
         addedXp,
         p1Score: currentScores.player1,
         p2Score: currentScores.player2,
         isQuit: false
       }
-      setGameOverData(myFinalData)
+      setGameOverData(hostFinalData)
 
+      // Eğer bu cihaz Hakemse (Host), rakibin sonuçlarını da hesaplayıp kesin olarak emir verir (Hakem Kararı)
       if (isHost && socketRef.current) {
         let enemyResultType = 'lose'
         if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
