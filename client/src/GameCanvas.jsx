@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
+import { io } from 'socket.io-client' // <-- Socket.io client eklendi
 
 export default function GameCanvas({ onBack, userId, roomId, profile, refreshProfile }) {
   const canvasRef = useRef(null)
@@ -28,7 +29,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [scores, setScores] = useState({ player1: 0, player2: 0 })
   const [gameOverData, setGameOverData] = useState(null)
 
-  const channelRef = useRef(null)
+  const socketRef = useRef(null) // <-- Supabase channel yerine socket ref kullanıyoruz
   const gameStateRef = useRef({
     myPos: { x: 80, y: 250, hp: 200, maxHp: 200 },
     enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200 },
@@ -65,8 +66,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     };
   }, []);
 
+  // --- ODA VE SOCKET.IO BAĞLANTISI ---
   useEffect(() => {
-    async function initRoomAndChannel() {
+    async function initRoomAndSocket() {
       if (!roomId || !userId) return
 
       const { data: roomData } = await supabase.from('rooms').select('*').eq('id', roomId).single()
@@ -89,53 +91,53 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         }
       }
 
-      const channel = supabase.channel(`room:${roomId}`, {
-        config: { broadcast: { self: false } }
+      // Render üzerindeki Socket.io sunucumuza bağlanıyoruz
+      // BURADAKİ URL'İ KENDİ RENDER URL'İN İLE DEĞİŞTİR:
+      const socket = io('https://boxwars-server.onrender.com')
+      socketRef.current = socket
+
+      socket.emit('join_room', roomId)
+
+      socket.on('player_move', (payload) => {
+        gameStateRef.current.enemyPos = { x: payload.x, y: payload.y, hp: payload.hp, maxHp: 200 }
       })
 
-      channel
-        .on('broadcast', { event: 'player_move' }, ({ payload }) => {
-          gameStateRef.current.enemyPos = { x: payload.x, y: payload.y, hp: payload.hp, maxHp: 200 }
-        })
-        .on('broadcast', { event: 'player_shoot' }, ({ payload }) => {
-          gameStateRef.current.bullets.push(payload.bullet)
-        })
-        .on('broadcast', { event: 'player_hit' }, ({ payload }) => {
-          if (payload.targetId === userId) {
-            gameStateRef.current.myPos.hp = Math.max(0, gameStateRef.current.myPos.hp - 20)
-          }
-        })
-        .on('broadcast', { event: 'round_won' }, ({ payload }) => {
-          handleRoundEndRemote(payload.winnerId, payload.scores)
-        })
-        .on('broadcast', { event: 'game_over_sync' }, ({ payload }) => {
-          setGameOverData(payload.gameOverData)
-          setScores(payload.scores)
-          applyPenaltiesAndDatabase(payload.gameOverData.resultType)
-        })
-        .on('broadcast', { event: 'player_quit' }, () => {
-          handleEarlyLeaveRemote()
-        })
-        .subscribe()
+      socket.on('player_shoot', (payload) => {
+        gameStateRef.current.bullets.push(payload.bullet)
+      })
 
-      channelRef.current = channel
+      socket.on('player_hit', (payload) => {
+        if (payload.targetId === userId) {
+          gameStateRef.current.myPos.hp = Math.max(0, gameStateRef.current.myPos.hp - 20)
+        }
+      })
+
+      socket.on('round_won', (payload) => {
+        handleRoundEndRemote(payload.winnerId, payload.scores)
+      })
+
+      socket.on('game_over_sync', (payload) => {
+        setGameOverData(payload.gameOverData)
+        setScores(payload.scores)
+        applyPenaltiesAndDatabase(payload.gameOverData.resultType)
+      })
+
+      socket.on('player_quit', () => {
+        handleEarlyLeaveRemote()
+      })
     }
 
-    initRoomAndChannel()
+    initRoomAndSocket()
 
     return () => {
-      if (channelRef.current) supabase.removeChannel(channelRef.current)
+      if (socketRef.current) socketRef.current.disconnect()
     }
   }, [roomId, userId])
 
   const handleEarlyLeave = async () => {
     if (!gameOverData) {
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'player_quit',
-          payload: {}
-        })
+      if (socketRef.current) {
+        socketRef.current.emit('player_quit', {})
       }
       await applyPenaltiesAndDatabase('lose', true)
     }
@@ -270,12 +272,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       gameStateRef.current.bullets.push(newBullet)
 
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'player_shoot',
-          payload: { bullet: newBullet }
-        })
+      if (socketRef.current) {
+        socketRef.current.emit('player_shoot', { roomId, bullet: newBullet })
       }
     }
 
@@ -317,13 +315,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (canMoveY) myP.y = nextY
 
       const now = Date.now()
-      if (now - lastMoveSend > 15 && channelRef.current) {
+      if (now - lastMoveSend > 15 && socketRef.current) {
         lastMoveSend = now
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'player_move',
-          payload: { x: myP.x, y: myP.y, hp: myP.hp }
-        })
+        socketRef.current.emit('player_move', { roomId, x: myP.x, y: myP.y, hp: myP.hp })
       }
 
       const bullets = gameStateRef.current.bullets
@@ -362,12 +356,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             bullets.splice(i, 1)
             enP.hp = Math.max(0, enP.hp - 20)
 
-            if (channelRef.current && enemyData.id) {
-              channelRef.current.send({
-                type: 'broadcast',
-                event: 'player_hit',
-                payload: { targetId: enemyData.id }
-              })
+            if (socketRef.current && enemyData.id) {
+              socketRef.current.emit('player_hit', { roomId, targetId: enemyData.id })
             }
 
             if (enP.hp <= 0 && !isRoundOver) {
@@ -434,12 +424,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       const updatedScores = { player1: newScores.player1, player2: newScores.player2 }
       setScores(updatedScores)
 
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'round_won',
-          payload: { winnerId: userId, scores: updatedScores }
-        })
+      if (socketRef.current) {
+        socketRef.current.emit('round_won', { roomId, winnerId: userId, scores: updatedScores })
       }
       handleRoundTransition(updatedScores)
     }
@@ -451,7 +437,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId])
+  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
@@ -485,26 +471,23 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
       setGameOverData(myFinalData)
 
-      if (isHost && channelRef.current) {
+      if (isHost && socketRef.current) {
         let enemyResultType = 'lose'
         if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
         else if (currentScores.player1 === currentScores.player2) enemyResultType = 'draw'
 
         const enemyXpChange = enemyResultType === 'win' ? 100 : (enemyResultType === 'draw' ? 50 : -50)
 
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'game_over_sync',
-          payload: {
-            gameOverData: {
-              resultType: enemyResultType,
-              addedXp: enemyXpChange,
-              p1Score: currentScores.player2,
-              p2Score: currentScores.player1,
-              isQuit: false
-            },
-            scores: { player1: currentScores.player2, player2: currentScores.player1 }
-          }
+        socketRef.current.emit('game_over_sync', {
+          roomId,
+          gameOverData: {
+            resultType: enemyResultType,
+            addedXp: enemyXpChange,
+            p1Score: currentScores.player2,
+            p2Score: currentScores.player1,
+            isQuit: false
+          },
+          scores: { player1: currentScores.player2, player2: currentScores.player1 }
         })
       }
     }
