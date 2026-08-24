@@ -15,6 +15,10 @@ function App() {
   const [incomingInvites, setIncomingInvites] = useState([]) 
   const [currentInviteId, setCurrentInviteId] = useState(null) 
 
+  // Liderlik Tablosu State'i
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [leaderboardPlayers, setLeaderboardPlayers] = useState([])
+
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -79,7 +83,18 @@ function App() {
     if (data) setProfile(data)
   }
 
-  // 2. Online Oyuncuları ve Davetleri Dinleme (Sadece 'waiting' odasındakileri listele)
+  // Liderlik Tablosu Verilerini Çekme
+  const fetchLeaderboard = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, username, level, xp, wins, losses, is_online')
+      .order('level', { ascending: false })
+      .order('xp', { ascending: false })
+
+    if (data) setLeaderboardPlayers(data)
+  }
+
+  // 2. Online Oyuncuları ve Davetleri Dinleme
   useEffect(() => {
     if (!session) return
 
@@ -105,10 +120,12 @@ function App() {
 
     fetchOnlinePlayers()
     fetchIncomingInvites()
+    fetchLeaderboard()
 
     const interval = setInterval(() => {
       fetchOnlinePlayers()
       fetchIncomingInvites()
+      if (showLeaderboard) fetchLeaderboard()
     }, 4000)
 
     const inviteChannel = supabase
@@ -140,9 +157,9 @@ function App() {
       clearInterval(interval)
       supabase.removeChannel(inviteChannel)
     }
-  }, [session])
+  }, [session, showLeaderboard])
 
-  // 3. Oda Durumu ve Üyeleri Dinleme (Oyun başladı mı veya oda kapandı mı kontrolü)
+  // 3. Oda Durumu ve Üyeleri Dinleme
   useEffect(() => {
     if (!currentRoom) {
       setRoomMembers([])
@@ -162,7 +179,6 @@ function App() {
         return
       }
 
-      // Kurucu oyunu başlattıysa ('playing' olduysa) katılımcıları da oyuna fırlat!
       if (roomData.status === 'playing' && !inGame) {
         setInGame(true)
         return
@@ -256,7 +272,7 @@ function App() {
     handleBackToLobby()
   }
 
-  // 6. Davet Gönderme (Çifte davet spam engeli eklenmiş hali)
+  // 6. Davet Gönderme
   const handleSendInvite = async (receiverId) => {
     if (!currentRoom) return
 
@@ -265,7 +281,6 @@ function App() {
       return
     }
 
-    // Bu oyuncuya zaten bekleyen bir davet atılmış mı kontrol et
     const { data: existingInvite } = await supabase
       .from('invites')
       .select('*')
@@ -319,7 +334,7 @@ function App() {
     setIncomingInvites((prev) => prev.filter((i) => i.id !== invite.id))
   }
 
-  // 9. Katılımcının Hazır Durumunu Değiştirmesi
+  // 9. Katılımcının Hazır Durumu
   const toggleReadyStatus = async () => {
     if (!currentInviteId) return
 
@@ -332,7 +347,7 @@ function App() {
       .eq('id', currentInviteId)
   }
 
-  // 10. Kurucunun Oyunu Başlatması (Oda durumunu 'playing' yapar, böylece herkes oyuna geçer)
+  // 10. Oyunu Başlatma
   const handleStartGame = async () => {
     if (!currentRoom) return
 
@@ -349,7 +364,6 @@ function App() {
   }
 
   const handleBackToLobby = async () => {
-    // Eğer oyundan çıkılıyorsa odayı ve davetleri tamamen temizle (Temiz lobi çıkışı)
     if (currentRoom) {
       const isHost = session?.user?.id === currentRoom.host_id
       if (isHost) {
@@ -453,6 +467,74 @@ function App() {
           </div>
         </header>
 
+        {/* LİDERLİK TABLOSU MODALI */}
+        {showLeaderboard && (
+          <div style={{
+            position: 'fixed',
+            top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(15, 23, 42, 0.85)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            zIndex: 99999,
+            backdropFilter: 'blur(6px)'
+          }}>
+            <div style={{
+              background: '#1e293b',
+              border: '2px solid #00f5d4',
+              borderRadius: '16px',
+              width: '90%', maxWidth: '600px',
+              maxHeight: '80vh',
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
+              overflow: 'hidden'
+            }}>
+              <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, color: '#00f5d4', fontSize: '1.2rem' }}>🏆 Global Liderlik Tablosu (Seviye Sıralaması)</h3>
+                <button onClick={() => setShowLeaderboard(false)} style={{ background: '#e71d36', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Kapat</button>
+              </div>
+
+              <div style={{ padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {leaderboardPlayers.map((player, index) => {
+                  const isMe = player.id === session.user.id
+                  return (
+                    <div key={player.id} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      background: isMe ? 'rgba(0, 245, 212, 0.15)' : 'rgba(255,255,255,0.05)',
+                      border: isMe ? '2px solid #00f5d4' : '1px solid rgba(255,255,255,0.05)',
+                      padding: '12px 15px',
+                      borderRadius: '10px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: index === 0 ? '#ffd700' : (index === 1 ? '#c0c0c0' : (index === 2 ? '#cd7f32' : '#888')) }}>
+                          #{index + 1}
+                        </span>
+                        <div>
+                          <span style={{ fontWeight: 'bold', color: isMe ? '#00f5d4' : '#fff' }}>
+                            {player.username} {isMe && '(Sen)'}
+                          </span>
+                          <div style={{ fontSize: '0.8rem', color: player.is_online ? '#2ec4b6' : '#888' }}>
+                            {player.is_online ? '🟢 Çevrimiçi' : '⚪ Çevrimdışı'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', textAlign: 'right' }}>
+                        <div>
+                          <div style={{ fontSize: '0.8rem', color: '#888' }}>Seviye / XP</div>
+                          <div style={{ fontWeight: 'bold', color: '#38bdf8' }}>Lvl {player.level} <span style={{ fontSize: '0.8rem', color: '#aaa' }}>({player.xp} XP)</span></div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.8rem', color: '#888' }}>Galibiyet</div>
+                          <div style={{ fontWeight: 'bold', color: '#2ec4b6' }}>{player.wins} W</div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* EĞER BİR ODAYSA (BEKLEME ODASI) */}
         {currentRoom ? (
           <div className="lobby-grid">
@@ -555,6 +637,15 @@ function App() {
                   <span className="mod-desc">Oda kur ve rakip davet et</span>
                 </div>
                 <span className="mod-badge">KUR</span>
+              </div>
+
+              {/* LİDERLİK TABLOSU AÇMA BUTONU */}
+              <div className="mod-card" onClick={() => { fetchLeaderboard(); setShowLeaderboard(true); }} style={{ marginTop: '15px', background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.1), rgba(114, 9, 183, 0.1))', borderColor: '#00f5d4' }}>
+                <div className="mod-left">
+                  <span className="mod-name" style={{ color: '#00f5d4' }}>🏆 LİDERLİK TABLOSU</span>
+                  <span className="mod-desc">Tüm oyuncuların seviye sıralaması</span>
+                </div>
+                <span className="mod-badge" style={{ background: '#00f5d4', color: '#0f172a' }}>İNCELE</span>
               </div>
             </section>
 
