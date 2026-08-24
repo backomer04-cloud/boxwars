@@ -109,14 +109,23 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       })
 
       socket.on('game_over_sync', async (payload) => {
-        setGameOverData(payload.gameOverData)
+        // Kesin senkronizasyon: Oyun bittiğinde her iki tarafta da sonuç ekranı direkt açılır
         setScores(payload.scores)
-        await applyPenaltiesAndDatabase(payload.gameOverData.resultType)
+        const finalResultType = payload.gameOverData.resultType
+        const { addedXp } = await applyPenaltiesAndDatabase(finalResultType)
+
+        setGameOverData({
+          resultType: finalResultType,
+          addedXp,
+          p1Score: payload.gameOverData.p1Score,
+          p2Score: payload.gameOverData.p2Score,
+          isQuit: false
+        })
       })
 
       socket.on('player_quit', async () => {
         if (!gameOverData) {
-          const res = await applyPenaltiesAndDatabase('win', false)
+          const res = await applyPenaltiesAndDatabase('win')
           setGameOverData({
             resultType: 'win',
             addedXp: res.addedXp,
@@ -140,7 +149,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (socketRef.current) {
         socketRef.current.emit('player_quit', {})
       }
-      await applyPenaltiesAndDatabase('lose', true)
+      await applyPenaltiesAndDatabase('lose')
     }
     if (refreshProfile) refreshProfile()
     onBack()
@@ -435,7 +444,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
 
     const triggerRoundWin = () => {
-      // Güvenli skor artışı: Maksimum toplam galibiyet 2'yi geçemez
       const updatedScores = { 
         ...scores, 
         player1: Math.min(2, scores.player1 + 1) 
@@ -463,7 +471,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
-      // Karşı taraf kazandığında gelen skoru direkt eşle, üst üste toplama hatasını engelle
       const updatedScores = {
         player1: remoteScores ? remoteScores.player2 : scores.player1,
         player2: remoteScores ? Math.min(2, remoteScores.player1) : Math.min(2, scores.player2 + 1)
@@ -483,7 +490,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setAmmo(maxAmmo)
         setIsReloading(false)
 
-        // 2. round'da taraflar simetrik olarak yer değiştirir
         const isCurrentlyLeft = playerSide === 'left'
         gameStateRef.current.myPos.x = isCurrentlyLeft ? 850 : 80
         gameStateRef.current.myPos.y = 250
@@ -496,7 +502,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         gameStateRef.current.bullets = []
       }, 2000)
     } else {
-      // === 2. ROUND BİTTİ -> MAÇ SONU (TOPLAM SKOR ASLA 2'Yİ GEÇMEZ) ===
+      // === 2. ROUND BİTTİ -> MAÇ SONU HER İKİ TARAFTA KESİN BİTİRİLİR ===
       let hostResultType = 'lose'
       if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
       else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
@@ -512,21 +518,18 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
       setGameOverData(finalMyData)
 
+      // Host, karşı tarafa oyunun bittiğini kesin olarak bildirir
       if (isHost && socketRef.current) {
         let enemyResultType = 'lose'
         if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
         else if (currentScores.player1 === currentScores.player2) enemyResultType = 'draw'
 
-        const enemyXpChange = enemyResultType === 'win' ? 100 : (enemyResultType === 'draw' ? 50 : -50)
-
         socketRef.current.emit('game_over_sync', {
           roomId,
           gameOverData: {
             resultType: enemyResultType,
-            addedXp: enemyXpChange,
             p1Score: currentScores.player2,
-            p2Score: currentScores.player1,
-            isQuit: false
+            p2Score: currentScores.player1
           },
           scores: { player1: currentScores.player2, player2: currentScores.player1 }
         })
