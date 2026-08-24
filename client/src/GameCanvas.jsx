@@ -40,34 +40,20 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     bullets: []
   })
 
-  // --- TAM EKRAN (FULLSCREEN) ENTEGRASYONU ---
+  // --- TAM EKRAN (FULLSCREEN) ---
   useEffect(() => {
     const enterFullscreen = () => {
       const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(() => {});
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen();
-      }
+      if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
     };
-
     const exitFullscreen = () => {
-      if (document.fullscreenElement) {
-        if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
       }
     };
-
     enterFullscreen();
-
-    return () => {
-      exitFullscreen();
-    };
+    return () => { exitFullscreen(); };
   }, []);
 
   // --- ODA VE SOCKET.IO BAĞLANTISI ---
@@ -122,14 +108,23 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         handleRoundEndRemote(payload.winnerId, payload.scores)
       })
 
-      socket.on('game_over_sync', (payload) => {
+      socket.on('game_over_sync', async (payload) => {
         setGameOverData(payload.gameOverData)
         setScores(payload.scores)
-        applyPenaltiesAndDatabase(payload.gameOverData.resultType)
+        await applyPenaltiesAndDatabase(payload.gameOverData.resultType)
       })
 
-      socket.on('player_quit', () => {
-        handleEarlyLeaveRemote()
+      socket.on('player_quit', async () => {
+        if (!gameOverData) {
+          const res = await applyPenaltiesAndDatabase('win', false)
+          setGameOverData({
+            resultType: 'win',
+            addedXp: res.addedXp,
+            p1Score: scores.player1,
+            p2Score: scores.player2,
+            isQuit: false
+          })
+        }
       })
     }
 
@@ -147,54 +142,57 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
       await applyPenaltiesAndDatabase('lose', true)
     }
+    if (refreshProfile) refreshProfile()
     onBack()
   }
 
-  const handleEarlyLeaveRemote = async () => {
-    if (!gameOverData) {
-      await applyPenaltiesAndDatabase('win', false)
-      setGameOverData({
-        resultType: 'win',
-        addedXp: 100,
-        p1Score: scores.player1,
-        p2Score: scores.player2,
-        isQuit: false
-      })
-    }
-  }
-
+  // --- GARANTİ VERİTABANI VE PROFİL GÜNCELLEME İŞLEMCİSİ ---
   const applyPenaltiesAndDatabase = async (resultType) => {
-    let newXp = userData.xp || 0
-    let newLevel = userData.level || 1
-    let newWins = userData.wins || 0
-    let newLosses = userData.losses || 0
+    // Mevcut verileri güncel profile verisinden veya state'ten al
+    let currentXp = profile?.xp ?? userData.xp ?? 0
+    let currentLevel = profile?.level ?? userData.level ?? 1
+    let currentWins = profile?.wins ?? userData.wins ?? 0
+    let currentLosses = profile?.losses ?? userData.losses ?? 0
     let addedXp = 0
 
     if (resultType === 'win') {
       addedXp = 100
-      newXp += 100
-      newWins += 1
+      currentXp += 100
+      currentWins += 1
     } else if (resultType === 'draw') {
       addedXp = 50
-      newXp += 50
+      currentXp += 50
     } else {
       addedXp = -50
-      newXp -= 50
-      newLosses += 1
-      if (newXp < 0 && newLevel > 1) {
-        newLevel -= 1
-        newXp += 200
+      currentXp -= 50
+      currentLosses += 1
+      if (currentXp < 0 && currentLevel > 1) {
+        currentLevel -= 1
+        currentXp += 200
       }
-      if (newXp < 0) newXp = 0
+      if (currentXp < 0) currentXp = 0
     }
 
-    while (newXp >= 200) {
-      newXp -= 200
-      newLevel += 1
+    while (currentXp >= 200) {
+      currentXp -= 200
+      currentLevel += 1
     }
 
-    await supabase.from('profiles').update({ xp: newXp, level: newLevel, wins: newWins, losses: newLosses }).eq('id', userId)
-    refreshProfile()
+    // Supabase'e güvenli kayıt
+    const { error } = await supabase.from('profiles').update({
+      xp: currentXp,
+      level: currentLevel,
+      wins: currentWins,
+      losses: currentLosses
+    }).eq('id', userId)
+
+    if (error) {
+      console.error('Veritabanı kayıt hatası:', error.message)
+    }
+
+    if (refreshProfile) {
+      refreshProfile()
+    }
 
     return { addedXp }
   }
@@ -208,7 +206,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }, 1200)
   }
 
-  // --- ANA OYUN DÖNGÜSÜ ---
+  // --- OYUN DÖNGÜSÜ ---
   useEffect(() => {
     if (gameOverData) return
 
@@ -237,8 +235,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
     const shoot = () => {
       if (isReloading) return
-
-      // Eğer mermi bittiyse direkt reload başlat ve çık
       if (ammo <= 0) {
         reloadGun()
         return
@@ -248,7 +244,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (now - lastShotTime.current < 250) return
       lastShotTime.current = now
 
-      // Mermiyi güvenli bir şekilde azalt (0'ın altına asla düşemez)
       let currentAmmoLeft = 6
       setAmmo((prev) => {
         const next = Math.max(0, prev - 1)
@@ -256,7 +251,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         return next
       })
 
-      // Eğer son mermi atıldıysa otomatik reload tetikle
       if (currentAmmoLeft === 0) {
         setTimeout(() => reloadGun(), 100)
       }
@@ -274,17 +268,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       const bulletSpeed = 12
 
       if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 0) {
-          muzzleX = myP.x + 32; muzzleY = myP.y + 16; vx = bulletSpeed; vy = 0
-        } else {
-          muzzleX = myP.x; muzzleY = myP.y + 16; vx = -bulletSpeed; vy = 0
-        }
+        if (dx > 0) { muzzleX = myP.x + 32; muzzleY = myP.y + 16; vx = bulletSpeed; vy = 0 }
+        else { muzzleX = myP.x; muzzleY = myP.y + 16; vx = -bulletSpeed; vy = 0 }
       } else {
-        if (dy > 0) {
-          muzzleX = myP.x + 16; muzzleY = myP.y + 32; vx = 0; vy = bulletSpeed
-        } else {
-          muzzleX = myP.x + 16; muzzleY = myP.y; vx = 0; vy = -bulletSpeed
-        }
+        if (dy > 0) { muzzleX = myP.x + 16; muzzleY = myP.y + 32; vx = 0; vy = bulletSpeed }
+        else { muzzleX = myP.x + 16; muzzleY = myP.y; vx = 0; vy = -bulletSpeed }
       }
 
       const newBullet = {
@@ -477,6 +465,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
+  // --- 2. ROUND GEÇİŞİ VE POZİSYON TERSLEME (SİMETRİK) ---
   const handleRoundTransition = async (currentScores) => {
     if (currentRound === 1) {
       setRoundMessage('1. Round Bitti! Taraf Değiştiriliyor...')
@@ -485,16 +474,21 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setCurrentRound(2)
         setAmmo(maxAmmo)
         setIsReloading(false)
-        const isR2Round2 = playerSide === 'left'
-        gameStateRef.current.myPos.x = isR2Round2 ? 850 : 80
+
+        // 2. round'da taraflar simetrik olarak yer değiştirir (Sol <-> Sağ)
+        const isCurrentlyLeft = playerSide === 'left'
+        gameStateRef.current.myPos.x = isCurrentlyLeft ? 850 : 80
         gameStateRef.current.myPos.y = 250
         gameStateRef.current.myPos.hp = 200
-        gameStateRef.current.enemyPos.x = isR2Round2 ? 80 : 850
+
+        gameStateRef.current.enemyPos.x = isCurrentlyLeft ? 80 : 850
         gameStateRef.current.enemyPos.y = 250
         gameStateRef.current.enemyPos.hp = 200
+
         gameStateRef.current.bullets = []
       }, 2000)
     } else {
+      // Maç Sonu Hesaplamaları
       let hostResultType = 'lose'
       if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
       else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
@@ -532,6 +526,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
+  const handleReturnToLobby = () => {
+    if (refreshProfile) refreshProfile()
+    onBack()
+  }
+
   return (
     <>
       <div className="portrait-warning">Lütfen Telefonu Yan Çevirin 🔄</div>
@@ -539,6 +538,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       <div className="game-wrapper" style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#0f172a', overflow: 'hidden' }}>
         <button className="back-btn-overlay" onClick={handleEarlyLeave}>⬅ Lobiye Dön (Terket)</button>
 
+        {/* AMMO HUD */}
         <div style={{
           position: 'fixed',
           top: '20px',
@@ -600,7 +600,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
               </div>
             </div>
 
-            <button className="btn-lobby" onClick={onBack}>
+            <button className="btn-lobby" onClick={handleReturnToLobby}>
               🏠 BEKLEME ODASINA DÖN (RÖVANŞ)
             </button>
           </div>
