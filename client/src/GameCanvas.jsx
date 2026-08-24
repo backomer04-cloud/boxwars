@@ -26,7 +26,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [playerSide, setPlayerSide] = useState('left')
   const [currentRound, setCurrentRound] = useState(1)
   const [roundMessage, setRoundMessage] = useState('')
-  const [scores, setScores] = useState({ player1: 0, player2: 0 })
+  const [scores, setScores] = useState({ player1: 0, player2: 0 }) // player1: Benim galibiyetim, player2: Rakibin galibiyeti
   const [gameOverData, setGameOverData] = useState(null)
 
   const [ammo, setAmmo] = useState(6)
@@ -105,6 +105,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       })
 
       socket.on('round_won', (payload) => {
+        // payload içinde karşı tarafın gönderdiği güncel skorlar var
         handleRoundEndRemote(payload.winnerId, payload.scores)
       })
 
@@ -148,7 +149,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
   // --- GARANTİ VERİTABANI VE PROFİL GÜNCELLEME İŞLEMCİSİ ---
   const applyPenaltiesAndDatabase = async (resultType) => {
-    // Mevcut verileri güncel profile verisinden veya state'ten al
     let currentXp = profile?.xp ?? userData.xp ?? 0
     let currentLevel = profile?.level ?? userData.level ?? 1
     let currentWins = profile?.wins ?? userData.wins ?? 0
@@ -178,7 +178,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       currentLevel += 1
     }
 
-    // Supabase'e güvenli kayıt
     const { error } = await supabase.from('profiles').update({
       xp: currentXp,
       level: currentLevel,
@@ -437,12 +436,17 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
 
     const triggerRoundWin = () => {
-      const newScores = { ...scores, player1: scores.player1 + 1 }
-      const updatedScores = { player1: newScores.player1, player2: newScores.player2 }
+      // Bu roundu ben kazandım, kendi skoruma 1 ekle
+      const updatedScores = { ...scores, player1: scores.player1 + 1 }
       setScores(updatedScores)
 
       if (socketRef.current) {
-        socketRef.current.emit('round_won', { roomId, winnerId: userId, scores: updatedScores })
+        // Karşı tarafa benim kazandığımı ve güncel skorumu bildiriyoruz
+        socketRef.current.emit('round_won', { 
+          roomId, 
+          winnerId: userId, 
+          scores: updatedScores 
+        })
       }
       handleRoundTransition(updatedScores)
     }
@@ -454,18 +458,22 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId, ammo, isReloading])
+  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId, ammo, isReloading, scores])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
-      const newScores = { ...scores, player2: scores.player2 + 1 }
-      const updatedScores = remoteScores || newScores
+      // Rakip kazandı, karşı tarafın gönderdiği skoru baz alıyoruz
+      // Not: Karşı tarafın gönderdiği skor onun perspektifinden olduğu için kendi p1'imiz rakibin p2'si olur.
+      const updatedScores = {
+        player1: remoteScores ? remoteScores.player2 : scores.player1,
+        player2: remoteScores ? remoteScores.player1 : (scores.player2 + 1)
+      }
       setScores(updatedScores)
       handleRoundTransition(updatedScores)
     }
   }
 
-  // --- 2. ROUND GEÇİŞİ VE POZİSYON TERSLEME (SİMETRİK) ---
+  // --- KESİN 2 ROUNDLUK GEÇİŞ VE MAÇ SONU YÖNETİMİ ---
   const handleRoundTransition = async (currentScores) => {
     if (currentRound === 1) {
       setRoundMessage('1. Round Bitti! Taraf Değiştiriliyor...')
@@ -488,22 +496,23 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         gameStateRef.current.bullets = []
       }, 2000)
     } else {
-      // Maç Sonu Hesaplamaları
+      // === 2. ROUND BİTTİ -> MAÇ SONU (KESİNLİKLE 2 ROUND BİTİNCE DURUR) ===
       let hostResultType = 'lose'
       if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
       else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
 
       const { addedXp } = await applyPenaltiesAndDatabase(hostResultType)
 
-      const hostFinalData = {
+      const finalMyData = {
         resultType: hostResultType,
         addedXp,
         p1Score: currentScores.player1,
         p2Score: currentScores.player2,
         isQuit: false
       }
-      setGameOverData(hostFinalData)
+      setGameOverData(finalMyData)
 
+      // Host isek, rakibe de oyunun bittiğini ve onun sonuçlarını senkronize edelim
       if (isHost && socketRef.current) {
         let enemyResultType = 'lose'
         if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
@@ -588,7 +597,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
             <div className="stats-grid">
               <div className="stat-card">
-                <span className="stat-label">Skor</span>
+                <span className="stat-label">Maç Skoru (2 Round)</span>
                 <span className="stat-value">{gameOverData.p1Score} - {gameOverData.p2Score}</span>
               </div>
 
