@@ -480,7 +480,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
-  // --- KESİN 2 ROUNDLUK GEÇİŞ VE MAÇ SONU YÖNETİMİ ---
+// --- KESİN 2 ROUNDLUK GEÇİŞ VE MAÇ SONU YÖNETİMİ ---
   const handleRoundTransition = async (currentScores) => {
     if (currentRound === 1) {
       setRoundMessage('1. Round Bitti! Taraf Değiştiriliyor...')
@@ -490,12 +490,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setAmmo(maxAmmo)
         setIsReloading(false)
 
-        const isCurrentlyLeft = playerSide === 'left'
-        gameStateRef.current.myPos.x = isCurrentlyLeft ? 850 : 80
+        // 1. Taraf (Side) State'ini Gerçekten Değiştiriyoruz
+        const newSide = playerSide === 'left' ? 'right' : 'left'
+        setPlayerSide(newSide)
+
+        // 2. Pozisyonları Yeni Tarafına Göre Ayarlıyoruz
+        gameStateRef.current.myPos.x = newSide === 'left' ? 80 : 850
         gameStateRef.current.myPos.y = 250
         gameStateRef.current.myPos.hp = 200
 
-        gameStateRef.current.enemyPos.x = isCurrentlyLeft ? 80 : 850
+        gameStateRef.current.enemyPos.x = newSide === 'left' ? 850 : 80
         gameStateRef.current.enemyPos.y = 250
         gameStateRef.current.enemyPos.hp = 200
 
