@@ -105,7 +105,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       })
 
       socket.on('round_won', (payload) => {
-        // payload içinde karşı tarafın gönderdiği güncel skorlar var
         handleRoundEndRemote(payload.winnerId, payload.scores)
       })
 
@@ -436,12 +435,14 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
 
     const triggerRoundWin = () => {
-      // Bu roundu ben kazandım, kendi skoruma 1 ekle
-      const updatedScores = { ...scores, player1: scores.player1 + 1 }
+      // Güvenli skor artışı: Maksimum toplam galibiyet 2'yi geçemez
+      const updatedScores = { 
+        ...scores, 
+        player1: Math.min(2, scores.player1 + 1) 
+      }
       setScores(updatedScores)
 
       if (socketRef.current) {
-        // Karşı tarafa benim kazandığımı ve güncel skorumu bildiriyoruz
         socketRef.current.emit('round_won', { 
           roomId, 
           winnerId: userId, 
@@ -462,11 +463,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
-      // Rakip kazandı, karşı tarafın gönderdiği skoru baz alıyoruz
-      // Not: Karşı tarafın gönderdiği skor onun perspektifinden olduğu için kendi p1'imiz rakibin p2'si olur.
+      // Karşı taraf kazandığında gelen skoru direkt eşle, üst üste toplama hatasını engelle
       const updatedScores = {
         player1: remoteScores ? remoteScores.player2 : scores.player1,
-        player2: remoteScores ? remoteScores.player1 : (scores.player2 + 1)
+        player2: remoteScores ? Math.min(2, remoteScores.player1) : Math.min(2, scores.player2 + 1)
       }
       setScores(updatedScores)
       handleRoundTransition(updatedScores)
@@ -483,7 +483,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setAmmo(maxAmmo)
         setIsReloading(false)
 
-        // 2. round'da taraflar simetrik olarak yer değiştirir (Sol <-> Sağ)
+        // 2. round'da taraflar simetrik olarak yer değiştirir
         const isCurrentlyLeft = playerSide === 'left'
         gameStateRef.current.myPos.x = isCurrentlyLeft ? 850 : 80
         gameStateRef.current.myPos.y = 250
@@ -496,7 +496,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         gameStateRef.current.bullets = []
       }, 2000)
     } else {
-      // === 2. ROUND BİTTİ -> MAÇ SONU (KESİNLİKLE 2 ROUND BİTİNCE DURUR) ===
+      // === 2. ROUND BİTTİ -> MAÇ SONU (TOPLAM SKOR ASLA 2'Yİ GEÇMEZ) ===
       let hostResultType = 'lose'
       if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
       else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
@@ -512,7 +512,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
       setGameOverData(finalMyData)
 
-      // Host isek, rakibe de oyunun bittiğini ve onun sonuçlarını senkronize edelim
       if (isHost && socketRef.current) {
         let enemyResultType = 'lose'
         if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
