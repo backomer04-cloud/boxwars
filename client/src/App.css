@@ -821,3 +821,95 @@ body {
     font-size: 0.9rem;
   }
 }
+
+/* --- LİDERLİK TABLOSU ÖZEL STİLLERİ --- */
+.leaderboard-modal-bg {
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  width: 100vw; 
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  z-index: 99999;
+  backdrop-filter: blur(6px);
+  padding: 15px;
+}
+
+.leaderboard-box {
+  background: #1e293b;
+  border: 2px solid #00f5d4;
+  border-radius: 16px;
+  width: 100%; 
+  max-width: 550px;
+  max-height: 85vh;
+  display: flex; 
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  overflow: hidden;
+}
+
+.leaderboard-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.leaderboard-list {
+  padding: 15px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 1. Sıra (En Gösterişli: Büyük, Parlak Altın Efekti) */
+.leaderboard-item-rank-1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+  border: 2px solid #ffd700;
+  padding: 16px 18px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+  transform: scale(1.02);
+  margin-bottom: 4px;
+}
+
+/* 2. Sıra (Biraz Az: Gümüş Ton, Orta İhtişam) */
+.leaderboard-item-rank-2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.15), rgba(255,255,255,0.03));
+  border: 1.5px solid #c0c0c0;
+  padding: 13px 16px;
+  border-radius: 10px;
+}
+
+/* 3. Sıra (Daha Az: Bronz Ton, Hafif Vurgu) */
+.leaderboard-item-rank-3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.12), rgba(255,255,255,0.03));
+  border: 1px solid #cd7f32;
+  padding: 11px 15px;
+  border-radius: 10px;
+}
+
+/* Diğer Sıralar (Normal Standart) */
+.leaderboard-item-standard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  padding: 10px 15px;
+  border-radius: 8px;
+}

@@ -27,7 +27,7 @@ function App() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // 1. Oturum ve Profil Takibi
+  // 1. Oturum Takibi
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -44,12 +44,10 @@ function App() {
       }
     })
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return () => subscription.unsubscribe()
   }, [])
 
-  // Tarayıcı kapatıldığında offline yap ve odadaysa temizle
+  // Tarayıcı kapatıldığında offline yap
   useEffect(() => {
     if (!session) return
 
@@ -83,7 +81,7 @@ function App() {
     if (data) setProfile(data)
   }
 
-  // Liderlik Tablosu Verilerini Çekme
+  // Liderlik Tablosu Verilerini Çekme (Seviye ve XP'ye göre)
   const fetchLeaderboard = async () => {
     const { data } = await supabase
       .from('profiles')
@@ -94,37 +92,31 @@ function App() {
     if (data) setLeaderboardPlayers(data)
   }
 
-  // 2. Online Oyuncuları ve Davetleri Dinleme
+  // 2. Online Oyuncular, Davetler ve Liderlik Verilerini Dinleme
   useEffect(() => {
     if (!session) return
 
-    const fetchOnlinePlayers = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      const { data: onlineData } = await supabase
         .from('profiles')
         .select('id, username, level, is_online')
         .eq('is_online', true)
         .neq('id', session.user.id)
+      if (onlineData) setOnlinePlayers(onlineData)
 
-      if (data) setOnlinePlayers(data)
-    }
-
-    const fetchIncomingInvites = async () => {
-      const { data } = await supabase
+      const { data: inviteData } = await supabase
         .from('invites')
         .select('*')
         .eq('receiver_id', session.user.id)
         .eq('status', 'pending')
-
-      if (data) setIncomingInvites(data)
+      if (inviteData) setIncomingInvites(inviteData)
     }
 
-    fetchOnlinePlayers()
-    fetchIncomingInvites()
+    fetchData()
     fetchLeaderboard()
 
     const interval = setInterval(() => {
-      fetchOnlinePlayers()
-      fetchIncomingInvites()
+      fetchData()
       if (showLeaderboard) fetchLeaderboard()
     }, 4000)
 
@@ -133,20 +125,18 @@ function App() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'invites', filter: `receiver_id=eq.${session.user.id}` },
-        (payload) => {
-          setIncomingInvites((prev) => [...prev, payload.new])
-        }
+        (payload) => setIncomingInvites((prev) => [...prev, payload.new])
       )
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'invites', filter: `sender_id=eq.${session.user.id}` },
         (payload) => {
-          const updatedInvite = payload.new
-          if (updatedInvite.status === 'accepted') {
+          const updated = payload.new
+          if (updated.status === 'accepted') {
             alert('🎉 Rakip daveti kabul etti! Odaya giriliyor...')
-            setCurrentRoom({ id: updatedInvite.room_id, status: 'waiting' })
-            setCurrentInviteId(updatedInvite.id)
-          } else if (updatedInvite.status === 'rejected') {
+            setCurrentRoom({ id: updated.room_id, status: 'waiting' })
+            setCurrentInviteId(updated.id)
+          } else if (updated.status === 'rejected') {
             alert('❌ Rakip daveti reddetti.')
           }
         }
@@ -159,7 +149,7 @@ function App() {
     }
   }, [session, showLeaderboard])
 
-  // 3. Oda Durumu ve Üyeleri Dinleme
+  // 3. Oda Durumu Takibi
   useEffect(() => {
     if (!currentRoom) {
       setRoomMembers([])
@@ -174,7 +164,7 @@ function App() {
         .single()
 
       if (error || !roomData) {
-        alert('⚠️ Oda kurucu tarafından kapatıldı!')
+        alert('⚠️ Oda kapatıldı!')
         handleBackToLobby()
         return
       }
@@ -198,9 +188,7 @@ function App() {
         .single()
 
       let members = []
-      if (hostProfile) {
-        members.push({ ...hostProfile, role: 'host', isReady: true })
-      }
+      if (hostProfile) members.push({ ...hostProfile, role: 'host', isReady: true })
 
       if (acceptedInvite) {
         if (acceptedInvite.receiver_id === session?.user?.id && !currentInviteId) {
@@ -214,17 +202,11 @@ function App() {
           .single()
         
         if (guestProfile) {
-          members.push({ 
-            ...guestProfile, 
-            role: 'guest', 
-            isReady: acceptedInvite.is_ready ?? false 
-          })
+          members.push({ ...guestProfile, role: 'guest', isReady: acceptedInvite.is_ready ?? false })
         }
-      } else {
-        if (currentRoom && session?.user?.id !== roomData.host_id) {
-          handleBackToLobby()
-          return
-        }
+      } else if (session?.user?.id !== roomData.host_id) {
+        handleBackToLobby()
+        return
       }
 
       setRoomMembers(members)
@@ -232,56 +214,39 @@ function App() {
 
     fetchRoomDetails()
     const roomInterval = setInterval(fetchRoomDetails, 2000)
-
     return () => clearInterval(roomInterval)
   }, [currentRoom, currentInviteId, session, inGame])
 
-  // 4. Oda Oluşturma
   const handleCreateRoom = async () => {
     if (!session) return
-
     const { data, error } = await supabase
       .from('rooms')
       .insert([{ host_id: session.user.id, status: 'waiting' }])
       .select()
       .single()
 
-    if (error) {
-      alert('Oda oluşturulamadı: ' + error.message)
-    } else {
+    if (error) alert('Oda oluşturulamadı: ' + error.message)
+    else {
       setCurrentRoom(data)
       setCurrentInviteId(null)
     }
   }
 
-  // 5. Odadan Ayrılma / Odayı Kapatma
   const handleLeaveRoom = async () => {
     if (!currentRoom) return
-
-    const isHost = session?.user?.id === currentRoom.host_id
-
-    if (isHost) {
+    if (session?.user?.id === currentRoom.host_id) {
       await supabase.from('rooms').delete().eq('id', currentRoom.id)
       await supabase.from('invites').delete().eq('room_id', currentRoom.id)
-    } else {
-      if (currentInviteId) {
-        await supabase.from('invites').delete().eq('id', currentInviteId)
-      }
+    } else if (currentInviteId) {
+      await supabase.from('invites').delete().eq('id', currentInviteId)
     }
-
     handleBackToLobby()
   }
 
-  // 6. Davet Gönderme
   const handleSendInvite = async (receiverId) => {
-    if (!currentRoom) return
+    if (!currentRoom || roomMembers.length >= 2) return
 
-    if (roomMembers.length >= 2) {
-      alert('Oda dolu! Daha fazla oyuncu davet edilemez.')
-      return
-    }
-
-    const { data: existingInvite } = await supabase
+    const { data: existing } = await supabase
       .from('invites')
       .select('*')
       .eq('room_id', currentRoom.id)
@@ -289,96 +254,58 @@ function App() {
       .eq('status', 'pending')
       .single()
 
-    if (existingInvite) {
+    if (existing) {
       alert('Bu oyuncuya zaten aktif bir davet gönderilmiş!')
       return
     }
 
-    const { error } = await supabase.from('invites').insert([
-      {
-        sender_id: session.user.id,
-        receiver_id: receiverId,
-        room_id: currentRoom.id,
-        status: 'pending',
-        is_ready: false
-      }
-    ])
+    const { error } = await supabase.from('invites').insert([{
+      sender_id: session.user.id,
+      receiver_id: receiverId,
+      room_id: currentRoom.id,
+      status: 'pending',
+      is_ready: false
+    }])
 
-    if (error) {
-      alert('Davet gönderilemedi: ' + error.message)
-    } else {
-      alert('Davet başarıyla gönderildi! Cevap bekleniyor...')
-    }
+    if (error) alert('Davet gönderilemedi: ' + error.message)
+    else alert('Davet gönderildi!')
   }
 
-  // 7. Daveti Kabul Etme
   const handleAcceptInvite = async (invite) => {
     setCurrentRoom({ id: invite.room_id, status: 'waiting' })
     setCurrentInviteId(invite.id)
-
-    await supabase
-      .from('invites')
-      .update({ status: 'accepted', is_ready: false })
-      .eq('id', invite.id)
-
+    await supabase.from('invites').update({ status: 'accepted', is_ready: false }).eq('id', invite.id)
     setIncomingInvites((prev) => prev.filter((i) => i.id !== invite.id))
   }
 
-  // 8. Daveti Reddetme
   const handleRejectInvite = async (invite) => {
-    await supabase
-      .from('invites')
-      .update({ status: 'rejected' })
-      .eq('id', invite.id)
-
+    await supabase.from('invites').update({ status: 'rejected' }).eq('id', invite.id)
     setIncomingInvites((prev) => prev.filter((i) => i.id !== invite.id))
   }
 
-  // 9. Katılımcının Hazır Durumu
   const toggleReadyStatus = async () => {
     if (!currentInviteId) return
-
-    const guestMember = roomMembers.find(m => m.role === 'guest')
-    const newReadyState = !guestMember?.isReady
-
-    await supabase
-      .from('invites')
-      .update({ is_ready: newReadyState })
-      .eq('id', currentInviteId)
+    const guest = roomMembers.find(m => m.role === 'guest')
+    await supabase.from('invites').update({ is_ready: !guest?.isReady }).eq('id', currentInviteId)
   }
 
-  // 10. Oyunu Başlatma
   const handleStartGame = async () => {
     if (!currentRoom) return
-
-    const { error } = await supabase
-      .from('rooms')
-      .update({ status: 'playing' })
-      .eq('id', currentRoom.id)
-
-    if (!error) {
-      setInGame(true)
-    } else {
-      alert('Oyun başlatılamadı: ' + error.message)
-    }
+    const { error } = await supabase.from('rooms').update({ status: 'playing' }).eq('id', currentRoom.id)
+    if (!error) setInGame(true)
+    else alert('Oyun başlatılamadı: ' + error.message)
   }
 
   const handleBackToLobby = async () => {
-    if (currentRoom) {
-      const isHost = session?.user?.id === currentRoom.host_id
-      if (isHost) {
-        await supabase.from('rooms').delete().eq('id', currentRoom.id)
-        await supabase.from('invites').delete().eq('room_id', currentRoom.id)
-      }
+    if (currentRoom && session?.user?.id === currentRoom.host_id) {
+      await supabase.from('rooms').delete().eq('id', currentRoom.id)
+      await supabase.from('invites').delete().eq('room_id', currentRoom.id)
     }
-
     setInGame(false)
     setCurrentRoom(null)
     setCurrentInviteId(null)
     setRoomMembers([])
-    if (session) {
-      fetchProfile(session.user.id)
-    }
+    if (session) fetchProfile(session.user.id)
   }
 
   const handleRegister = async (e) => {
@@ -386,20 +313,19 @@ function App() {
     setLoading(true)
     setMessage('')
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password })
-    if (authError) {
-      setMessage(`❌ ${authError.message}`)
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error) {
+      setMessage(`❌ ${error.message}`)
       setLoading(false)
       return
     }
 
-    if (authData.user) {
-      const { error: profileError } = await supabase.from('profiles').insert([
-        { id: authData.user.id, username, xp: 0, level: 1, wins: 0, losses: 0, is_online: true }
+    if (data.user) {
+      const { error: profileErr } = await supabase.from('profiles').insert([
+        { id: data.user.id, username, xp: 0, level: 1, wins: 0, losses: 0, is_online: true }
       ])
-      if (profileError) {
-        setMessage(`❌ ${profileError.message}`)
-      } else {
+      if (profileErr) setMessage(`❌ ${profileErr.message}`)
+      else {
         setMessage('✅ Kayıt başarılı! Giriş yapabilirsin.')
         setIsRegistering(false)
         setUsername('')
@@ -415,28 +341,21 @@ function App() {
     setMessage('')
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setMessage(`❌ ${error.message}`)
-    } else if (data.user) {
-      await supabase.from('profiles').update({ is_online: true }).eq('id', data.user.id)
-    }
+    if (error) setMessage(`❌ ${error.message}`)
+    else if (data.user) await supabase.from('profiles').update({ is_online: true }).eq('id', data.user.id)
     setLoading(false)
   }
 
   const handleLogout = async () => {
-    if (currentRoom) {
-      await handleLeaveRoom()
-    }
-    if (session) {
-      await supabase.from('profiles').update({ is_online: false }).eq('id', session.user.id)
-    }
+    if (currentRoom) await handleLeaveRoom()
+    if (session) await supabase.from('profiles').update({ is_online: false }).eq('id', session.user.id)
     await supabase.auth.signOut()
     setProfile(null)
     setCurrentRoom(null)
   }
 
-  const currentLevelXp = profile?.xp ? profile.xp % 200 : 0;
-  const xpPercent = (currentLevelXp / 200) * 100;
+  const currentLevelXp = profile?.xp ? profile.xp % 200 : 0
+  const xpPercent = (currentLevelXp / 200) * 100
 
   if (session) {
     if (inGame) {
@@ -451,11 +370,11 @@ function App() {
       )
     }
 
-    const isHost = currentRoom && session?.user?.id === currentRoom.host_id;
-    const isRoomFull = roomMembers.length >= 2;
-    const guestMember = roomMembers.find(m => m.role === 'guest');
-    const isGuestReady = guestMember ? guestMember.isReady : false;
-    const canStartGame = isRoomFull && isGuestReady;
+    const isHost = currentRoom && session?.user?.id === currentRoom.host_id
+    const isRoomFull = roomMembers.length >= 2
+    const guestMember = roomMembers.find(m => m.role === 'guest')
+    const isGuestReady = guestMember ? guestMember.isReady : false
+    const canStartGame = isRoomFull && isGuestReady
 
     return (
       <div className="lobby-wrap">
@@ -469,61 +388,41 @@ function App() {
 
         {/* LİDERLİK TABLOSU MODALI */}
         {showLeaderboard && (
-          <div style={{
-            position: 'fixed',
-            top: 0, left: 0, width: '100vw', height: '100vh',
-            background: 'rgba(15, 23, 42, 0.85)',
-            display: 'flex', justifyContent: 'center', alignItems: 'center',
-            zIndex: 99999,
-            backdropFilter: 'blur(6px)'
-          }}>
-            <div style={{
-              background: '#1e293b',
-              border: '2px solid #00f5d4',
-              borderRadius: '16px',
-              width: '90%', maxWidth: '600px',
-              maxHeight: '80vh',
-              display: 'flex', flexDirection: 'column',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
-              overflow: 'hidden'
-            }}>
-              <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, color: '#00f5d4', fontSize: '1.2rem' }}>🏆 Global Liderlik Tablosu (Seviye Sıralaması)</h3>
-                <button onClick={() => setShowLeaderboard(false)} style={{ background: '#e71d36', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕ Kapat</button>
+          <div className="leaderboard-modal-bg">
+            <div className="leaderboard-box">
+              <div className="leaderboard-header">
+                <h3 style={{ margin: 0, color: '#00f5d4', fontSize: '1.1rem' }}>🏆 Global Liderlik Tablosu</h3>
+                <button onClick={() => setShowLeaderboard(false)} style={{ background: '#e71d36', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
               </div>
 
-              <div style={{ padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="leaderboard-list">
                 {leaderboardPlayers.map((player, index) => {
                   const isMe = player.id === session.user.id
+                  const rankClass = index === 0 ? 'leaderboard-item-rank-1' : (index === 1 ? 'leaderboard-item-rank-2' : (index === 2 ? 'leaderboard-item-rank-3' : 'leaderboard-item-standard'))
+
                   return (
-                    <div key={player.id} style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      background: isMe ? 'rgba(0, 245, 212, 0.15)' : 'rgba(255,255,255,0.05)',
-                      border: isMe ? '2px solid #00f5d4' : '1px solid rgba(255,255,255,0.05)',
-                      padding: '12px 15px',
-                      borderRadius: '10px'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: index === 0 ? '#ffd700' : (index === 1 ? '#c0c0c0' : (index === 2 ? '#cd7f32' : '#888')) }}>
+                    <div key={player.id} className={rankClass} style={isMe ? { borderColor: '#00f5d4', background: 'rgba(0, 245, 212, 0.1)' } : {}}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: index === 0 ? '1.2rem' : '1rem', color: index === 0 ? '#ffd700' : (index === 1 ? '#c0c0c0' : (index === 2 ? '#cd7f32' : '#888')) }}>
                           #{index + 1}
                         </span>
                         <div>
                           <span style={{ fontWeight: 'bold', color: isMe ? '#00f5d4' : '#fff' }}>
                             {player.username} {isMe && '(Sen)'}
                           </span>
-                          <div style={{ fontSize: '0.8rem', color: player.is_online ? '#2ec4b6' : '#888' }}>
+                          <div style={{ fontSize: '0.75rem', color: player.is_online ? '#2ec4b6' : '#888' }}>
                             {player.is_online ? '🟢 Çevrimiçi' : '⚪ Çevrimdışı'}
                           </div>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '15px', alignItems: 'center', textAlign: 'right' }}>
                         <div>
-                          <div style={{ fontSize: '0.8rem', color: '#888' }}>Seviye / XP</div>
-                          <div style={{ fontWeight: 'bold', color: '#38bdf8' }}>Lvl {player.level} <span style={{ fontSize: '0.8rem', color: '#aaa' }}>({player.xp} XP)</span></div>
+                          <div style={{ fontSize: '0.75rem', color: '#888' }}>Seviye / XP</div>
+                          <div style={{ fontWeight: 'bold', color: '#38bdf8', fontSize: index === 0 ? '1.1rem' : '0.95rem' }}>Lvl {player.level} <span style={{ fontSize: '0.75rem', color: '#aaa' }}>({player.xp})</span></div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '0.8rem', color: '#888' }}>Galibiyet</div>
+                          <div style={{ fontSize: '0.75rem', color: '#888' }}>Galibiyet</div>
                           <div style={{ fontWeight: 'bold', color: '#2ec4b6' }}>{player.wins} W</div>
                         </div>
                       </div>
@@ -535,7 +434,7 @@ function App() {
           </div>
         )}
 
-        {/* EĞER BİR ODAYSA (BEKLEME ODASI) */}
+        {/* BEKLEME ODASI / LOBİ */}
         {currentRoom ? (
           <div className="lobby-grid">
             <section className="mods-panel">
@@ -551,7 +450,6 @@ function App() {
                         {member.role === 'host' ? '👑 Kurucu' : '👤 Katılımcı'}
                       </div>
                     </div>
-
                     <div>
                       {member.role === 'host' ? (
                         <span style={{ color: '#2ec4b6', fontWeight: 'bold', fontSize: '14px' }}>✅ Kurucu (Hazır)</span>
@@ -565,42 +463,26 @@ function App() {
                 ))}
               </div>
 
-              {/* BUTONLAR */}
               <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                 {!isHost && (
-                  <button 
-                    className="auth-button" 
-                    onClick={toggleReadyStatus}
-                    style={{ background: isGuestReady ? '#2ec4b6' : '#e71d36', flex: 1 }}
-                  >
+                  <button className="auth-button" onClick={toggleReadyStatus} style={{ background: isGuestReady ? '#2ec4b6' : '#e71d36', flex: 1 }}>
                     {isGuestReady ? '✅ HAZIRSIN (İptal Et)' : '❌ HAZIR OL'}
                   </button>
                 )}
-
-                <button 
-                  className="logout-btn" 
-                  onClick={handleLeaveRoom}
-                  style={{ flex: 1, padding: '12px', background: isHost ? '#e71d36' : undefined }}
-                >
+                <button className="logout-btn" onClick={handleLeaveRoom} style={{ flex: 1, padding: '12px', background: isHost ? '#e71d36' : undefined }}>
                   {isHost ? 'Odayı Dağıt / Ayrıl' : 'Odadan Ayrıl'}
                 </button>
               </div>
 
-              {/* KURUCU İÇİN OYUNU BAŞLAT TUŞU */}
               {isHost && (
-                <button 
-                  className="auth-button" 
-                  onClick={handleStartGame}
-                  disabled={!canStartGame}
-                  style={{ background: canStartGame ? '#7209b7' : '#555', marginTop: '10px', cursor: canStartGame ? 'pointer' : 'not-allowed' }}
-                >
-                  {!isRoomFull ? '⏳ Rakibin Gelmesi Bekleniyor...' : (!isGuestReady ? '⏳ Rakibin Hazır Olması Bekleniyor...' : '🚀 OYUNU BAŞLAT')}
+                <button className="auth-button" onClick={handleStartGame} disabled={!canStartGame} style={{ background: canStartGame ? '#7209b7' : '#555', cursor: canStartGame ? 'pointer' : 'not-allowed' }}>
+                  {!isRoomFull ? '⏳ Rakibin Bekleniyor...' : (!isGuestReady ? '⏳ Rakibin Hazır Olması Bekleniyor...' : '🚀 OYUNU BAŞLAT')}
                 </button>
               )}
             </section>
 
             <section className="stats-panel">
-              <h3 className="panel-title">👥 Çevrimiçi Oyuncular {isRoomFull && '(Oda Dolu)'}</h3>
+              <h3 className="panel-title">👥 Çevrimiçi Oyuncular</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {onlinePlayers.length === 0 ? (
                   <p style={{ color: '#888' }}>Şu an çevrimiçi başka oyuncu yok.</p>
@@ -608,16 +490,10 @@ function App() {
                   onlinePlayers.map((player) => (
                     <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
                       <span>{player.username} (Lvl {player.level}) <span style={{ color: '#2ec4b6', fontSize: '12px' }}>🟢 Online</span></span>
-                      
                       {isRoomFull ? (
                         <span style={{ fontSize: '12px', color: '#e71d36' }}>Oda Dolu</span>
                       ) : (
-                        <button 
-                          onClick={() => handleSendInvite(player.id)}
-                          style={{ padding: '5px 10px', background: '#00f5d4', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                        >
-                          Davet Et
-                        </button>
+                        <button onClick={() => handleSendInvite(player.id)} style={{ padding: '5px 10px', background: '#00f5d4', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Davet Et</button>
                       )}
                     </div>
                   ))
@@ -626,11 +502,9 @@ function App() {
             </section>
           </div>
         ) : (
-          /* NORMAL LOBİ EKRANI (ODA DIŞI) */
           <div className="lobby-grid">
             <section className="mods-panel">
               <h3 className="panel-title">⚔️ Savaş Modu</h3>
-
               <div className="mod-card" onClick={handleCreateRoom}>
                 <div className="mod-left">
                   <span className="mod-name">1 VS 1 OYNA</span>
@@ -639,11 +513,10 @@ function App() {
                 <span className="mod-badge">KUR</span>
               </div>
 
-              {/* LİDERLİK TABLOSU AÇMA BUTONU */}
               <div className="mod-card" onClick={() => { fetchLeaderboard(); setShowLeaderboard(true); }} style={{ marginTop: '15px', background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.1), rgba(114, 9, 183, 0.1))', borderColor: '#00f5d4' }}>
                 <div className="mod-left">
                   <span className="mod-name" style={{ color: '#00f5d4' }}>🏆 LİDERLİK TABLOSU</span>
-                  <span className="mod-desc">Tüm oyuncuların seviye sıralaması</span>
+                  <span className="mod-desc">Seviye ve galibiyet sıralaması</span>
                 </div>
                 <span className="mod-badge" style={{ background: '#00f5d4', color: '#0f172a' }}>İNCELE</span>
               </div>
@@ -656,29 +529,17 @@ function App() {
                   <p style={{ color: '#888' }}>Şu an çevrimiçi başka oyuncu yok.</p>
                 ) : (
                   onlinePlayers.map((player) => {
-                    const inviteFromThisPlayer = incomingInvites.find((inv) => inv.sender_id === player.id)
-
+                    const invite = incomingInvites.find((inv) => inv.sender_id === player.id)
                     return (
                       <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
                         <span>{player.username} (Lvl {player.level}) <span style={{ color: '#2ec4b6', fontSize: '12px' }}>🟢 Online</span></span>
-                        
-                        {inviteFromThisPlayer ? (
+                        {invite ? (
                           <div style={{ display: 'flex', gap: '5px' }}>
-                            <button 
-                              onClick={() => handleAcceptInvite(inviteFromThisPlayer)}
-                              style={{ padding: '5px 8px', background: '#2ec4b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                            >
-                              Kabul Et ✅
-                            </button>
-                            <button 
-                              onClick={() => handleRejectInvite(inviteFromThisPlayer)}
-                              style={{ padding: '5px 8px', background: '#e71d36', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                            >
-                              Reddet ❌
-                            </button>
+                            <button onClick={() => handleAcceptInvite(invite)} style={{ padding: '5px 8px', background: '#2ec4b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Kabul Et ✅</button>
+                            <button onClick={() => handleRejectInvite(invite)} style={{ padding: '5px 8px', background: '#e71d36', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Reddet ❌</button>
                           </div>
                         ) : (
-                          <span style={{ fontSize: '12px', color: '#888' }}>Oda bekleniyor...</span>
+                          <span style={{ fontSize: '12px', color: '#888' }}>Bekleniyor...</span>
                         )}
                       </div>
                     )
@@ -692,24 +553,16 @@ function App() {
                   <div className="stat-label">Level</div>
                   <div className="stat-value accent">{profile?.level ?? 1}</div>
                 </div>
-
                 <div className="stat-item">
                   <div className="stat-label">XP</div>
                   <div className="stat-value">{profile?.xp ?? 0}</div>
-                  <div className="xp-bar-wrap">
-                    <div className="xp-bar-fill" style={{ width: `${xpPercent}%` }} />
-                  </div>
-                  <div className="xp-label">
-                    <span>{xpPercent.toFixed(0)}%</span>
-                    <span>{currentLevelXp} / 200 XP</span>
-                  </div>
+                  <div className="xp-bar-wrap"><div className="xp-bar-fill" style={{ width: `${xpPercent}%` }} /></div>
+                  <div className="xp-label"><span>{xpPercent.toFixed(0)}%</span><span>{currentLevelXp} / 200 XP</span></div>
                 </div>
-
                 <div className="stat-item">
                   <div className="stat-label">Galibiyet</div>
                   <div className="stat-value wins">{profile?.wins ?? 0}</div>
                 </div>
-
                 <div className="stat-item">
                   <div className="stat-label">Mağlubiyet</div>
                   <div className="stat-value losses">{profile?.losses ?? 0}</div>
@@ -730,31 +583,10 @@ function App() {
 
         <form onSubmit={isRegistering ? handleRegister : handleLogin}>
           {isRegistering && (
-            <input
-              className="auth-input"
-              type="text"
-              placeholder="Kullanıcı Adı"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
+            <input className="auth-input" type="text" placeholder="Kullanıcı Adı" value={username} onChange={(e) => setUsername(e.target.value)} required />
           )}
-          <input
-            className="auth-input"
-            type="email"
-            placeholder="E-posta"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            className="auth-input"
-            type="password"
-            placeholder="Şifre"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <input className="auth-input" type="email" placeholder="E-posta" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input className="auth-input" type="password" placeholder="Şifre" value={password} onChange={(e) => setPassword(e.target.value)} required />
 
           <button type="submit" className="auth-button" disabled={loading}>
             {loading ? 'Yükleniyor...' : (isRegistering ? 'KAYIT OL' : 'GİRİŞ YAP')}
@@ -763,10 +595,7 @@ function App() {
 
         {message && <div className="auth-message">{message}</div>}
 
-        <button
-          className="toggle-button"
-          onClick={() => { setIsRegistering(!isRegistering); setMessage(''); }}
-        >
+        <button className="toggle-button" onClick={() => { setIsRegistering(!isRegistering); setMessage(''); }}>
           {isRegistering ? 'Zaten hesabın var mı? Giriş Yap' : 'Hesabın yok mu? Kayıt Ol'}
         </button>
       </div>
