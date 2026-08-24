@@ -34,12 +34,12 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
   const socketRef = useRef(null)
   
-  // TÜM KONUMLAR VE TARAF STATE'LERİ ARTIK REFS (ANLIK HAFIZA) İÇİNDE - REACT GECİKMESİ YOK!
   const gameStateRef = useRef({
-    mySide: 'left', // 'left' veya 'right'
+    mySide: 'left',
     myPos: { x: 80, y: 250, hp: 200, maxHp: 200 },
     enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200 },
-    bullets: []
+    bullets: [],
+    isPaused: false // OYUNUN DONDUĞU ANLIK BAYRAK
   })
 
   // --- TAM EKRAN ---
@@ -198,7 +198,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   }
 
   const reloadGun = () => {
-    if (isReloading) return
+    if (isReloading || gameStateRef.current.isPaused) return
     setIsReloading(true)
     setTimeout(() => {
       setAmmo(maxAmmo)
@@ -206,7 +206,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }, 1200)
   }
 
-  // --- SABİT OYUN DÖNGÜSÜ (SADECE İLK AÇILIŞTA BAŞLAR, RE-RENDER'A GİRMEZ) ---
+  // --- OYUN DÖNGÜSÜ ---
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -232,7 +232,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     window.addEventListener('keyup', handleKeyUp)
 
     const shoot = () => {
-      if (isReloading) return
+      if (gameStateRef.current.isPaused || isReloading) return
       if (ammo <= 0) { reloadGun(); return }
 
       const now = Date.now()
@@ -295,78 +295,81 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let lastMoveSend = 0
 
     const updateGame = () => {
-      // Oyun bittiyse veya round geçişi banner'ı varsa çizmeyi beklet
       let myP = gameStateRef.current.myPos
       let enP = gameStateRef.current.enemyPos
-      let nextX = myP.x
-      let nextY = myP.y
 
-      if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= 4.5
-      if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += 4.5
-      if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= 4.5
-      if (keysPressed.current['KeyD'] || keysPressed.current['ArrowRight'] || keysPressed.current['RIGHT']) nextX += 4.5
+      // OYUN DURDURULDUYSA HAREKET VE MERMİ GÜNCELLEMESİNİ ATLA (AMA ÇİZİMİ YAP)
+      if (!gameStateRef.current.isPaused) {
+        let nextX = myP.x
+        let nextY = myP.y
 
-      nextX = Math.max(0, Math.min(canvas.width - 32, nextX))
-      nextY = Math.max(0, Math.min(canvas.height - 32, nextY))
+        if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= 4.5
+        if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += 4.5
+        if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= 4.5
+        if (keysPressed.current['KeyD'] || keysPressed.current['ArrowRight'] || keysPressed.current['RIGHT']) nextX += 4.5
 
-      let canMoveX = true, canMoveY = true
-      mapObstacles.forEach((obs) => {
-        if (checkRectCollision({ x: nextX, y: myP.y }, obs)) canMoveX = false
-        if (checkRectCollision({ x: myP.x, y: nextY }, obs)) canMoveY = false
-      })
+        nextX = Math.max(0, Math.min(canvas.width - 32, nextX))
+        nextY = Math.max(0, Math.min(canvas.height - 32, nextY))
 
-      if (canMoveX) myP.x = nextX
-      if (canMoveY) myP.y = nextY
+        let canMoveX = true, canMoveY = true
+        mapObstacles.forEach((obs) => {
+          if (checkRectCollision({ x: nextX, y: myP.y }, obs)) canMoveX = false
+          if (checkRectCollision({ x: myP.x, y: nextY }, obs)) canMoveY = false
+        })
 
-      const now = Date.now()
-      if (now - lastMoveSend > 20 && socketRef.current) {
-        lastMoveSend = now
-        socketRef.current.emit('player_move', { roomId, x: myP.x, y: myP.y, hp: myP.hp })
-      }
+        if (canMoveX) myP.x = nextX
+        if (canMoveY) myP.y = nextY
 
-      const bullets = gameStateRef.current.bullets
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        const bullet = bullets[i]
-        let hitWall = false
-        
-        for (let step = 0; step < 2; step++) {
-          bullet.x += bullet.vx / 2
-          bullet.y += bullet.vy / 2
+        const now = Date.now()
+        if (now - lastMoveSend > 20 && socketRef.current) {
+          lastMoveSend = now
+          socketRef.current.emit('player_move', { roomId, x: myP.x, y: myP.y, hp: myP.hp })
+        }
 
-          if (bullet.x > canvas.width || bullet.x < 0 || bullet.y > canvas.height || bullet.y < 0) {
-            hitWall = true; break
-          }
-          for (const obs of mapObstacles) {
-            if (bullet.x > obs.x && bullet.x < obs.x + obs.w && bullet.y > obs.y && bullet.y < obs.y + obs.h) {
+        const bullets = gameStateRef.current.bullets
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          const bullet = bullets[i]
+          let hitWall = false
+          
+          for (let step = 0; step < 2; step++) {
+            bullet.x += bullet.vx / 2
+            bullet.y += bullet.vy / 2
+
+            if (bullet.x > canvas.width || bullet.x < 0 || bullet.y > canvas.height || bullet.y < 0) {
               hitWall = true; break
             }
+            for (const obs of mapObstacles) {
+              if (bullet.x > obs.x && bullet.x < obs.x + obs.w && bullet.y > obs.y && bullet.y < obs.y + obs.h) {
+                hitWall = true; break
+              }
+            }
+            if (hitWall) break
           }
-          if (hitWall) break
-        }
 
-        if (hitWall) {
-          bullets.splice(i, 1)
-          continue
-        }
-
-        const isMyBullet = bullet.senderId === userId || !bullet.senderId
-        if (isMyBullet) {
-          const hitBoxMargin = 6
-          if (
-            bullet.x >= enP.x - hitBoxMargin && bullet.x <= enP.x + 32 + hitBoxMargin &&
-            bullet.y >= enP.y - hitBoxMargin && bullet.y <= enP.y + 32 + hitBoxMargin
-          ) {
+          if (hitWall) {
             bullets.splice(i, 1)
-            enP.hp = Math.max(0, enP.hp - 20)
-
-            if (socketRef.current && enemyData.id) {
-              socketRef.current.emit('player_hit', { roomId, targetId: enemyData.id })
-            }
-
-            if (enP.hp <= 0) {
-              triggerRoundWin()
-            }
             continue
+          }
+
+          const isMyBullet = bullet.senderId === userId || !bullet.senderId
+          if (isMyBullet) {
+            const hitBoxMargin = 6
+            if (
+              bullet.x >= enP.x - hitBoxMargin && bullet.x <= enP.x + 32 + hitBoxMargin &&
+              bullet.y >= enP.y - hitBoxMargin && bullet.y <= enP.y + 32 + hitBoxMargin
+            ) {
+              bullets.splice(i, 1)
+              enP.hp = Math.max(0, enP.hp - 20)
+
+              if (socketRef.current && enemyData.id) {
+                socketRef.current.emit('player_hit', { roomId, targetId: enemyData.id })
+              }
+
+              if (enP.hp <= 0) {
+                triggerRoundWin()
+              }
+              continue
+            }
           }
         }
       }
@@ -397,7 +400,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       ctx.fillRect(enP.x, enP.y, 32, 32)
       drawEntityHeader(enP, enemyData.name, enemyData.color, 200)
 
-      bullets.forEach((bullet) => {
+      gameStateRef.current.bullets.forEach((bullet) => {
         ctx.fillStyle = bullet.color
         ctx.beginPath()
         ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2)
@@ -422,7 +425,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
 
     const triggerRoundWin = () => {
-      // Birden fazla tetiklenmeyi engellemek için hp'leri geçici olarak sıfırla
+      if (gameStateRef.current.isPaused) return
+      gameStateRef.current.isPaused = true // ANINDA DONDUR
+
       gameStateRef.current.enemyPos.hp = 200
       gameStateRef.current.myPos.hp = 200
 
@@ -455,6 +460,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
+      gameStateRef.current.isPaused = true // ANINDA DONDUR
       setScores((prevScores) => {
         const updatedScores = {
           player1: remoteScores ? remoteScores.player2 : prevScores.player1,
@@ -492,6 +498,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           gameStateRef.current.enemyPos.hp = 200
 
           gameStateRef.current.bullets = []
+          gameStateRef.current.isPaused = false // OYUNU TEKRAR AÇ (ÇÖZ)
         }, 2000)
         return 1
       } else {
