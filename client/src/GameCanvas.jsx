@@ -490,16 +490,17 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setAmmo(maxAmmo)
         setIsReloading(false)
 
-        // 1. Taraf (Side) State'ini Gerçekten Değiştiriyoruz
-        const newSide = playerSide === 'left' ? 'right' : 'left'
-        setPlayerSide(newSide)
+        // Anlık olarak tarafı tersine çeviriyoruz (State gecikmesini engellemek için doğrudan mantıksal tersi)
+        const nextSide = playerSide === 'left' ? 'right' : 'left'
+        setPlayerSide(nextSide)
 
-        // 2. Pozisyonları Yeni Tarafına Göre Ayarlıyoruz
-        gameStateRef.current.myPos.x = newSide === 'left' ? 80 : 850
+        // Pozisyonları kesin ve net bir şekilde yeni tarafa göre oturtuyoruz
+        const isNowLeft = nextSide === 'left'
+        gameStateRef.current.myPos.x = isNowLeft ? 80 : 850
         gameStateRef.current.myPos.y = 250
         gameStateRef.current.myPos.hp = 200
 
-        gameStateRef.current.enemyPos.x = newSide === 'left' ? 850 : 80
+        gameStateRef.current.enemyPos.x = isNowLeft ? 850 : 80
         gameStateRef.current.enemyPos.y = 250
         gameStateRef.current.enemyPos.hp = 200
 
