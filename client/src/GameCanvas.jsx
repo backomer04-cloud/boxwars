@@ -26,7 +26,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [playerSide, setPlayerSide] = useState('left')
   const [currentRound, setCurrentRound] = useState(1)
   const [roundMessage, setRoundMessage] = useState('')
-  const [scores, setScores] = useState({ player1: 0, player2: 0 }) // player1: Benim galibiyetim, player2: Rakibin galibiyeti
+  const [scores, setScores] = useState({ player1: 0, player2: 0 })
   const [gameOverData, setGameOverData] = useState(null)
 
   const [ammo, setAmmo] = useState(6)
@@ -40,7 +40,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     bullets: []
   })
 
-  // --- TAM EKRAN (FULLSCREEN) ---
+  // --- TAM EKRAN ---
   useEffect(() => {
     const enterFullscreen = () => {
       const elem = document.documentElement;
@@ -56,7 +56,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     return () => { exitFullscreen(); };
   }, []);
 
-  // --- ODA VE SOCKET.IO BAĞLANTISI ---
+  // --- ODA VE SOCKET BAĞLANTISI ---
   useEffect(() => {
     async function initRoomAndSocket() {
       if (!roomId || !userId) return
@@ -109,7 +109,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       })
 
       socket.on('game_over_sync', async (payload) => {
-        // Kesin senkronizasyon: Oyun bittiğinde her iki tarafta da sonuç ekranı direkt açılır
         setScores(payload.scores)
         const finalResultType = payload.gameOverData.resultType
         const { addedXp } = await applyPenaltiesAndDatabase(finalResultType)
@@ -155,7 +154,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     onBack()
   }
 
-  // --- GARANTİ VERİTABANI VE PROFİL GÜNCELLEME İŞLEMCİSİ ---
   const applyPenaltiesAndDatabase = async (resultType) => {
     let currentXp = profile?.xp ?? userData.xp ?? 0
     let currentLevel = profile?.level ?? userData.level ?? 1
@@ -186,21 +184,14 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       currentLevel += 1
     }
 
-    const { error } = await supabase.from('profiles').update({
+    await supabase.from('profiles').update({
       xp: currentXp,
       level: currentLevel,
       wins: currentWins,
       losses: currentLosses
     }).eq('id', userId)
 
-    if (error) {
-      console.error('Veritabanı kayıt hatası:', error.message)
-    }
-
-    if (refreshProfile) {
-      refreshProfile()
-    }
-
+    if (refreshProfile) refreshProfile()
     return { addedXp }
   }
 
@@ -242,10 +233,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
     const shoot = () => {
       if (isReloading) return
-      if (ammo <= 0) {
-        reloadGun()
-        return
-      }
+      if (ammo <= 0) { reloadGun(); return }
 
       const now = Date.now()
       if (now - lastShotTime.current < 250) return
@@ -264,22 +252,19 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       const myP = gameStateRef.current.myPos
       const enP = gameStateRef.current.enemyPos
-
       const dx = enP.x - myP.x
       const dy = enP.y - myP.y
 
-      let vx = 0
-      let vy = 0
-      let muzzleX = myP.x + 16
-      let muzzleY = myP.y + 16
+      let vx = 0, vy = 0
+      let muzzleX = myP.x + 16, muzzleY = myP.y + 16
       const bulletSpeed = 12
 
       if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 0) { muzzleX = myP.x + 32; muzzleY = myP.y + 16; vx = bulletSpeed; vy = 0 }
-        else { muzzleX = myP.x; muzzleY = myP.y + 16; vx = -bulletSpeed; vy = 0 }
+        if (dx > 0) { muzzleX = myP.x + 32; vx = bulletSpeed; }
+        else { muzzleX = myP.x; vx = -bulletSpeed; }
       } else {
-        if (dy > 0) { muzzleX = myP.x + 16; muzzleY = myP.y + 32; vx = 0; vy = bulletSpeed }
-        else { muzzleX = myP.x + 16; muzzleY = myP.y; vx = 0; vy = -bulletSpeed }
+        if (dy > 0) { muzzleY = myP.y + 32; vy = bulletSpeed; }
+        else { muzzleY = myP.y; vy = -bulletSpeed; }
       }
 
       const newBullet = {
@@ -287,14 +272,12 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         senderId: userId,
         x: muzzleX,
         y: muzzleY,
-        vx: vx,
-        vy: vy,
+        vx, vy,
         size: 7,
         color: userData.color
       }
 
       gameStateRef.current.bullets.push(newBullet)
-
       if (socketRef.current) {
         socketRef.current.emit('player_shoot', { roomId, bullet: newBullet })
       }
@@ -328,8 +311,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       nextX = Math.max(0, Math.min(canvas.width - 32, nextX))
       nextY = Math.max(0, Math.min(canvas.height - 32, nextY))
 
-      let canMoveX = true
-      let canMoveY = true
+      let canMoveX = true, canMoveY = true
       mapObstacles.forEach((obs) => {
         if (checkRectCollision({ x: nextX, y: myP.y }, obs)) canMoveX = false
         if (checkRectCollision({ x: myP.x, y: nextY }, obs)) canMoveY = false
@@ -347,8 +329,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       const bullets = gameStateRef.current.bullets
       for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i]
-        
         let hitWall = false
+        
         for (let step = 0; step < 2; step++) {
           bullet.x += bullet.vx / 2
           bullet.y += bullet.vy / 2
@@ -356,7 +338,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           if (bullet.x > canvas.width || bullet.x < 0 || bullet.y > canvas.height || bullet.y < 0) {
             hitWall = true; break
           }
-
           for (const obs of mapObstacles) {
             if (bullet.x > obs.x && bullet.x < obs.x + obs.w && bullet.y > obs.y && bullet.y < obs.y + obs.h) {
               hitWall = true; break
@@ -480,7 +461,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
-// --- KESİN 2 ROUNDLUK GEÇİŞ VE MAÇ SONU YÖNETİMİ ---
+  // --- 2 ROUND GEÇİŞİ VE YER DEĞİŞTİRME ---
   const handleRoundTransition = async (currentScores) => {
     if (currentRound === 1) {
       setRoundMessage('1. Round Bitti! Taraf Değiştiriliyor...')
@@ -490,11 +471,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setAmmo(maxAmmo)
         setIsReloading(false)
 
-        // Anlık olarak tarafı tersine çeviriyoruz (State gecikmesini engellemek için doğrudan mantıksal tersi)
+        // Kesin taraf değişimi (Sol <-> Sağ)
         const nextSide = playerSide === 'left' ? 'right' : 'left'
         setPlayerSide(nextSide)
 
-        // Pozisyonları kesin ve net bir şekilde yeni tarafa göre oturtuyoruz
         const isNowLeft = nextSide === 'left'
         gameStateRef.current.myPos.x = isNowLeft ? 80 : 850
         gameStateRef.current.myPos.y = 250
@@ -507,23 +487,21 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         gameStateRef.current.bullets = []
       }, 2000)
     } else {
-      // === 2. ROUND BİTTİ -> MAÇ SONU HER İKİ TARAFTA KESİN BİTİRİLİR ===
+      // === 2. ROUND SONU (MAÇ BİTTİ) ===
       let hostResultType = 'lose'
       if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
       else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
 
       const { addedXp } = await applyPenaltiesAndDatabase(hostResultType)
 
-      const finalMyData = {
+      setGameOverData({
         resultType: hostResultType,
         addedXp,
         p1Score: currentScores.player1,
         p2Score: currentScores.player2,
         isQuit: false
-      }
-      setGameOverData(finalMyData)
+      })
 
-      // Host, karşı tarafa oyunun bittiğini kesin olarak bildirir
       if (isHost && socketRef.current) {
         let enemyResultType = 'lose'
         if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
