@@ -23,7 +23,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   })
 
   const [isHost, setIsHost] = useState(false)
-  const [playerSide, setPlayerSide] = useState('left')
   const [currentRound, setCurrentRound] = useState(1)
   const [roundMessage, setRoundMessage] = useState('')
   const [scores, setScores] = useState({ player1: 0, player2: 0 })
@@ -34,7 +33,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [isReloading, setIsReloading] = useState(false)
 
   const socketRef = useRef(null)
+  
+  // TÜM KONUMLAR VE TARAF STATE'LERİ ARTIK REFS (ANLIK HAFIZA) İÇİNDE - REACT GECİKMESİ YOK!
   const gameStateRef = useRef({
+    mySide: 'left', // 'left' veya 'right'
     myPos: { x: 80, y: 250, hp: 200, maxHp: 200 },
     enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200 },
     bullets: []
@@ -66,8 +68,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       const hosting = roomData.host_id === userId
       setIsHost(hosting)
       const side = hosting ? 'left' : 'right'
-      setPlayerSide(side)
-
+      
+      gameStateRef.current.mySide = side
       gameStateRef.current.myPos.x = side === 'left' ? 80 : 850
       gameStateRef.current.enemyPos.x = side === 'left' ? 850 : 80
 
@@ -204,10 +206,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }, 1200)
   }
 
-  // --- OYUN DÖNGÜSÜ ---
+  // --- SABİT OYUN DÖNGÜSÜ (SADECE İLK AÇILIŞTA BAŞLAR, RE-RENDER'A GİRMEZ) ---
   useEffect(() => {
-    if (gameOverData) return
-
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -292,12 +292,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
 
     let animationFrameId
-    let isRoundOver = false
     let lastMoveSend = 0
 
     const updateGame = () => {
-      if (isRoundOver) return
-
+      // Oyun bittiyse veya round geçişi banner'ı varsa çizmeyi beklet
       let myP = gameStateRef.current.myPos
       let enP = gameStateRef.current.enemyPos
       let nextX = myP.x
@@ -365,8 +363,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
               socketRef.current.emit('player_hit', { roomId, targetId: enemyData.id })
             }
 
-            if (enP.hp <= 0 && !isRoundOver) {
-              isRoundOver = true
+            if (enP.hp <= 0) {
               triggerRoundWin()
             }
             continue
@@ -425,20 +422,26 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
 
     const triggerRoundWin = () => {
-      const updatedScores = { 
-        ...scores, 
-        player1: Math.min(2, scores.player1 + 1) 
-      }
-      setScores(updatedScores)
+      // Birden fazla tetiklenmeyi engellemek için hp'leri geçici olarak sıfırla
+      gameStateRef.current.enemyPos.hp = 200
+      gameStateRef.current.myPos.hp = 200
 
-      if (socketRef.current) {
-        socketRef.current.emit('round_won', { 
-          roomId, 
-          winnerId: userId, 
-          scores: updatedScores 
-        })
-      }
-      handleRoundTransition(updatedScores)
+      setScores((prevScores) => {
+        const updatedScores = { 
+          ...prevScores, 
+          player1: Math.min(2, prevScores.player1 + 1) 
+        }
+
+        if (socketRef.current) {
+          socketRef.current.emit('round_won', { 
+            roomId, 
+            winnerId: userId, 
+            scores: updatedScores 
+          })
+        }
+        handleRoundTransition(updatedScores)
+        return updatedScores
+      })
     }
 
     updateGame()
@@ -448,76 +451,85 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [currentRound, gameOverData, userData.color, userData.username, playerSide, enemyData.color, enemyData.name, enemyData.id, userId, roomId, ammo, isReloading, scores])
+  }, [userData.color, userData.username, enemyData.color, enemyData.name, enemyData.id, userId, roomId])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
-      const updatedScores = {
-        player1: remoteScores ? remoteScores.player2 : scores.player1,
-        player2: remoteScores ? Math.min(2, remoteScores.player1) : Math.min(2, scores.player2 + 1)
-      }
-      setScores(updatedScores)
-      handleRoundTransition(updatedScores)
+      setScores((prevScores) => {
+        const updatedScores = {
+          player1: remoteScores ? remoteScores.player2 : prevScores.player1,
+          player2: remoteScores ? Math.min(2, remoteScores.player1) : Math.min(2, prevScores.player2 + 1)
+        }
+        handleRoundTransition(updatedScores)
+        return updatedScores
+      })
     }
   }
 
-  // --- 2 ROUND GEÇİŞİ VE YER DEĞİŞTİRME ---
+  // --- KESİN VE TEMİZ ROUND GEÇİŞİ ---
   const handleRoundTransition = async (currentScores) => {
-    if (currentRound === 1) {
-      setRoundMessage('1. Round Bitti! Taraf Değiştiriliyor...')
-      setTimeout(() => {
-        setRoundMessage('')
-        setCurrentRound(2)
-        setAmmo(maxAmmo)
-        setIsReloading(false)
+    setCurrentRound((prevRound) => {
+      if (prevRound === 1) {
+        setRoundMessage('1. Round Bitti! Taraf Değiştiriliyor...')
+        setTimeout(() => {
+          setRoundMessage('')
+          setCurrentRound(2)
+          setAmmo(maxAmmo)
+          setIsReloading(false)
 
-        // Kesin taraf değişimi (Sol <-> Sağ)
-        const nextSide = playerSide === 'left' ? 'right' : 'left'
-        setPlayerSide(nextSide)
+          // Tarafları tam tersine çeviriyoruz
+          const currentSide = gameStateRef.current.mySide
+          const nextSide = currentSide === 'left' ? 'right' : 'left'
+          gameStateRef.current.mySide = nextSide
 
-        const isNowLeft = nextSide === 'left'
-        gameStateRef.current.myPos.x = isNowLeft ? 80 : 850
-        gameStateRef.current.myPos.y = 250
-        gameStateRef.current.myPos.hp = 200
+          const isNowLeft = nextSide === 'left'
+          gameStateRef.current.myPos.x = isNowLeft ? 80 : 850
+          gameStateRef.current.myPos.y = 250
+          gameStateRef.current.myPos.hp = 200
 
-        gameStateRef.current.enemyPos.x = isNowLeft ? 850 : 80
-        gameStateRef.current.enemyPos.y = 250
-        gameStateRef.current.enemyPos.hp = 200
+          gameStateRef.current.enemyPos.x = isNowLeft ? 850 : 80
+          gameStateRef.current.enemyPos.y = 250
+          gameStateRef.current.enemyPos.hp = 200
 
-        gameStateRef.current.bullets = []
-      }, 2000)
-    } else {
-      // === 2. ROUND SONU (MAÇ BİTTİ) ===
-      let hostResultType = 'lose'
-      if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
-      else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
+          gameStateRef.current.bullets = []
+        }, 2000)
+        return 1
+      } else {
+        // MAÇ SONU
+        (async () => {
+          let hostResultType = 'lose'
+          if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
+          else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
 
-      const { addedXp } = await applyPenaltiesAndDatabase(hostResultType)
+          const { addedXp } = await applyPenaltiesAndDatabase(hostResultType)
 
-      setGameOverData({
-        resultType: hostResultType,
-        addedXp,
-        p1Score: currentScores.player1,
-        p2Score: currentScores.player2,
-        isQuit: false
-      })
+          setGameOverData({
+            resultType: hostResultType,
+            addedXp,
+            p1Score: currentScores.player1,
+            p2Score: currentScores.player2,
+            isQuit: false
+          })
 
-      if (isHost && socketRef.current) {
-        let enemyResultType = 'lose'
-        if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
-        else if (currentScores.player1 === currentScores.player2) enemyResultType = 'draw'
+          if (isHost && socketRef.current) {
+            let enemyResultType = 'lose'
+            if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
+            else if (currentScores.player1 === currentScores.player2) enemyResultType = 'draw'
 
-        socketRef.current.emit('game_over_sync', {
-          roomId,
-          gameOverData: {
-            resultType: enemyResultType,
-            p1Score: currentScores.player2,
-            p2Score: currentScores.player1
-          },
-          scores: { player1: currentScores.player2, player2: currentScores.player1 }
-        })
+            socketRef.current.emit('game_over_sync', {
+              roomId,
+              gameOverData: {
+                resultType: enemyResultType,
+                p1Score: currentScores.player2,
+                p2Score: currentScores.player1
+              },
+              scores: { player1: currentScores.player2, player2: currentScores.player1 }
+            })
+          }
+        })();
+        return prevRound
       }
-    }
+    })
   }
 
   const handleReturnToLobby = () => {
