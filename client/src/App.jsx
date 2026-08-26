@@ -15,14 +15,14 @@ function App() {
   const [shopSubTab, setShopSubTab] = useState('store')
 
   // Envanter & Mağaza State'leri
-  const [inventory, setInventory] = useState([]) // Sahip olunan item ID'leri
+  const [inventory, setInventory] = useState([]) 
   const [equippedItems, setEquippedItems] = useState({
     skin: 'default_box',
     bullet: 'default_bullet',
     trail: 'none'
   })
 
-  // 🛍️ BÜSSÜRÜ ÜRÜN (MAĞAZA ENVANTERİ - GRID UYUMLU)
+  // 🛍️ KOCAMAN ÜRÜN LİSTESİ (SKİNLER, MERMİ RENKLERİ, PARILDAMALAR, TRAİLLER)
   const shopItems = [
     // --- SKİNLER (KUTULAR) ---
     { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7' },
@@ -32,15 +32,18 @@ function App() {
     { id: 'skin_cyber_pink', type: 'skin', name: 'Cyber Pembe Küp', price: 80, desc: 'Sokakların en dikkat çeken neon pembe tarzı.', preview: '#f72585' },
     { id: 'skin_shadow_black', type: 'skin', name: 'Gölge Karbon Küp', price: 200, desc: 'Karanlığın gücünü üzerinde taşı.', preview: '#1e293b' },
 
-    // --- MERMİ EFEKTLERİ ---
-    { id: 'bullet_plasma_blue', type: 'bullet', name: 'Plazma Mavi Mermi', price: 40, desc: 'Mavi renkli keskin plazma mermileri.', preview: '#38bdf8' },
-    { id: 'bullet_laser_red', type: 'bullet', name: 'Lazer Kırmızı Mermi', price: 60, desc: 'Yüksek hızlı kızılötesi lazer mermisi.', preview: '#ff4d4d' },
-    { id: 'bullet_toxic_green', type: 'bullet', name: 'Zehirli Yeşil Mermi', price: 55, desc: 'Radyasyon yayan zehirli mermi izi.', preview: '#10b981' },
+    // --- MERMİ RENKLERİ & PARILDAMALAR ---
+    { id: 'bullet_plasma_blue', type: 'bullet', name: 'Plazma Mavi Mermi', price: 40, desc: 'Parlak mavi renkli keskin plazma mermileri.', preview: '#38bdf8' },
+    { id: 'bullet_laser_red', type: 'bullet', name: 'Lazer Kırmızı Mermi', price: 60, desc: 'Yüksek hızlı kızılötesi parlayan lazer mermisi.', preview: '#ff4d4d' },
+    { id: 'bullet_toxic_green', type: 'bullet', name: 'Zehirli Yeşil Mermi', price: 55, desc: 'Etrafa radyasyon ve yeşil parıltı yayan mermi.', preview: '#10b981' },
+    { id: 'bullet_gold_spark', type: 'bullet', name: 'Altın Sarısı Parıltılı Mermi', price: 85, desc: 'Altın tozlarıyla parıldayan özel mermi tipi.', preview: '#facc15' },
+    { id: 'bullet_neon_cyan', type: 'bullet', name: 'Cyan Neon Mermi', price: 70, desc: 'Göz alıcı canlı cyan parıldayan mermi izi.', preview: '#22d3ee' },
 
     // --- HAREKET / İZ (TRAIL) EFEKTLERİ ---
     { id: 'trail_sparks', type: 'trail', name: 'Kıvılcım İz Efekti', price: 75, desc: 'Hareket ederken arkasından uçuşan kıvılcımlar.', preview: '#f72585' },
     { id: 'trail_star_dust', type: 'trail', name: 'Yıldız Tozu İz Efekti', price: 110, desc: 'Galaktik toz bulutu bırakan zarif efekt.', preview: '#a855f7' },
-    { id: 'trail_smoke', type: 'trail', name: 'Sis Duman Efekti', price: 65, desc: 'Arzdan süzülen gizemli gri duman izi.', preview: '#64748b' }
+    { id: 'trail_smoke', type: 'trail', name: 'Sis Duman Efekti', price: 65, desc: 'Arzdan süzülen gizemli gri duman izi.', preview: '#64748b' },
+    { id: 'trail_fire_trail', type: 'trail', name: 'Alev Yolu İz Efekti', price: 130, desc: 'Aranda bıraktığın yanık alev izleri.', preview: '#ea580c' }
   ]
 
   // Oda ve Davet State'leri
@@ -120,7 +123,6 @@ function App() {
     }
   }
 
-  // Liderlik Tablosu Verilerini Çekme
   const fetchLeaderboard = async () => {
     const { data } = await supabase
       .from('profiles')
@@ -131,7 +133,6 @@ function App() {
     if (data) setLeaderboardPlayers(data)
   }
 
-  // 2. Online Oyuncular, Davetler ve Liderlik Verilerini Dinleme
   useEffect(() => {
     if (!session) return
 
@@ -189,7 +190,6 @@ function App() {
     }
   }, [session, showLeaderboard])
 
-  // 3. Oda Durumu Takibi
   useEffect(() => {
     if (!currentRoom) {
       setRoomMembers([])
@@ -348,7 +348,7 @@ function App() {
     if (session) fetchProfile(session.user.id)
   }
 
-  // --- SHOP & ENVANTER (BU DOSYADAN YÖNETİLİYOR) ---
+  // --- SHOP & ENVANTER İŞLEMLERİ ---
   const handleBuyItem = async (item) => {
     if (!profile || (profile.voxel ?? 0) < item.price) {
       alert('❌ Yetersiz Voxel ($VXL$) bakiyesi!')
@@ -394,6 +394,24 @@ function App() {
     }
   }
 
+  // KUŞANMADAN KALDIRMA (ÇIKARMA) FONKSİYONU
+  const handleUnequipItem = async (type) => {
+    let updatedEquipped = { ...equippedItems }
+    if (type === 'skin') updatedEquipped.skin = 'default_box'
+    if (type === 'bullet') updatedEquipped.bullet = 'default_bullet'
+    if (type === 'trail') updatedEquipped.trail = 'none'
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ equipped: updatedEquipped })
+      .eq('id', session.user.id)
+
+    if (!error) {
+      setEquippedItems(updatedEquipped)
+      alert('🛡️ Eşya üzerinden kaldırıldı (Varsayılana dönüldü).')
+    }
+  }
+
   const handleRegister = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -415,7 +433,7 @@ function App() {
           level: 1, 
           wins: 0, 
           losses: 0, 
-          voxel: 250, // Başlangıç hediyesi 250 Voxel!
+          voxel: 250, 
           is_online: true,
           inventory: [],
           equipped: { skin: 'default_box', bullet: 'default_bullet', trail: 'none' }
@@ -476,7 +494,6 @@ function App() {
 
     return (
       <div className="lobby-wrap">
-        {/* EFSANE CAM EFEKTLİ HEADER & DAMLA ÇENTİK NAVBAR */}
         <header className="lobby-header" style={{
           background: 'rgba(15, 23, 42, 0.75)',
           backdropFilter: 'blur(20px) saturate(180%)',
@@ -504,7 +521,6 @@ function App() {
             <span style={{ color: '#00f5d4' }}>⬛</span> BOX WARS
           </span>
 
-          {/* SAĞ TARAF: BAKIYE & KULLANICI & ÇIKIŞ */}
           <div className="user-badge" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ 
               background: 'rgba(0, 245, 212, 0.1)', 
@@ -526,13 +542,11 @@ function App() {
               padding: '6px 14px',
               borderRadius: '12px',
               cursor: 'pointer',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease'
+              fontWeight: 'bold'
             }}>Çıkış</button>
           </div>
         </header>
 
-        {/* HEADER'DAN AŞAĞIYA DAMLA KAVİSLE SARKAN ÇENTİK (NOTCH) SEKME ALANI */}
         <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', position: 'relative', zIndex: 90, marginTop: '-1px' }}>
           <div style={{ 
             display: 'flex', 
@@ -558,7 +572,6 @@ function App() {
                 fontWeight: '600', 
                 fontSize: '0.95rem',
                 boxShadow: activeTab === 'home' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
-                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -577,7 +590,6 @@ function App() {
                 fontWeight: '600', 
                 fontSize: '0.95rem',
                 boxShadow: activeTab === 'shop' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
-                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -596,7 +608,6 @@ function App() {
                 fontWeight: '600', 
                 fontSize: '0.95rem',
                 boxShadow: activeTab === 'about' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
-                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -606,7 +617,6 @@ function App() {
           </div>
         </div>
 
-        {/* LİDERLİK TABLOSU MODALI */}
         {showLeaderboard && (
           <div className="leaderboard-modal-bg">
             <div className="leaderboard-box">
@@ -639,7 +649,7 @@ function App() {
                       <div style={{ display: 'flex', gap: '15px', alignItems: 'center', textAlign: 'right' }}>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: '#888' }}>Seviye / XP</div>
-                          <div style={{ fontWeight: 'bold', color: '#38bdf8', fontSize: index === 0 ? '1.1rem' : '0.95rem' }}>Lvl {player.level} <span style={{ fontSize: '0.75rem', color: '#aaa' }}>({player.xp})</span></div>
+                          <div style={{ fontWeight: 'bold', color: '#38bdf8' }}>Lvl {player.level}</div>
                         </div>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: '#888' }}>Galibiyet</div>
@@ -654,9 +664,9 @@ function App() {
           </div>
         )}
 
-        {/* İÇERİK ALANI (SEKMELERE GÖRE) */}
+        {/* SHOP VE ENVANTER ALANI (KESİN 4'ERLİ 4 SÜTUNLU GRID) */}
         {activeTab === 'shop' ? (
-          <div style={{ padding: '30px', maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ padding: '30px', maxWidth: '1250px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '30px' }}>
               <button 
                 onClick={() => setShopSubTab('store')}
@@ -676,15 +686,15 @@ function App() {
                   border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer',
                   boxShadow: shopSubTab === 'inventory' ? '0 0 15px rgba(0,245,212,0.4)' : 'none'
                 }}>
-                🎒 Envanterim & Kuşan
+                🎒 Envanterim & Kuşan / Çıkar
               </button>
             </div>
 
             {shopSubTab === 'store' ? (
               <div>
-                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>KUTU & EFEKT MAĞAZASI</h3>
-                {/* YAN YANA GÖRKEMLİ GRID YAPISI */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
+                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>TÜM MAĞAZA ÜRÜNLERİ</h3>
+                {/* 4'ERLİ YAN YANA GRID YAPISI (repeat(4, minmax(0, 1fr))) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
                   {shopItems.map((item) => {
                     const owned = inventory.includes(item.id)
                     return (
@@ -693,27 +703,25 @@ function App() {
                         backdropFilter: 'blur(15px)',
                         border: '1px solid rgba(255,255,255,0.08)', 
                         borderRadius: '20px', 
-                        padding: '22px', 
+                        padding: '20px', 
                         display: 'flex', 
                         flexDirection: 'column', 
                         alignItems: 'center', 
                         textAlign: 'center',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
-                        transition: 'transform 0.3s ease'
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.4)'
                       }}>
-                        <div style={{ width: '60px', height: '60px', background: item.preview, borderRadius: '16px', marginBottom: '15px', boxShadow: `0 0 20px ${item.preview}` }} />
-                        <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '1.05rem' }}>{item.name}</h4>
-                        <p style={{ color: '#94a3b8', fontSize: '0.8rem', minHeight: '40px', lineHeight: '1.4' }}>{item.desc}</p>
-                        <div style={{ color: '#00f5d4', fontWeight: 'bold', margin: '15px 0', fontSize: '1.1rem' }}>🔷 {item.price} VXL</div>
+                        <div style={{ width: '55px', height: '55px', background: item.preview, borderRadius: '14px', marginBottom: '12px', boxShadow: `0 0 20px ${item.preview}` }} />
+                        <h4 style={{ color: '#fff', margin: '0 0 6px 0', fontSize: '1rem' }}>{item.name}</h4>
+                        <p style={{ color: '#94a3b8', fontSize: '0.75rem', minHeight: '45px', lineHeight: '1.3' }}>{item.desc}</p>
+                        <div style={{ color: '#00f5d4', fontWeight: 'bold', margin: '12px 0', fontSize: '1rem' }}>🔷 {item.price} VXL</div>
                         <button 
                           onClick={() => handleBuyItem(item)}
                           disabled={owned}
                           style={{
-                            width: '100%', padding: '11px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: owned ? 'default' : 'pointer',
+                            width: '100%', padding: '10px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: owned ? 'default' : 'pointer',
                             background: owned ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #00f5d4, #2ec4b6)',
                             color: owned ? '#64748b' : '#0f172a',
-                            boxShadow: owned ? 'none' : '0 5px 15px rgba(0,245,212,0.3)',
-                            transition: 'all 0.2s ease'
+                            boxShadow: owned ? 'none' : '0 5px 15px rgba(0,245,212,0.3)'
                           }}>
                           {owned ? 'Zaten Sende ✅' : 'Satın Al'}
                         </button>
@@ -724,12 +732,12 @@ function App() {
               </div>
             ) : (
               <div>
-                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>ENVANTERİN VE KUŞANILANLAR</h3>
-                {/* YAN YANA GÖRKEMLİ GRID YAPISI */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
+                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>ENVANTERİN VE KUŞANIM MERKEZİ</h3>
+                {/* 4'ERLİ YAN YANA GRID YAPISI */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
                   {inventory.length === 0 ? (
                     <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>Envanterin henüz bomboş kanki! Mağazadan kendine havalı bir şeyler alabilirsin. 🚀</p>
+                      <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>Envanterinde hiç eşya yok! Mağazadan dilediğin gibi satın alabilirsin. 🚀</p>
                     </div>
                   ) : (
                     inventory.map((invId) => {
@@ -743,26 +751,40 @@ function App() {
                           backdropFilter: 'blur(15px)',
                           border: isEquipped ? '2px solid #00f5d4' : '1px solid rgba(255,255,255,0.08)', 
                           borderRadius: '20px', 
-                          padding: '22px', 
+                          padding: '20px', 
                           display: 'flex', 
                           flexDirection: 'column', 
                           alignItems: 'center', 
                           textAlign: 'center',
                           boxShadow: isEquipped ? '0 0 25px rgba(0,245,212,0.25)' : '0 10px 30px rgba(0,0,0,0.4)'
                         }}>
-                          <div style={{ width: '60px', height: '60px', background: item.preview, borderRadius: '16px', marginBottom: '15px', boxShadow: `0 0 20px ${item.preview}` }} />
-                          <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '1.05rem' }}>{item.name}</h4>
-                          <p style={{ color: '#94a3b8', fontSize: '0.8rem', minHeight: '40px', lineHeight: '1.4' }}>{item.desc}</p>
-                          <button 
-                            onClick={() => handleEquipItem(item)}
-                            style={{
-                              width: '100%', padding: '11px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px',
-                              background: isEquipped ? '#2ec4b6' : 'rgba(255,255,255,0.1)',
-                              color: isEquipped ? '#0f172a' : '#cbd5e1',
-                              boxShadow: isEquipped ? '0 0 15px rgba(46,196,182,0.4)' : 'none'
-                            }}>
-                            {isEquipped ? 'Aktif (Kuşanıldı) ✨' : 'Kuşan'}
-                          </button>
+                          <div style={{ width: '55px', height: '55px', background: item.preview, borderRadius: '14px', marginBottom: '12px', boxShadow: `0 0 20px ${item.preview}` }} />
+                          <h4 style={{ color: '#fff', margin: '0 0 6px 0', fontSize: '1rem' }}>{item.name}</h4>
+                          <p style={{ color: '#94a3b8', fontSize: '0.75rem', minHeight: '45px', lineHeight: '1.3' }}>{item.desc}</p>
+                          
+                          {/* KUŞAN VEYA KUŞANMADAN KALDIR (ÇIKAR) BUTONLARI */}
+                          {isEquipped ? (
+                            <button 
+                              onClick={() => handleUnequipItem(item.type)}
+                              style={{
+                                width: '100%', padding: '10px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '12px',
+                                background: '#e71d36',
+                                color: '#fff',
+                                boxShadow: '0 0 15px rgba(231,29,54,0.4)'
+                              }}>
+                              Kuşanmayı Kaldır ❌
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleEquipItem(item)}
+                              style={{
+                                width: '100%', padding: '10px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '12px',
+                                background: 'rgba(255,255,255,0.1)',
+                                color: '#cbd5e1'
+                              }}>
+                              Kuşan ✨
+                            </button>
+                          )}
                         </div>
                       )
                     })
@@ -776,12 +798,10 @@ function App() {
             <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', lineHeight: '1.6', color: '#ccc' }}>
               <p><strong>Box Wars</strong>, küplerin ve taktiksel kapışmaların merkezde olduğu gerçek zamanlı bir 1v1 web oyunudur.</p>
-              <p style={{ marginTop: '15px' }}>Arkadaşlarınla oda kurabilir, çevrimiçi oyunculara meydan okuyabilir, seviye atlayarak <strong>Voxel ($VXL$)</strong> toplayabilir ve liderlik tablosunda adını zirveye yazdırabilirsin!</p>
-              <p style={{ marginTop: '15px', color: '#00f5d4' }}>Geliştirici Notu: Keyifli oyunlar kanki! 🚀</p>
+              <p style={{ marginTop: '15px' }}>Mağazadan binbir çeşitte mermi, skin ve trail satın alıp kuşanabilirsin kanki!</p>
             </div>
           </div>
         ) : (
-          /* ANASAYFA / LOBİ EKRANI */
           currentRoom ? (
             <div className="lobby-grid">
               <section className="mods-panel">
