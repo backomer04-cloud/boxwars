@@ -382,72 +382,130 @@ function App() {
 
     return (
       <div className="lobby-wrap">
-        <header className="lobby-header">
-          <span className="lobby-logo">⬛ BOX WARS</span>
+        {/* EFSANE CAM EFEKTLİ HEADER & DAMLA ÇENTİK NAVBAR */}
+        <header className="lobby-header" style={{
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          padding: '16px 35px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100
+        }}>
+          <span className="lobby-logo" style={{ 
+            fontSize: '24px', 
+            fontWeight: '800', 
+            color: '#fff', 
+            letterSpacing: '-0.5px',
+            textShadow: '0 0 20px rgba(0, 245, 212, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <span style={{ color: '#00f5d4' }}>⬛</span> BOX WARS
+          </span>
+
+          {/* SAĞ TARAF: BAKIYE & KULLANICI & ÇIKIŞ */}
           <div className="user-badge" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>🔷 {profile?.voxel ?? 0} VXL</span>
-            <span className="user-name">⚡ {profile?.username || 'Oyuncu'}</span>
-            <button className="logout-btn" onClick={handleLogout}>Çıkış</button>
+            <div style={{ 
+              background: 'rgba(0, 245, 212, 0.1)', 
+              border: '1px solid rgba(0, 245, 212, 0.3)', 
+              padding: '6px 14px', 
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 0 15px rgba(0, 245, 212, 0.15)'
+            }}>
+              <span style={{ color: '#00f5d4', fontWeight: 'bold' }}>🔷 {profile?.voxel ?? 0} VXL</span>
+            </div>
+            <span className="user-name" style={{ color: '#cbd5e1', fontWeight: '600' }}>⚡ {profile?.username || 'Oyuncu'}</span>
+            <button className="logout-btn" onClick={handleLogout} style={{
+              background: 'rgba(231, 29, 54, 0.15)',
+              border: '1px solid rgba(231, 29, 54, 0.3)',
+              color: '#ff6b6b',
+              padding: '6px 14px',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease'
+            }}>Çıkış</button>
           </div>
         </header>
 
-        {/* DAMLA ÇENTİK (NOTCH) SEKME ALANI */}
-        <div style={{ display: 'flex', justifyContent: 'center', background: '#0f172a', position: 'relative', zIndex: 10 }}>
+        {/* HEADER'DAN AŞAĞIYA DAMLA KAVİSLE SARKAN ÇENTİK (NOTCH) SEKME ALANI */}
+        <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', position: 'relative', zIndex: 90, marginTop: '-1px' }}>
           <div style={{ 
             display: 'flex', 
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))', 
-            borderRadius: '0 0 24px 24px', 
-            padding: '8px 25px 12px 25px', 
+            background: 'rgba(15, 23, 42, 0.85)', 
+            backdropFilter: 'blur(25px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+            borderRadius: '0 0 32px 32px', 
+            padding: '10px 30px 16px 30px', 
             gap: '12px', 
-            border: '1px solid rgba(0, 245, 212, 0.2)', 
+            border: '1px solid rgba(255, 255, 255, 0.1)', 
             borderTop: 'none',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 245, 212, 0.1)'
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.15)'
           }}>
             <button 
               onClick={() => setActiveTab('home')} 
               style={{ 
-                background: activeTab === 'home' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.03)', 
+                background: activeTab === 'home' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
                 color: activeTab === 'home' ? '#0f172a' : '#94a3b8', 
                 border: activeTab === 'home' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-                padding: '8px 22px', 
-                borderRadius: '16px', 
+                padding: '10px 24px', 
+                borderRadius: '50px', 
                 cursor: 'pointer', 
-                fontWeight: 'bold', 
-                fontSize: '0.9rem',
-                boxShadow: activeTab === 'home' ? '0 0 15px rgba(0, 245, 212, 0.4)' : 'none',
-                transition: 'all 0.2s ease' 
+                fontWeight: '600', 
+                fontSize: '0.95rem',
+                boxShadow: activeTab === 'home' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}>
               🏠 Anasayfa
             </button>
             <button 
               onClick={() => setActiveTab('shop')} 
               style={{ 
-                background: activeTab === 'shop' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.03)', 
+                background: activeTab === 'shop' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
                 color: activeTab === 'shop' ? '#0f172a' : '#94a3b8', 
                 border: activeTab === 'shop' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-                padding: '8px 22px', 
-                borderRadius: '16px', 
+                padding: '10px 24px', 
+                borderRadius: '50px', 
                 cursor: 'pointer', 
-                fontWeight: 'bold', 
-                fontSize: '0.9rem',
-                boxShadow: activeTab === 'shop' ? '0 0 15px rgba(0, 245, 212, 0.4)' : 'none',
-                transition: 'all 0.2s ease' 
+                fontWeight: '600', 
+                fontSize: '0.95rem',
+                boxShadow: activeTab === 'shop' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}>
               🛍️ Shop (Voxel)
             </button>
             <button 
               onClick={() => setActiveTab('about')} 
               style={{ 
-                background: activeTab === 'about' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.03)', 
+                background: activeTab === 'about' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
                 color: activeTab === 'about' ? '#0f172a' : '#94a3b8', 
                 border: activeTab === 'about' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-                padding: '8px 22px', 
-                borderRadius: '16px', 
+                padding: '10px 24px', 
+                borderRadius: '50px', 
                 cursor: 'pointer', 
-                fontWeight: 'bold', 
-                fontSize: '0.9rem',
-                boxShadow: activeTab === 'about' ? '0 0 15px rgba(0, 245, 212, 0.4)' : 'none',
-                transition: 'all 0.2s ease' 
+                fontWeight: '600', 
+                fontSize: '0.95rem',
+                boxShadow: activeTab === 'about' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}>
               📖 Hakkında
             </button>
@@ -504,19 +562,19 @@ function App() {
 
         {/* İÇERİK ALANI (SEKMELERE GÖRE) */}
         {activeTab === 'shop' ? (
-          <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
             <h2 style={{ color: '#00f5d4', marginBottom: '10px' }}>🛍️ Voxel Mağazası</h2>
             <p style={{ color: '#aaa', marginBottom: '30px' }}>Mağazaya hoş geldin kanki! Biriken Voxel'lerinle karakterini ve özelleştirmelerini yakında burada harcayabileceksin.</p>
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '40px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)' }}>
               <span style={{ fontSize: '3rem' }}>🚧</span>
               <h3 style={{ color: '#fff', marginTop: '15px' }}>Mağaza Tezgahı Hazırlanıyor...</h3>
-              <p style={{ color: '#888', fontSize: '0.9rem' }}>İlk ürünleri eklemek için sabırsızlanıyorum!</p>
+              <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '5px' }}>İlk ürünleri eklemek için sabırsızlanıyorum!</p>
             </div>
           </div>
         ) : activeTab === 'about' ? (
-          <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
+          <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
             <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '30px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', lineHeight: '1.6', color: '#ccc' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', lineHeight: '1.6', color: '#ccc' }}>
               <p><strong>Box Wars</strong>, küplerin ve taktiksel kapışmaların merkezde olduğu gerçek zamanlı bir 1v1 web oyunudur.</p>
               <p style={{ marginTop: '15px' }}>Arkadaşlarınla oda kurabilir, çevrimiçi oyunculara meydan okuyabilir, seviye atlayarak <strong>Voxel ($VXL$)</strong> toplayabilir ve liderlik tablosunda adını zirveye yazdırabilirsin!</p>
               <p style={{ marginTop: '15px', color: '#00f5d4' }}>Geliştirici Notu: Keyifli oyunlar kanki! 🚀</p>
