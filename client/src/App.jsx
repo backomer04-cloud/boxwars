@@ -11,6 +11,25 @@ function App() {
   // Sekme Yönetimi ('home' | 'shop' | 'about')
   const [activeTab, setActiveTab] = useState('home')
 
+  // Shop Alt Sekmesi ('store' | 'inventory')
+  const [shopSubTab, setShopSubTab] = useState('store')
+
+  // Envanter & Mağaza State'leri
+  const [inventory, setInventory] = useState([]) // Sahip olunan item ID'leri
+  const [equippedItems, setEquippedItems] = useState({
+    skin: 'default_box',
+    bullet: 'default_bullet',
+    trail: 'none'
+  })
+
+  // Örnek Mağaza Ürünleri
+  const shopItems = [
+    { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7' },
+    { id: 'skin_gold', type: 'skin', name: 'Altın Kaplama Küp', price: 100, desc: 'Zenginliğin ve gücün rengi!', preview: '#ffd700' },
+    { id: 'bullet_plasma_blue', type: 'bullet', name: 'Plazma Mavi Mermi', price: 40, desc: 'Mavi renkli keskin plazma mermileri.', preview: '#38bdf8' },
+    { id: 'trail_sparks', type: 'trail', name: 'Kıvılcım İz Efekti', price: 75, desc: 'Mermi ve hareket arkasından uçuşan kıvılcımlar.', preview: '#f72585' }
+  ]
+
   // Oda ve Davet State'leri
   const [currentRoom, setCurrentRoom] = useState(null) 
   const [roomMembers, setRoomMembers] = useState([]) 
@@ -81,7 +100,11 @@ function App() {
       await supabase.from('profiles').update({ is_online: true }).eq('id', userId)
     }
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    if (data) setProfile(data)
+    if (data) {
+      setProfile(data)
+      if (data.inventory) setInventory(data.inventory)
+      if (data.equipped) setEquippedItems(data.equipped)
+    }
   }
 
   // Liderlik Tablosu Verilerini Çekme
@@ -312,6 +335,52 @@ function App() {
     if (session) fetchProfile(session.user.id)
   }
 
+  // --- SHOP & ENVANTER FONKSİYONLARI ---
+  const handleBuyItem = async (item) => {
+    if (!profile || (profile.voxel ?? 0) < item.price) {
+      alert('❌ Yetersiz Voxel ($VXL$) banyosu!')
+      return
+    }
+
+    if (inventory.includes(item.id)) {
+      alert('⚠️ Bu ürüne zaten sahipsin!')
+      return
+    }
+
+    const newVoxel = profile.voxel - item.price
+    const newInventory = [...inventory, item.id]
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ voxel: newVoxel, inventory: newInventory })
+      .eq('id', session.user.id)
+
+    if (error) {
+      alert('Satın alma başarısız: ' + error.message)
+    } else {
+      setProfile({ ...profile, voxel: newVoxel })
+      setInventory(newInventory)
+      alert(`🎉 Tebrikler! Başarıyla satın aldın: ${item.name}`)
+    }
+  }
+
+  const handleEquipItem = async (item) => {
+    let updatedEquipped = { ...equippedItems }
+    if (item.type === 'skin') updatedEquipped.skin = item.id
+    if (item.type === 'bullet') updatedEquipped.bullet = item.id
+    if (item.type === 'trail') updatedEquipped.trail = item.id
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ equipped: updatedEquipped })
+      .eq('id', session.user.id)
+
+    if (!error) {
+      setEquippedItems(updatedEquipped)
+      alert(`✅ Kuşanıldı: ${item.name}`)
+    }
+  }
+
   const handleRegister = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -326,7 +395,18 @@ function App() {
 
     if (data.user) {
       const { error: profileErr } = await supabase.from('profiles').insert([
-        { id: data.user.id, username, xp: 0, level: 1, wins: 0, losses: 0, voxel: 100, is_online: true }
+        { 
+          id: data.user.id, 
+          username, 
+          xp: 0, 
+          level: 1, 
+          wins: 0, 
+          losses: 0, 
+          voxel: 100, 
+          is_online: true,
+          inventory: [],
+          equipped: { skin: 'default_box', bullet: 'default_bullet', trail: 'none' }
+        }
       ])
       if (profileErr) setMessage(`❌ ${profileErr.message}`)
       else {
@@ -369,6 +449,7 @@ function App() {
           userId={session.user.id} 
           roomId={currentRoom?.id} 
           profile={profile}
+          equippedItems={equippedItems}
           refreshProfile={() => fetchProfile(session.user.id)}
         />
       )
@@ -488,7 +569,7 @@ function App() {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-              🛍️ Shop (Voxel)
+              🛍️ Shop & Envanter
             </button>
             <button 
               onClick={() => setActiveTab('about')} 
@@ -562,14 +643,88 @@ function App() {
 
         {/* İÇERİK ALANI (SEKMELERE GÖRE) */}
         {activeTab === 'shop' ? (
-          <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-            <h2 style={{ color: '#00f5d4', marginBottom: '10px' }}>🛍️ Voxel Mağazası</h2>
-            <p style={{ color: '#aaa', marginBottom: '30px' }}>Mağazaya hoş geldin kanki! Biriken Voxel'lerinle karakterini ve özelleştirmelerini yakında burada harcayabileceksin.</p>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)' }}>
-              <span style={{ fontSize: '3rem' }}>🚧</span>
-              <h3 style={{ color: '#fff', marginTop: '15px' }}>Mağaza Tezgahı Hazırlanıyor...</h3>
-              <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '5px' }}>İlk ürünleri eklemek için sabırsızlanıyorum!</p>
+          <div style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '30px' }}>
+              <button 
+                onClick={() => setShopSubTab('store')}
+                style={{
+                  background: shopSubTab === 'store' ? '#00f5d4' : 'rgba(255,255,255,0.05)',
+                  color: shopSubTab === 'store' ? '#0f172a' : '#fff',
+                  border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer'
+                }}>
+                🛍️ Mağaza (Satın Al)
+              </button>
+              <button 
+                onClick={() => setShopSubTab('inventory')}
+                style={{
+                  background: shopSubTab === 'inventory' ? '#00f5d4' : 'rgba(255,255,255,0.05)',
+                  color: shopSubTab === 'inventory' ? '#0f172a' : '#fff',
+                  border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer'
+                }}>
+                🎒 Envanterim & Kuşan
+              </button>
             </div>
+
+            {shopSubTab === 'store' ? (
+              <div>
+                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center' }}>Kutu & Efekt Mağazası</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+                  {shopItems.map((item) => {
+                    const owned = inventory.includes(item.id)
+                    return (
+                      <div key={item.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                        <div style={{ width: '50px', height: '50px', background: item.preview, borderRadius: '12px', marginBottom: '15px', boxShadow: `0 0 15px ${item.preview}` }} />
+                        <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>{item.name}</h4>
+                        <p style={{ color: '#888', fontSize: '0.8rem', minHeight: '35px' }}>{item.desc}</p>
+                        <div style={{ color: '#00f5d4', fontWeight: 'bold', margin: '15px 0' }}>🔷 {item.price} VXL</div>
+                        <button 
+                          onClick={() => handleBuyItem(item)}
+                          disabled={owned}
+                          style={{
+                            width: '100%', padding: '10px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: owned ? 'default' : 'pointer',
+                            background: owned ? 'rgba(255,255,255,0.1)' : '#00f5d4',
+                            color: owned ? '#888' : '#0f172a'
+                          }}>
+                          {owned ? 'Zaten Sende ✅' : 'Satın Al'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center' }}>Sahip Olduğun Eşyalar (Kuşan)</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+                  {inventory.length === 0 ? (
+                    <p style={{ color: '#888', textAlign: 'center', gridColumn: '1 / -1' }}>Henüz mağazadan hiç eşya almamışsın kanki!</p>
+                  ) : (
+                    inventory.map((invId) => {
+                      const item = shopItems.find(i => i.id === invId)
+                      if (!item) return null
+                      const isEquipped = equippedItems.skin === item.id || equippedItems.bullet === item.id || equippedItems.trail === item.id
+
+                      return (
+                        <div key={item.id} style={{ background: 'rgba(255,255,255,0.03)', border: isEquipped ? '2px solid #00f5d4' : '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                          <div style={{ width: '50px', height: '50px', background: item.preview, borderRadius: '12px', marginBottom: '15px', boxShadow: `0 0 15px ${item.preview}` }} />
+                          <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>{item.name}</h4>
+                          <p style={{ color: '#888', fontSize: '0.8rem', minHeight: '35px' }}>{item.desc}</p>
+                          <button 
+                            onClick={() => handleEquipItem(item)}
+                            style={{
+                              width: '100%', padding: '10px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px',
+                              background: isEquipped ? '#2ec4b6' : 'rgba(255,255,255,0.1)',
+                              color: isEquipped ? '#fff' : '#cbd5e1'
+                            }}>
+                            {isEquipped ? 'Aktif (Kuşanıldı) ✨' : 'Kuşan'}
+                          </button>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : activeTab === 'about' ? (
           <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
