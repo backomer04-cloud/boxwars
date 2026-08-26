@@ -39,7 +39,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     myPos: { x: 80, y: 250, hp: 200, maxHp: 200 },
     enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200 },
     bullets: [],
-    isPaused: false // OYUNUN DONDUĞU ANLIK BAYRAK
+    isPaused: false
   })
 
   // --- TAM EKRAN ---
@@ -220,17 +220,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       { x: 490, y: 220, w: 20, h: 110 }
     ]
 
-    const handleKeyDown = (e) => {
-      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault()
-      keysPressed.current[e.code] = true
-      if (e.code === 'Space') shoot()
-      if (e.code === 'KeyR') reloadGun()
-    }
-    const handleKeyUp = (e) => { keysPressed.current[e.code] = false }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-
     const shoot = () => {
       if (gameStateRef.current.isPaused || isReloading) return
       if (ammo <= 0) { reloadGun(); return }
@@ -283,6 +272,18 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
     }
 
+    const handleKeyDown = (e) => {
+      if (['Space', 'Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault()
+      keysPressed.current[e.code] = true
+      // Space veya Kumandanın ortasındaki OK tuşu (Enter) ateş etsin
+      if (e.code === 'Space' || e.code === 'Enter') shoot()
+      if (e.code === 'KeyR') reloadGun()
+    }
+    const handleKeyUp = (e) => { keysPressed.current[e.code] = false }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
     window.mobileMove = (dir, active) => { keysPressed.current[dir] = active }
     window.mobileShoot = shoot
     window.mobileReload = reloadGun
@@ -298,7 +299,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       let myP = gameStateRef.current.myPos
       let enP = gameStateRef.current.enemyPos
 
-      // OYUN DURDURULDUYSA HAREKET VE MERMİ GÜNCELLEMESİNİ ATLA (AMA ÇİZİMİ YAP)
       if (!gameStateRef.current.isPaused) {
         let nextX = myP.x
         let nextY = myP.y
@@ -426,7 +426,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
     const triggerRoundWin = () => {
       if (gameStateRef.current.isPaused) return
-      gameStateRef.current.isPaused = true // ANINDA DONDUR
+      gameStateRef.current.isPaused = true
 
       gameStateRef.current.enemyPos.hp = 200
       gameStateRef.current.myPos.hp = 200
@@ -460,7 +460,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
-      gameStateRef.current.isPaused = true // ANINDA DONDUR
+      gameStateRef.current.isPaused = true
       setScores((prevScores) => {
         const updatedScores = {
           player1: remoteScores ? remoteScores.player2 : prevScores.player1,
@@ -472,7 +472,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
   }
 
-  // --- KESİN VE TEMİZ ROUND GEÇİŞİ ---
   const handleRoundTransition = async (currentScores) => {
     setCurrentRound((prevRound) => {
       if (prevRound === 1) {
@@ -483,7 +482,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           setAmmo(maxAmmo)
           setIsReloading(false)
 
-          // Tarafları tam tersine çeviriyoruz
           const currentSide = gameStateRef.current.mySide
           const nextSide = currentSide === 'left' ? 'right' : 'left'
           gameStateRef.current.mySide = nextSide
@@ -498,11 +496,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           gameStateRef.current.enemyPos.hp = 200
 
           gameStateRef.current.bullets = []
-          gameStateRef.current.isPaused = false // OYUNU TEKRAR AÇ (ÇÖZ)
+          gameStateRef.current.isPaused = false
         }, 2000)
         return 1
       } else {
-        // MAÇ SONU
         (async () => {
           let hostResultType = 'lose'
           if (currentScores.player1 > currentScores.player2) hostResultType = 'win'
@@ -619,7 +616,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           </div>
         )}
 
-        <canvas ref={canvasRef} width={1000} height={550} className="game-canvas" />
+        {/* Fare sol tıkı ile ateş etme desteği eklendi */}
+        <canvas 
+          ref={canvasRef} 
+          width={1000} 
+          height={550} 
+          className="game-canvas" 
+          onMouseDown={() => {
+            if (window.mobileShoot) window.mobileShoot();
+          }}
+        />
 
         <div className="mobile-controls-overlay">
           <div className="dpad">
