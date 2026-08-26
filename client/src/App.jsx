@@ -440,14 +440,57 @@ function App() {
 
         {/* HEADER'DAN AŞAĞIYA DAMLA KAVİSLE SARKAN ÇENTİK (NOTCH) SEKME ALANI */}
         <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', position: 'relative', zIndex: 90, marginTop: '-1px' }}>
-          <div>
-            <button onClick={() => setActiveTab('home')} >
+          <div style={{ 
+            display: 'flex', 
+            background: 'rgba(15, 23, 42, 0.85)', 
+            backdropFilter: 'blur(25px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+            borderRadius: '0 0 32px 32px', 
+            padding: '10px 30px 16px 30px', 
+            gap: '12px', 
+            border: '1px solid rgba(255, 255, 255, 0.1)', 
+            borderTop: 'none',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.15)'
+          }}>
+            <button 
+              onClick={() => setActiveTab('home')} 
+              style={{ 
+                background: activeTab === 'home' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
+                color: activeTab === 'home' ? '#0f172a' : '#94a3b8', 
+                border: activeTab === 'home' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+                padding: '10px 24px', 
+                borderRadius: '50px', 
+                cursor: 'pointer', 
+                fontWeight: '600', 
+                fontSize: '0.95rem',
+                boxShadow: activeTab === 'home' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
               🏠 Anasayfa
             </button>
             <button onClick={() => setActiveTab('shop')} >
               🛍️ Shop (Voxel)
             </button>
-            <button onClick={() => setActiveTab('about')} >
+            <button 
+              onClick={() => setActiveTab('about')} 
+              style={{ 
+                background: activeTab === 'about' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
+                color: activeTab === 'about' ? '#0f172a' : '#94a3b8', 
+                border: activeTab === 'about' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+                padding: '10px 24px', 
+                borderRadius: '50px', 
+                cursor: 'pointer', 
+                fontWeight: '600', 
+                fontSize: '0.95rem',
+                boxShadow: activeTab === 'about' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
               📖 Hakkında
             </button>
           </div>
