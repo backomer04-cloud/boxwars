@@ -382,37 +382,131 @@ function App() {
 
     return (
       <div className="lobby-wrap">
-        {/* EFSANE CAM EFEKTLİ HEADER */}
-        <header className="lobby-header">
-          <span className="lobby-logo">
-            <span className="logo-icon">⬛</span> BOX WARS
+        {/* EFSANE CAM EFEKTLİ HEADER & DAMLA ÇENTİK NAVBAR */}
+        <header className="lobby-header" style={{
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          padding: '16px 35px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100
+        }}>
+          <span className="lobby-logo" style={{ 
+            fontSize: '24px', 
+            fontWeight: '800', 
+            color: '#fff', 
+            letterSpacing: '-0.5px',
+            textShadow: '0 0 20px rgba(0, 245, 212, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <span style={{ color: '#00f5d4' }}>⬛</span> BOX WARS
           </span>
 
-          <div className="user-badge-container">
-            <div className="voxel-badge">
-              <span>🔷 {profile?.voxel ?? 0} VXL</span>
+          {/* SAĞ TARAF: BAKIYE & KULLANICI & ÇIKIŞ */}
+          <div className="user-badge" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ 
+              background: 'rgba(0, 245, 212, 0.1)', 
+              border: '1px solid rgba(0, 245, 212, 0.3)', 
+              padding: '6px 14px', 
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 0 15px rgba(0, 245, 212, 0.15)'
+            }}>
+              <span style={{ color: '#00f5d4', fontWeight: 'bold' }}>🔷 {profile?.voxel ?? 0} VXL</span>
             </div>
-            <span className="user-name-text">⚡ {profile?.username || 'Oyuncu'}</span>
-            <button className="logout-btn" onClick={handleLogout}>Çıkış</button>
+            <span className="user-name" style={{ color: '#cbd5e1', fontWeight: '600' }}>⚡ {profile?.username || 'Oyuncu'}</span>
+            <button className="logout-btn" onClick={handleLogout} style={{
+              background: 'rgba(231, 29, 54, 0.15)',
+              border: '1px solid rgba(231, 29, 54, 0.3)',
+              color: '#ff6b6b',
+              padding: '6px 14px',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease'
+            }}>Çıkış</button>
           </div>
         </header>
 
-        {/* DAMLA KAVİSLE SARKAN ÇENTİK (NOTCH) SEKME ALANI */}
-        <div className="notch-container">
-          <div className="notch-tabs">
+        {/* HEADER'DAN AŞAĞIYA DAMLA KAVİSLE SARKAN ÇENTİK (NOTCH) SEKME ALANI */}
+        <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', position: 'relative', zIndex: 90, marginTop: '-1px' }}>
+          <div style={{ 
+            display: 'flex', 
+            background: 'rgba(15, 23, 42, 0.85)', 
+            backdropFilter: 'blur(25px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+            borderRadius: '0 0 32px 32px', 
+            padding: '10px 30px 16px 30px', 
+            gap: '12px', 
+            border: '1px solid rgba(255, 255, 255, 0.1)', 
+            borderTop: 'none',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.15)'
+          }}>
             <button 
               onClick={() => setActiveTab('home')} 
-              className={`notch-tab-btn ${activeTab === 'home' ? 'active' : ''}`}>
+              style={{ 
+                background: activeTab === 'home' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
+                color: activeTab === 'home' ? '#0f172a' : '#94a3b8', 
+                border: activeTab === 'home' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+                padding: '10px 24px', 
+                borderRadius: '50px', 
+                cursor: 'pointer', 
+                fontWeight: '600', 
+                fontSize: '0.95rem',
+                boxShadow: activeTab === 'home' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
               🏠 Anasayfa
             </button>
             <button 
               onClick={() => setActiveTab('shop')} 
-              className={`notch-tab-btn ${activeTab === 'shop' ? 'active' : ''}`}>
+              style={{ 
+                background: activeTab === 'shop' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
+                color: activeTab === 'shop' ? '#0f172a' : '#94a3b8', 
+                border: activeTab === 'shop' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+                padding: '10px 24px', 
+                borderRadius: '50px', 
+                cursor: 'pointer', 
+                fontWeight: '600', 
+                fontSize: '0.95rem',
+                boxShadow: activeTab === 'shop' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
               🛍️ Shop (Voxel)
             </button>
             <button 
               onClick={() => setActiveTab('about')} 
-              className={`notch-tab-btn ${activeTab === 'about' ? 'active' : ''}`}>
+              style={{ 
+                background: activeTab === 'about' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
+                color: activeTab === 'about' ? '#0f172a' : '#94a3b8', 
+                border: activeTab === 'about' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+                padding: '10px 24px', 
+                borderRadius: '50px', 
+                cursor: 'pointer', 
+                fontWeight: '600', 
+                fontSize: '0.95rem',
+                boxShadow: activeTab === 'about' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
               📖 Hakkında
             </button>
           </div>
@@ -423,39 +517,39 @@ function App() {
           <div className="leaderboard-modal-bg">
             <div className="leaderboard-box">
               <div className="leaderboard-header">
-                <h3>🏆 Global Liderlik Tablosu</h3>
-                <button onClick={() => setShowLeaderboard(false)} className="modal-close-btn">✕</button>
+                <h3 style={{ margin: 0, color: '#00f5d4', fontSize: '1.1rem' }}>🏆 Global Liderlik Tablosu</h3>
+                <button onClick={() => setShowLeaderboard(false)} style={{ background: '#e71d36', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
               </div>
 
               <div className="leaderboard-list">
                 {leaderboardPlayers.map((player, index) => {
                   const isMe = player.id === session.user.id
-                  const rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : (index === 2 ? 'rank-3' : 'rank-standard'))
+                  const rankClass = index === 0 ? 'leaderboard-item-rank-1' : (index === 1 ? 'leaderboard-item-rank-2' : (index === 2 ? 'leaderboard-item-rank-3' : 'leaderboard-item-standard'))
 
                   return (
-                    <div key={player.id} className={`leaderboard-item ${rankClass} ${isMe ? 'my-rank' : ''}`}>
-                      <div className="leaderboard-item-left">
-                        <span className={`rank-number ${index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : ''}`}>
+                    <div key={player.id} className={rankClass} style={isMe ? { borderColor: '#00f5d4', background: 'rgba(0, 245, 212, 0.1)' } : {}}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: index === 0 ? '1.2rem' : '1rem', color: index === 0 ? '#ffd700' : (index === 1 ? '#c0c0c0' : (index === 2 ? '#cd7f32' : '#888')) }}>
                           #{index + 1}
                         </span>
                         <div>
-                          <span className="leaderboard-username">
+                          <span style={{ fontWeight: 'bold', color: isMe ? '#00f5d4' : '#fff' }}>
                             {player.username} {isMe && '(Sen)'}
                           </span>
-                          <div className={`status-indicator ${player.is_online ? 'online' : 'offline'}`}>
+                          <div style={{ fontSize: '0.75rem', color: player.is_online ? '#2ec4b6' : '#888' }}>
                             {player.is_online ? '🟢 Çevrimiçi' : '⚪ Çevrimdışı'}
                           </div>
                         </div>
                       </div>
 
-                      <div className="leaderboard-item-right">
+                      <div style={{ display: 'flex', gap: '15px', alignItems: 'center', textAlign: 'right' }}>
                         <div>
-                          <div className="stat-sublabel">Seviye / XP</div>
-                          <div className="stat-main-val">Lvl {player.level} <span>({player.xp})</span></div>
+                          <div style={{ fontSize: '0.75rem', color: '#888' }}>Seviye / XP</div>
+                          <div style={{ fontWeight: 'bold', color: '#38bdf8', fontSize: index === 0 ? '1.1rem' : '0.95rem' }}>Lvl {player.level} <span style={{ fontSize: '0.75rem', color: '#aaa' }}>({player.xp})</span></div>
                         </div>
                         <div>
-                          <div className="stat-sublabel">Galibiyet</div>
-                          <div className="stat-win-val">{player.wins} W</div>
+                          <div style={{ fontSize: '0.75rem', color: '#888' }}>Galibiyet</div>
+                          <div style={{ fontWeight: 'bold', color: '#2ec4b6' }}>{player.wins} W</div>
                         </div>
                       </div>
                     </div>
@@ -468,22 +562,22 @@ function App() {
 
         {/* İÇERİK ALANI (SEKMELERE GÖRE) */}
         {activeTab === 'shop' ? (
-          <div className="tab-content-container">
-            <h2>🛍️ Voxel Mağazası</h2>
-            <p className="tab-subtext">Mağazaya hoş geldin kanki! Biriken Voxel'lerinle karakterini ve özelleştirmelerini yakında burada harcayabileceksin.</p>
-            <div className="tab-card-placeholder">
-              <span className="placeholder-emoji">🚧</span>
-              <h3>Mağaza Tezgahı Hazırlanıyor...</h3>
-              <p>İlk ürünleri eklemek için sabırsızlanıyorum!</p>
+          <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+            <h2 style={{ color: '#00f5d4', marginBottom: '10px' }}>🛍️ Voxel Mağazası</h2>
+            <p style={{ color: '#aaa', marginBottom: '30px' }}>Mağazaya hoş geldin kanki! Biriken Voxel'lerinle karakterini ve özelleştirmelerini yakında burada harcayabileceksin.</p>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)' }}>
+              <span style={{ fontSize: '3rem' }}>🚧</span>
+              <h3 style={{ color: '#fff', marginTop: '15px' }}>Mağaza Tezgahı Hazırlanıyor...</h3>
+              <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '5px' }}>İlk ürünleri eklemek için sabırsızlanıyorum!</p>
             </div>
           </div>
         ) : activeTab === 'about' ? (
-          <div className="tab-content-container about-align">
-            <h2>📖 Box Wars Hakkında</h2>
-            <div className="about-box">
+          <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
+            <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', lineHeight: '1.6', color: '#ccc' }}>
               <p><strong>Box Wars</strong>, küplerin ve taktiksel kapışmaların merkezde olduğu gerçek zamanlı bir 1v1 web oyunudur.</p>
-              <p className="about-mt">Arkadaşlarınla oda kurabilir, çevrimiçi oyunculara meydan okuyabilir, seviye atlayarak <strong>Voxel ($VXL$)</strong> toplayabilir ve liderlik tablosunda adını zirveye yazdırabilirsin!</p>
-              <p className="about-mt accent-text">Geliştirici Notu: Keyifli oyunlar kanki! 🚀</p>
+              <p style={{ marginTop: '15px' }}>Arkadaşlarınla oda kurabilir, çevrimiçi oyunculara meydan okuyabilir, seviye atlayarak <strong>Voxel ($VXL$)</strong> toplayabilir ve liderlik tablosunda adını zirveye yazdırabilirsin!</p>
+              <p style={{ marginTop: '15px', color: '#00f5d4' }}>Geliştirici Notu: Keyifli oyunlar kanki! 🚀</p>
             </div>
           </div>
         ) : (
@@ -492,22 +586,22 @@ function App() {
             <div className="lobby-grid">
               <section className="mods-panel">
                 <h3 className="panel-title">🛡️ Bekleme Odası (1v1)</h3>
-                <p className="room-id-text">Oda ID: {currentRoom.id.slice(0, 8)}... ({roomMembers.length}/2 Kişi)</p>
+                <p style={{ color: '#00f5d4', marginBottom: '15px' }}>Oda ID: {currentRoom.id.slice(0, 8)}... ({roomMembers.length}/2 Kişi)</p>
                 
-                <div className="room-members-list">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
                   {roomMembers.map((member) => (
-                    <div key={member.id} className="room-member-card">
+                    <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px', alignItems: 'center' }}>
                       <div>
-                        <span className="member-name">{member.username}</span> (Lvl {member.level})
-                        <div className={`member-role ${member.role === 'host' ? 'host-color' : 'guest-color'}`}>
+                        <span style={{ fontWeight: 'bold' }}>{member.username}</span> (Lvl {member.level})
+                        <div style={{ fontSize: '12px', color: member.role === 'host' ? '#00f5d4' : '#888' }}>
                           {member.role === 'host' ? '👑 Kurucu' : '👤 Katılımcı'}
                         </div>
                       </div>
                       <div>
                         {member.role === 'host' ? (
-                          <span className="ready-badge-green">✅ Kurucu (Hazır)</span>
+                          <span style={{ color: '#2ec4b6', fontWeight: 'bold', fontSize: '14px' }}>✅ Kurucu (Hazır)</span>
                         ) : (
-                          <span className={member.isReady ? 'ready-badge-green' : 'ready-badge-red'}>
+                          <span style={{ color: member.isReady ? '#2ec4b6' : '#e71d36', fontWeight: 'bold', fontSize: '14px' }}>
                             {member.isReady ? '✅ Hazır' : '❌ Hazır Değil'}
                           </span>
                         )}
@@ -516,13 +610,13 @@ function App() {
                   ))}
                 </div>
 
-                <div className="room-actions-row">
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                   {!isHost && (
-                    <button className="auth-button room-ready-btn" onClick={toggleReadyStatus} style={{ background: isGuestReady ? '#2ec4b6' : '#e71d36' }}>
+                    <button className="auth-button" onClick={toggleReadyStatus} style={{ background: isGuestReady ? '#2ec4b6' : '#e71d36', flex: 1 }}>
                       {isGuestReady ? '✅ HAZIRSIN (İptal Et)' : '❌ HAZIR OL'}
                     </button>
                   )}
-                  <button className="logout-btn room-leave-btn" onClick={handleLeaveRoom}>
+                  <button className="logout-btn" onClick={handleLeaveRoom} style={{ flex: 1, padding: '12px', background: isHost ? '#e71d36' : undefined }}>
                     {isHost ? 'Odayı Dağıt / Ayrıl' : 'Odadan Ayrıl'}
                   </button>
                 </div>
@@ -536,17 +630,17 @@ function App() {
 
               <section className="stats-panel">
                 <h3 className="panel-title">👥 Çevrimiçi Oyuncular</h3>
-                <div className="online-players-list">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {onlinePlayers.length === 0 ? (
-                    <p className="no-player-text">Şu an çevrimiçi başka oyuncu yok.</p>
+                    <p style={{ color: '#888' }}>Şu an çevrimiçi başka oyuncu yok.</p>
                   ) : (
                     onlinePlayers.map((player) => (
-                      <div key={player.id} className="player-row-card">
-                        <span>{player.username} (Lvl {player.level}) <span className="online-tag">🟢 Online</span></span>
+                      <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
+                        <span>{player.username} (Lvl {player.level}) <span style={{ color: '#2ec4b6', fontSize: '12px' }}>🟢 Online</span></span>
                         {isRoomFull ? (
-                          <span className="room-full-text">Oda Dolu</span>
+                          <span style={{ fontSize: '12px', color: '#e71d36' }}>Oda Dolu</span>
                         ) : (
-                          <button onClick={() => handleSendInvite(player.id)} className="invite-action-btn">Davet Et</button>
+                          <button onClick={() => handleSendInvite(player.id)} style={{ padding: '5px 10px', background: '#00f5d4', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Davet Et</button>
                         )}
                       </div>
                     ))
@@ -566,33 +660,33 @@ function App() {
                   <span className="mod-badge">KUR</span>
                 </div>
 
-                <div className="mod-card leaderboard-card-trigger" onClick={() => { fetchLeaderboard(); setShowLeaderboard(true); }}>
+                <div className="mod-card" onClick={() => { fetchLeaderboard(); setShowLeaderboard(true); }} style={{ marginTop: '15px', background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.1), rgba(114, 9, 183, 0.1))', borderColor: '#00f5d4' }}>
                   <div className="mod-left">
-                    <span className="mod-name leaderboard-title-glow">🏆 LİDERLİK TABLOSU</span>
+                    <span className="mod-name" style={{ color: '#00f5d4' }}>🏆 LİDERLİK TABLOSU</span>
                     <span className="mod-desc">Seviye ve galibiyet sıralaması</span>
                   </div>
-                  <span className="mod-badge leaderboard-badge-btn">İNCELE</span>
+                  <span className="mod-badge" style={{ background: '#00f5d4', color: '#0f172a' }}>İNCELE</span>
                 </div>
               </section>
 
               <section className="stats-panel">
                 <h3 className="panel-title">👥 Çevrimiçi Oyuncular & Gelen Davetler</h3>
-                <div className="online-players-list mb-space">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
                   {onlinePlayers.length === 0 ? (
-                    <p className="no-player-text">Şu an çevrimiçi başka oyuncu yok.</p>
+                    <p style={{ color: '#888' }}>Şu an çevrimiçi başka oyuncu yok.</p>
                   ) : (
                     onlinePlayers.map((player) => {
                       const invite = incomingInvites.find((inv) => inv.sender_id === player.id)
                       return (
-                        <div key={player.id} className="player-row-card">
-                          <span>{player.username} (Lvl {player.level}) <span className="online-tag">🟢 Online</span></span>
+                        <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
+                          <span>{player.username} (Lvl {player.level}) <span style={{ color: '#2ec4b6', fontSize: '12px' }}>🟢 Online</span></span>
                           {invite ? (
-                            <div className="invite-buttons-group">
-                              <button onClick={() => handleAcceptInvite(invite)} className="accept-btn">Kabul Et ✅</button>
-                              <button onClick={() => handleRejectInvite(invite)} className="reject-btn">Reddet ❌</button>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                              <button onClick={() => handleAcceptInvite(invite)} style={{ padding: '5px 8px', background: '#2ec4b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Kabul Et ✅</button>
+                              <button onClick={() => handleRejectInvite(invite)} style={{ padding: '5px 8px', background: '#e71d36', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Reddet ❌</button>
                             </div>
                           ) : (
-                            <span className="waiting-text">Bekleniyor...</span>
+                            <span style={{ fontSize: '12px', color: '#888' }}>Bekleniyor...</span>
                           )}
                         </div>
                       )
