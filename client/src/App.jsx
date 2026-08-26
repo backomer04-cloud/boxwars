@@ -22,7 +22,7 @@ function App() {
     trail: 'none'
   })
 
-  // 🛍️ KOCAMAN ÜRÜN LİSTESİ (SKİNLER, MERMİ RENKLERİ, PARILDAMALAR, TRAİLLER)
+  // 🛍️ KOCAMAN ÜRÜN LİSTESİ (TÜRÜNE GÖRE GÖRSEL ŞEKLİ VAR: 'skin', 'bullet', 'trail')
   const shopItems = [
     // --- SKİNLER (KUTULAR) ---
     { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7' },
@@ -85,7 +85,6 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Tarayıcı kapatıldığında offline yap
   useEffect(() => {
     if (!session) return
 
@@ -394,7 +393,6 @@ function App() {
     }
   }
 
-  // KUŞANMADAN KALDIRMA (ÇIKARMA) FONKSİYONU
   const handleUnequipItem = async (type) => {
     let updatedEquipped = { ...equippedItems }
     if (type === 'skin') updatedEquipped.skin = 'default_box'
@@ -664,7 +662,7 @@ function App() {
           </div>
         )}
 
-        {/* SHOP VE ENVANTER ALANI (KESİN 4'ERLİ 4 SÜTUNLU GRID) */}
+        {/* 4'ERLİ GRID VE TÜRÜNE GÖRE DOĞRU ÖNİZLEME ŞEKLİ (SKİN=KUTU, MERMİ=ÇUBUK/MERMİ, TRAİL=PARLAYAN TOP) */}
         {activeTab === 'shop' ? (
           <div style={{ padding: '30px', maxWidth: '1250px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '30px' }}>
@@ -693,7 +691,6 @@ function App() {
             {shopSubTab === 'store' ? (
               <div>
                 <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>TÜM MAĞAZA ÜRÜNLERİ</h3>
-                {/* 4'ERLİ YAN YANA GRID YAPISI (repeat(4, minmax(0, 1fr))) */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
                   {shopItems.map((item) => {
                     const owned = inventory.includes(item.id)
@@ -710,7 +707,17 @@ function App() {
                         textAlign: 'center',
                         boxShadow: '0 10px 30px rgba(0,0,0,0.4)'
                       }}>
-                        <div style={{ width: '55px', height: '55px', background: item.preview, borderRadius: '14px', marginBottom: '12px', boxShadow: `0 0 20px ${item.preview}` }} />
+                        {/* 🎨 ÜRÜNÜN KENDİNE HAS ŞEKLİ (SKİN=KARE KUTU, MERMİ=İNCE UZUN ÇUBUK, TRAİL=YUVARLAK PARLAYAN TOP) */}
+                        <div style={{ 
+                          width: item.type === 'bullet' ? '24px' : '55px', 
+                          height: item.type === 'bullet' ? '50px' : '55px', 
+                          background: item.preview, 
+                          borderRadius: item.type === 'skin' ? '14px' : (item.type === 'bullet' ? '12px' : '50%'), 
+                          marginBottom: '14px', 
+                          boxShadow: `0 0 22px ${item.preview}`,
+                          transform: item.type === 'bullet' ? 'rotate(0deg)' : 'none'
+                        }} />
+
                         <h4 style={{ color: '#fff', margin: '0 0 6px 0', fontSize: '1rem' }}>{item.name}</h4>
                         <p style={{ color: '#94a3b8', fontSize: '0.75rem', minHeight: '45px', lineHeight: '1.3' }}>{item.desc}</p>
                         <div style={{ color: '#00f5d4', fontWeight: 'bold', margin: '12px 0', fontSize: '1rem' }}>🔷 {item.price} VXL</div>
@@ -733,7 +740,6 @@ function App() {
             ) : (
               <div>
                 <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>ENVANTERİN VE KUŞANIM MERKEZİ</h3>
-                {/* 4'ERLİ YAN YANA GRID YAPISI */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
                   {inventory.length === 0 ? (
                     <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -758,11 +764,19 @@ function App() {
                           textAlign: 'center',
                           boxShadow: isEquipped ? '0 0 25px rgba(0,245,212,0.25)' : '0 10px 30px rgba(0,0,0,0.4)'
                         }}>
-                          <div style={{ width: '55px', height: '55px', background: item.preview, borderRadius: '14px', marginBottom: '12px', boxShadow: `0 0 20px ${item.preview}` }} />
+                          {/* 🎨 ENVANTERDE DE DOĞRU ŞEKİL GÖSTERİMİ */}
+                          <div style={{ 
+                            width: item.type === 'bullet' ? '24px' : '55px', 
+                            height: item.type === 'bullet' ? '50px' : '55px', 
+                            background: item.preview, 
+                            borderRadius: item.type === 'skin' ? '14px' : (item.type === 'bullet' ? '12px' : '50%'), 
+                            marginBottom: '14px', 
+                            boxShadow: `0 0 22px ${item.preview}` 
+                          }} />
+
                           <h4 style={{ color: '#fff', margin: '0 0 6px 0', fontSize: '1rem' }}>{item.name}</h4>
                           <p style={{ color: '#94a3b8', fontSize: '0.75rem', minHeight: '45px', lineHeight: '1.3' }}>{item.desc}</p>
                           
-                          {/* KUŞAN VEYA KUŞANMADAN KALDIR (ÇIKAR) BUTONLARI */}
                           {isEquipped ? (
                             <button 
                               onClick={() => handleUnequipItem(item.type)}
@@ -798,7 +812,6 @@ function App() {
             <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', lineHeight: '1.6', color: '#ccc' }}>
               <p><strong>Box Wars</strong>, küplerin ve taktiksel kapışmaların merkezde olduğu gerçek zamanlı bir 1v1 web oyunudur.</p>
-              <p style={{ marginTop: '15px' }}>Mağazadan binbir çeşitte mermi, skin ve trail satın alıp kuşanabilirsin kanki!</p>
             </div>
           </div>
         ) : (
