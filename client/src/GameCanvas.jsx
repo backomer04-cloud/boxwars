@@ -13,7 +13,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     level: profile?.level || 1,
     xp: profile?.xp || 0,
     wins: profile?.wins || 0,
-    losses: profile?.losses || 0
+    losses: profile?.losses || 0,
+    voxel: profile?.voxel || 0
   })
 
   const [enemyData, setEnemyData] = useState({
@@ -165,6 +166,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let currentLevel = profile?.level ?? userData.level ?? 1
     let currentWins = profile?.wins ?? userData.wins ?? 0
     let currentLosses = profile?.losses ?? userData.losses ?? 0
+    let currentVoxel = profile?.voxel ?? userData.voxel ?? 0
     let addedXp = 0
 
     if (resultType === 'win') {
@@ -185,16 +187,19 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (currentXp < 0) currentXp = 0
     }
 
+    // Her seviye atlandığında Voxel ödülü verme mekaniği
     while (currentXp >= 200) {
       currentXp -= 200
       currentLevel += 1
+      currentVoxel += 50 // Her seviye atlayışta kazanılacak Voxel miktarı (örnek: 50)
     }
 
     await supabase.from('profiles').update({
       xp: currentXp,
       level: currentLevel,
       wins: currentWins,
-      losses: currentLosses
+      losses: currentLosses,
+      voxel: currentVoxel
     }).eq('id', userId)
 
     if (refreshProfile) refreshProfile()
@@ -231,7 +236,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     const shoot = () => {
       if (gameStateRef.current.isPaused || isReloadingRef.current) return
       
-      // Mermi bittiyse direkt doldurmaya git
       if (ammoRef.current <= 0) { 
         reloadGun(); 
         return 
@@ -241,7 +245,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (now - lastShotTime.current < 250) return
       lastShotTime.current = now
 
-      // Mermiyi anlık ref ve state üzerinden düşür
       ammoRef.current -= 1
       const currentAmmoLeft = ammoRef.current
       setAmmo(currentAmmoLeft)
@@ -638,7 +641,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           }}
         />
 
-<div className="mobile-controls-overlay">
+        <div className="mobile-controls-overlay">
           <div className="dpad">
             <button onTouchStart={(e) => { e.preventDefault(); window.mobileMove('UP', true) }} onTouchEnd={(e) => { e.preventDefault(); window.mobileMove('UP', false) }}>▲</button>
             <div className="dpad-row">
@@ -648,7 +651,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             <button onTouchStart={(e) => { e.preventDefault(); window.mobileMove('DOWN', true) }} onTouchEnd={(e) => { e.preventDefault(); window.mobileMove('DOWN', false) }}>▼</button>
           </div>
 
-          {/* Sağ taraf: Ateş ve Şarjör Butonları */}
           <div style={{ display: 'flex', position: 'relative', width: '160px', height: '160px', justifyContent: 'center', alignItems: 'center' }}>
             <button 
               onClick={() => window.mobileReload()} 
