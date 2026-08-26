@@ -638,7 +638,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           }}
         />
 
-        <div className="mobile-controls-overlay">
+<div className="mobile-controls-overlay">
           <div className="dpad">
             <button onTouchStart={(e) => { e.preventDefault(); window.mobileMove('UP', true) }} onTouchEnd={(e) => { e.preventDefault(); window.mobileMove('UP', false) }}>▲</button>
             <div className="dpad-row">
@@ -648,19 +648,25 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             <button onTouchStart={(e) => { e.preventDefault(); window.mobileMove('DOWN', true) }} onTouchEnd={(e) => { e.preventDefault(); window.mobileMove('DOWN', false) }}>▼</button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-end' }}>
+          {/* Sağ taraf: Ateş ve Şarjör Butonları */}
+          <div style={{ display: 'flex', position: 'relative', width: '160px', height: '160px', justifyContent: 'center', alignItems: 'center' }}>
             <button 
               onClick={() => window.mobileReload()} 
               style={{
-                background: 'rgba(56, 189, 248, 0.2)',
+                position: 'absolute',
+                top: '-5px',
+                left: '-15px',
+                background: 'rgba(15, 23, 42, 0.85)',
                 border: '2px solid #38bdf8',
                 color: '#38bdf8',
-                padding: '0.5rem 1rem',
-                borderRadius: '12px',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '10px',
                 fontWeight: 'bold',
-                fontSize: '0.85rem',
+                fontSize: '0.75rem',
                 backdropFilter: 'blur(4px)',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                zIndex: 10
               }}
             >
               🔄 Reload
