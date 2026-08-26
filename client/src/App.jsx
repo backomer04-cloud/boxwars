@@ -139,7 +139,7 @@ function App() {
             alert('🎉 Rakip daveti kabul etti! Odaya giriliyor...')
             setCurrentRoom({ id: updated.room_id, status: 'waiting' })
             setCurrentInviteId(updated.id)
-            setActiveTab('home') // Maç olunca otomatik ana sayfaya at
+            setActiveTab('home')
           } else if (updated.status === 'rejected') {
             alert('❌ Rakip daveti reddetti.')
           }
@@ -391,22 +391,64 @@ function App() {
           </div>
         </header>
 
-        {/* SEKME ÇUBUĞU (Çıkıntılı Navigasyon) */}
-        <div style={{ display: 'flex', justifyContent: 'center', background: '#0f172a', paddingBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '0 0 12px 12px', padding: '6px 15px', gap: '10px', border: '1px solid rgba(255,255,255,0.1)', borderTop: 'none' }}>
+        {/* DAMLA ÇENTİK (NOTCH) SEKME ALANI */}
+        <div style={{ display: 'flex', justifyContent: 'center', background: '#0f172a', position: 'relative', zIndex: 10 }}>
+          <div style={{ 
+            display: 'flex', 
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))', 
+            borderRadius: '0 0 24px 24px', 
+            padding: '8px 25px 12px 25px', 
+            gap: '12px', 
+            border: '1px solid rgba(0, 245, 212, 0.2)', 
+            borderTop: 'none',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 245, 212, 0.1)'
+          }}>
             <button 
               onClick={() => setActiveTab('home')} 
-              style={{ background: activeTab === 'home' ? '#00f5d4' : 'transparent', color: activeTab === 'home' ? '#0f172a' : '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
+              style={{ 
+                background: activeTab === 'home' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.03)', 
+                color: activeTab === 'home' ? '#0f172a' : '#94a3b8', 
+                border: activeTab === 'home' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+                padding: '8px 22px', 
+                borderRadius: '16px', 
+                cursor: 'pointer', 
+                fontWeight: 'bold', 
+                fontSize: '0.9rem',
+                boxShadow: activeTab === 'home' ? '0 0 15px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.2s ease' 
+              }}>
               🏠 Anasayfa
             </button>
             <button 
               onClick={() => setActiveTab('shop')} 
-              style={{ background: activeTab === 'shop' ? '#00f5d4' : 'transparent', color: activeTab === 'shop' ? '#0f172a' : '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
+              style={{ 
+                background: activeTab === 'shop' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.03)', 
+                color: activeTab === 'shop' ? '#0f172a' : '#94a3b8', 
+                border: activeTab === 'shop' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+                padding: '8px 22px', 
+                borderRadius: '16px', 
+                cursor: 'pointer', 
+                fontWeight: 'bold', 
+                fontSize: '0.9rem',
+                boxShadow: activeTab === 'shop' ? '0 0 15px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.2s ease' 
+              }}>
               🛍️ Shop (Voxel)
             </button>
             <button 
               onClick={() => setActiveTab('about')} 
-              style={{ background: activeTab === 'about' ? '#00f5d4' : 'transparent', color: activeTab === 'about' ? '#0f172a' : '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
+              style={{ 
+                background: activeTab === 'about' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.03)', 
+                color: activeTab === 'about' ? '#0f172a' : '#94a3b8', 
+                border: activeTab === 'about' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+                padding: '8px 22px', 
+                borderRadius: '16px', 
+                cursor: 'pointer', 
+                fontWeight: 'bold', 
+                fontSize: '0.9rem',
+                boxShadow: activeTab === 'about' ? '0 0 15px rgba(0, 245, 212, 0.4)' : 'none',
+                transition: 'all 0.2s ease' 
+              }}>
               📖 Hakkında
             </button>
           </div>
@@ -460,7 +502,7 @@ function App() {
           </div>
         )}
 
-        {/* İÇERİK ALANI (Sekmelere Göre Değişen Bölüm) */}
+        {/* İÇERİK ALANI (SEKMELERE GÖRE) */}
         {activeTab === 'shop' ? (
           <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
             <h2 style={{ color: '#00f5d4', marginBottom: '10px' }}>🛍️ Voxel Mağazası</h2>
@@ -476,7 +518,7 @@ function App() {
             <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: '30px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', lineHeight: '1.6', color: '#ccc' }}>
               <p><strong>Box Wars</strong>, küplerin ve taktiksel kapışmaların merkezde olduğu gerçek zamanlı bir 1v1 web oyunudur.</p>
-              <p style={{ marginTop: '15px' }}>Arkadaşlarınla oda kurabilir, çevrimiçi oyunculara meydan okuyabilir, seviye atlayarak <strong>Voxel</strong> toplayabilir ve liderlik tablosunda adını zirveye yazdırabilirsin!</p>
+              <p style={{ marginTop: '15px' }}>Arkadaşlarınla oda kurabilir, çevrimiçi oyunculara meydan okuyabilir, seviye atlayarak <strong>Voxel ($VXL$)</strong> toplayabilir ve liderlik tablosunda adını zirveye yazdırabilirsin!</p>
               <p style={{ marginTop: '15px', color: '#00f5d4' }}>Geliştirici Notu: Keyifli oyunlar kanki! 🚀</p>
             </div>
           </div>
