@@ -8,6 +8,9 @@ function App() {
   const [profile, setProfile] = useState(null)
   const [inGame, setInGame] = useState(false)
 
+  // Sekme Yönetimi ('home' | 'shop' | 'about')
+  const [activeTab, setActiveTab] = useState('home')
+
   // Oda ve Davet State'leri
   const [currentRoom, setCurrentRoom] = useState(null) 
   const [roomMembers, setRoomMembers] = useState([]) 
@@ -81,7 +84,7 @@ function App() {
     if (data) setProfile(data)
   }
 
-  // Liderlik Tablosu Verilerini Çekme (Seviye ve XP'ye göre)
+  // Liderlik Tablosu Verilerini Çekme
   const fetchLeaderboard = async () => {
     const { data } = await supabase
       .from('profiles')
@@ -136,6 +139,7 @@ function App() {
             alert('🎉 Rakip daveti kabul etti! Odaya giriliyor...')
             setCurrentRoom({ id: updated.room_id, status: 'waiting' })
             setCurrentInviteId(updated.id)
+            setActiveTab('home') // Maç olunca otomatik ana sayfaya at
           } else if (updated.status === 'rejected') {
             alert('❌ Rakip daveti reddetti.')
           }
@@ -322,7 +326,7 @@ function App() {
 
     if (data.user) {
       const { error: profileErr } = await supabase.from('profiles').insert([
-        { id: data.user.id, username, xp: 0, level: 1, wins: 0, losses: 0, is_online: true }
+        { id: data.user.id, username, xp: 0, level: 1, wins: 0, losses: 0, voxel: 100, is_online: true }
       ])
       if (profileErr) setMessage(`❌ ${profileErr.message}`)
       else {
@@ -380,11 +384,33 @@ function App() {
       <div className="lobby-wrap">
         <header className="lobby-header">
           <span className="lobby-logo">⬛ BOX WARS</span>
-          <div className="user-badge">
+          <div className="user-badge" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>🔷 {profile?.voxel ?? 0} VXL</span>
             <span className="user-name">⚡ {profile?.username || 'Oyuncu'}</span>
             <button className="logout-btn" onClick={handleLogout}>Çıkış</button>
           </div>
         </header>
+
+        {/* SEKME ÇUBUĞU (Çıkıntılı Navigasyon) */}
+        <div style={{ display: 'flex', justifyContent: 'center', background: '#0f172a', paddingBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '0 0 12px 12px', padding: '6px 15px', gap: '10px', border: '1px solid rgba(255,255,255,0.1)', borderTop: 'none' }}>
+            <button 
+              onClick={() => setActiveTab('home')} 
+              style={{ background: activeTab === 'home' ? '#00f5d4' : 'transparent', color: activeTab === 'home' ? '#0f172a' : '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
+              🏠 Anasayfa
+            </button>
+            <button 
+              onClick={() => setActiveTab('shop')} 
+              style={{ background: activeTab === 'shop' ? '#00f5d4' : 'transparent', color: activeTab === 'shop' ? '#0f172a' : '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
+              🛍️ Shop (Voxel)
+            </button>
+            <button 
+              onClick={() => setActiveTab('about')} 
+              style={{ background: activeTab === 'about' ? '#00f5d4' : 'transparent', color: activeTab === 'about' ? '#0f172a' : '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
+              📖 Hakkında
+            </button>
+          </div>
+        </div>
 
         {/* LİDERLİK TABLOSU MODALI */}
         {showLeaderboard && (
@@ -434,142 +460,164 @@ function App() {
           </div>
         )}
 
-        {/* BEKLEME ODASI / LOBİ */}
-        {currentRoom ? (
-          <div className="lobby-grid">
-            <section className="mods-panel">
-              <h3 className="panel-title">🛡️ Bekleme Odası (1v1)</h3>
-              <p style={{ color: '#00f5d4', marginBottom: '15px' }}>Oda ID: {currentRoom.id.slice(0, 8)}... ({roomMembers.length}/2 Kişi)</p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-                {roomMembers.map((member) => (
-                  <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px', alignItems: 'center' }}>
-                    <div>
-                      <span style={{ fontWeight: 'bold' }}>{member.username}</span> (Lvl {member.level})
-                      <div style={{ fontSize: '12px', color: member.role === 'host' ? '#00f5d4' : '#888' }}>
-                        {member.role === 'host' ? '👑 Kurucu' : '👤 Katılımcı'}
-                      </div>
-                    </div>
-                    <div>
-                      {member.role === 'host' ? (
-                        <span style={{ color: '#2ec4b6', fontWeight: 'bold', fontSize: '14px' }}>✅ Kurucu (Hazır)</span>
-                      ) : (
-                        <span style={{ color: member.isReady ? '#2ec4b6' : '#e71d36', fontWeight: 'bold', fontSize: '14px' }}>
-                          {member.isReady ? '✅ Hazır' : '❌ Hazır Değil'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                {!isHost && (
-                  <button className="auth-button" onClick={toggleReadyStatus} style={{ background: isGuestReady ? '#2ec4b6' : '#e71d36', flex: 1 }}>
-                    {isGuestReady ? '✅ HAZIRSIN (İptal Et)' : '❌ HAZIR OL'}
-                  </button>
-                )}
-                <button className="logout-btn" onClick={handleLeaveRoom} style={{ flex: 1, padding: '12px', background: isHost ? '#e71d36' : undefined }}>
-                  {isHost ? 'Odayı Dağıt / Ayrıl' : 'Odadan Ayrıl'}
-                </button>
-              </div>
-
-              {isHost && (
-                <button className="auth-button" onClick={handleStartGame} disabled={!canStartGame} style={{ background: canStartGame ? '#7209b7' : '#555', cursor: canStartGame ? 'pointer' : 'not-allowed' }}>
-                  {!isRoomFull ? '⏳ Rakibin Bekleniyor...' : (!isGuestReady ? '⏳ Rakibin Hazır Olması Bekleniyor...' : '🚀 OYUNU BAŞLAT')}
-                </button>
-              )}
-            </section>
-
-            <section className="stats-panel">
-              <h3 className="panel-title">👥 Çevrimiçi Oyuncular</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {onlinePlayers.length === 0 ? (
-                  <p style={{ color: '#888' }}>Şu an çevrimiçi başka oyuncu yok.</p>
-                ) : (
-                  onlinePlayers.map((player) => (
-                    <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
-                      <span>{player.username} (Lvl {player.level}) <span style={{ color: '#2ec4b6', fontSize: '12px' }}>🟢 Online</span></span>
-                      {isRoomFull ? (
-                        <span style={{ fontSize: '12px', color: '#e71d36' }}>Oda Dolu</span>
-                      ) : (
-                        <button onClick={() => handleSendInvite(player.id)} style={{ padding: '5px 10px', background: '#00f5d4', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Davet Et</button>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
+        {/* İÇERİK ALANI (Sekmelere Göre Değişen Bölüm) */}
+        {activeTab === 'shop' ? (
+          <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+            <h2 style={{ color: '#00f5d4', marginBottom: '10px' }}>🛍️ Voxel Mağazası</h2>
+            <p style={{ color: '#aaa', marginBottom: '30px' }}>Mağazaya hoş geldin kanki! Biriken Voxel'lerinle karakterini ve özelleştirmelerini yakında burada harcayabileceksin.</p>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '40px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <span style={{ fontSize: '3rem' }}>🚧</span>
+              <h3 style={{ color: '#fff', marginTop: '15px' }}>Mağaza Tezgahı Hazırlanıyor...</h3>
+              <p style={{ color: '#888', fontSize: '0.9rem' }}>İlk ürünleri eklemek için sabırsızlanıyorum!</p>
+            </div>
+          </div>
+        ) : activeTab === 'about' ? (
+          <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
+            <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '30px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', lineHeight: '1.6', color: '#ccc' }}>
+              <p><strong>Box Wars</strong>, küplerin ve taktiksel kapışmaların merkezde olduğu gerçek zamanlı bir 1v1 web oyunudur.</p>
+              <p style={{ marginTop: '15px' }}>Arkadaşlarınla oda kurabilir, çevrimiçi oyunculara meydan okuyabilir, seviye atlayarak <strong>Voxel</strong> toplayabilir ve liderlik tablosunda adını zirveye yazdırabilirsin!</p>
+              <p style={{ marginTop: '15px', color: '#00f5d4' }}>Geliştirici Notu: Keyifli oyunlar kanki! 🚀</p>
+            </div>
           </div>
         ) : (
-          <div className="lobby-grid">
-            <section className="mods-panel">
-              <h3 className="panel-title">⚔️ Savaş Modu</h3>
-              <div className="mod-card" onClick={handleCreateRoom}>
-                <div className="mod-left">
-                  <span className="mod-name">1 VS 1 OYNA</span>
-                  <span className="mod-desc">Oda kur ve rakip davet et</span>
-                </div>
-                <span className="mod-badge">KUR</span>
-              </div>
-
-              <div className="mod-card" onClick={() => { fetchLeaderboard(); setShowLeaderboard(true); }} style={{ marginTop: '15px', background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.1), rgba(114, 9, 183, 0.1))', borderColor: '#00f5d4' }}>
-                <div className="mod-left">
-                  <span className="mod-name" style={{ color: '#00f5d4' }}>🏆 LİDERLİK TABLOSU</span>
-                  <span className="mod-desc">Seviye ve galibiyet sıralaması</span>
-                </div>
-                <span className="mod-badge" style={{ background: '#00f5d4', color: '#0f172a' }}>İNCELE</span>
-              </div>
-            </section>
-
-            <section className="stats-panel">
-              <h3 className="panel-title">👥 Çevrimiçi Oyuncular & Gelen Davetler</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-                {onlinePlayers.length === 0 ? (
-                  <p style={{ color: '#888' }}>Şu an çevrimiçi başka oyuncu yok.</p>
-                ) : (
-                  onlinePlayers.map((player) => {
-                    const invite = incomingInvites.find((inv) => inv.sender_id === player.id)
-                    return (
-                      <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
-                        <span>{player.username} (Lvl {player.level}) <span style={{ color: '#2ec4b6', fontSize: '12px' }}>🟢 Online</span></span>
-                        {invite ? (
-                          <div style={{ display: 'flex', gap: '5px' }}>
-                            <button onClick={() => handleAcceptInvite(invite)} style={{ padding: '5px 8px', background: '#2ec4b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Kabul Et ✅</button>
-                            <button onClick={() => handleRejectInvite(invite)} style={{ padding: '5px 8px', background: '#e71d36', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Reddet ❌</button>
-                          </div>
+          /* ANASAYFA / LOBİ EKRANI */
+          currentRoom ? (
+            <div className="lobby-grid">
+              <section className="mods-panel">
+                <h3 className="panel-title">🛡️ Bekleme Odası (1v1)</h3>
+                <p style={{ color: '#00f5d4', marginBottom: '15px' }}>Oda ID: {currentRoom.id.slice(0, 8)}... ({roomMembers.length}/2 Kişi)</p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                  {roomMembers.map((member) => (
+                    <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontWeight: 'bold' }}>{member.username}</span> (Lvl {member.level})
+                        <div style={{ fontSize: '12px', color: member.role === 'host' ? '#00f5d4' : '#888' }}>
+                          {member.role === 'host' ? '👑 Kurucu' : '👤 Katılımcı'}
+                        </div>
+                      </div>
+                      <div>
+                        {member.role === 'host' ? (
+                          <span style={{ color: '#2ec4b6', fontWeight: 'bold', fontSize: '14px' }}>✅ Kurucu (Hazır)</span>
                         ) : (
-                          <span style={{ fontSize: '12px', color: '#888' }}>Bekleniyor...</span>
+                          <span style={{ color: member.isReady ? '#2ec4b6' : '#e71d36', fontWeight: 'bold', fontSize: '14px' }}>
+                            {member.isReady ? '✅ Hazır' : '❌ Hazır Değil'}
+                          </span>
                         )}
                       </div>
-                    )
-                  })
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
 
-              <h3 className="panel-title">📊 İstatistikler</h3>
-              <div className="stats-grid">
-                <div className="stat-item">
-                  <div className="stat-label">Level</div>
-                  <div className="stat-value accent">{profile?.level ?? 1}</div>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                  {!isHost && (
+                    <button className="auth-button" onClick={toggleReadyStatus} style={{ background: isGuestReady ? '#2ec4b6' : '#e71d36', flex: 1 }}>
+                      {isGuestReady ? '✅ HAZIRSIN (İptal Et)' : '❌ HAZIR OL'}
+                    </button>
+                  )}
+                  <button className="logout-btn" onClick={handleLeaveRoom} style={{ flex: 1, padding: '12px', background: isHost ? '#e71d36' : undefined }}>
+                    {isHost ? 'Odayı Dağıt / Ayrıl' : 'Odadan Ayrıl'}
+                  </button>
                 </div>
-                <div className="stat-item">
-                  <div className="stat-label">XP</div>
-                  <div className="stat-value">{profile?.xp ?? 0}</div>
-                  <div className="xp-bar-wrap"><div className="xp-bar-fill" style={{ width: `${xpPercent}%` }} /></div>
-                  <div className="xp-label"><span>{xpPercent.toFixed(0)}%</span><span>{currentLevelXp} / 200 XP</span></div>
+
+                {isHost && (
+                  <button className="auth-button" onClick={handleStartGame} disabled={!canStartGame} style={{ background: canStartGame ? '#7209b7' : '#555', cursor: canStartGame ? 'pointer' : 'not-allowed' }}>
+                    {!isRoomFull ? '⏳ Rakibin Bekleniyor...' : (!isGuestReady ? '⏳ Rakibin Hazır Olması Bekleniyor...' : '🚀 OYUNU BAŞLAT')}
+                  </button>
+                )}
+              </section>
+
+              <section className="stats-panel">
+                <h3 className="panel-title">👥 Çevrimiçi Oyuncular</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {onlinePlayers.length === 0 ? (
+                    <p style={{ color: '#888' }}>Şu an çevrimiçi başka oyuncu yok.</p>
+                  ) : (
+                    onlinePlayers.map((player) => (
+                      <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
+                        <span>{player.username} (Lvl {player.level}) <span style={{ color: '#2ec4b6', fontSize: '12px' }}>🟢 Online</span></span>
+                        {isRoomFull ? (
+                          <span style={{ fontSize: '12px', color: '#e71d36' }}>Oda Dolu</span>
+                        ) : (
+                          <button onClick={() => handleSendInvite(player.id)} style={{ padding: '5px 10px', background: '#00f5d4', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Davet Et</button>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
-                <div className="stat-item">
-                  <div className="stat-label">Galibiyet</div>
-                  <div className="stat-value wins">{profile?.wins ?? 0}</div>
+              </section>
+            </div>
+          ) : (
+            <div className="lobby-grid">
+              <section className="mods-panel">
+                <h3 className="panel-title">⚔️ Savaş Modu</h3>
+                <div className="mod-card" onClick={handleCreateRoom}>
+                  <div className="mod-left">
+                    <span className="mod-name">1 VS 1 OYNA</span>
+                    <span className="mod-desc">Oda kur ve rakip davet et</span>
+                  </div>
+                  <span className="mod-badge">KUR</span>
                 </div>
-                <div className="stat-item">
-                  <div className="stat-label">Mağlubiyet</div>
-                  <div className="stat-value losses">{profile?.losses ?? 0}</div>
+
+                <div className="mod-card" onClick={() => { fetchLeaderboard(); setShowLeaderboard(true); }} style={{ marginTop: '15px', background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.1), rgba(114, 9, 183, 0.1))', borderColor: '#00f5d4' }}>
+                  <div className="mod-left">
+                    <span className="mod-name" style={{ color: '#00f5d4' }}>🏆 LİDERLİK TABLOSU</span>
+                    <span className="mod-desc">Seviye ve galibiyet sıralaması</span>
+                  </div>
+                  <span className="mod-badge" style={{ background: '#00f5d4', color: '#0f172a' }}>İNCELE</span>
                 </div>
-              </div>
-            </section>
-          </div>
+              </section>
+
+              <section className="stats-panel">
+                <h3 className="panel-title">👥 Çevrimiçi Oyuncular & Gelen Davetler</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                  {onlinePlayers.length === 0 ? (
+                    <p style={{ color: '#888' }}>Şu an çevrimiçi başka oyuncu yok.</p>
+                  ) : (
+                    onlinePlayers.map((player) => {
+                      const invite = incomingInvites.find((inv) => inv.sender_id === player.id)
+                      return (
+                        <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
+                          <span>{player.username} (Lvl {player.level}) <span style={{ color: '#2ec4b6', fontSize: '12px' }}>🟢 Online</span></span>
+                          {invite ? (
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                              <button onClick={() => handleAcceptInvite(invite)} style={{ padding: '5px 8px', background: '#2ec4b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Kabul Et ✅</button>
+                              <button onClick={() => handleRejectInvite(invite)} style={{ padding: '5px 8px', background: '#e71d36', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Reddet ❌</button>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: '12px', color: '#888' }}>Bekleniyor...</span>
+                          )}
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+
+                <h3 className="panel-title">📊 İstatistikler</h3>
+                <div className="stats-grid">
+                  <div className="stat-item">
+                    <div className="stat-label">Level</div>
+                    <div className="stat-value accent">{profile?.level ?? 1}</div>
+                  </div>
+                  <div className="stat-item">
+                    <div className="stat-label">XP</div>
+                    <div className="stat-value">{profile?.xp ?? 0}</div>
+                    <div className="xp-bar-wrap"><div className="xp-bar-fill" style={{ width: `${xpPercent}%` }} /></div>
+                    <div className="xp-label"><span>{xpPercent.toFixed(0)}%</span><span>{currentLevelXp} / 200 XP</span></div>
+                  </div>
+                  <div className="stat-item">
+                    <div className="stat-label">Galibiyet</div>
+                    <div className="stat-value wins">{profile?.wins ?? 0}</div>
+                  </div>
+                  <div className="stat-item">
+                    <div className="stat-label">Mağlubiyet</div>
+                    <div className="stat-value losses">{profile?.losses ?? 0}</div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          )
         )}
       </div>
     )
