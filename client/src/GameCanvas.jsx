@@ -32,6 +32,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const maxAmmo = 6
   const [isReloading, setIsReloading] = useState(false)
 
+  // Şarjör durumunu anlık takip etmek için ref ekledik (closure sorununu çözer)
+  const ammoRef = useRef(6)
+  const isReloadingRef = useRef(false)
+
   const socketRef = useRef(null)
   
   const gameStateRef = useRef({
@@ -198,10 +202,14 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   }
 
   const reloadGun = () => {
-    if (isReloading || gameStateRef.current.isPaused) return
+    if (isReloadingRef.current || gameStateRef.current.isPaused) return
+    isReloadingRef.current = true
     setIsReloading(true)
+    
     setTimeout(() => {
+      ammoRef.current = maxAmmo
       setAmmo(maxAmmo)
+      isReloadingRef.current = false
       setIsReloading(false)
     }, 1200)
   }
@@ -221,21 +229,24 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     ]
 
     const shoot = () => {
-      if (gameStateRef.current.isPaused || isReloading) return
-      if (ammo <= 0) { reloadGun(); return }
+      if (gameStateRef.current.isPaused || isReloadingRef.current) return
+      
+      // Mermi bittiyse direkt doldurmaya git
+      if (ammoRef.current <= 0) { 
+        reloadGun(); 
+        return 
+      }
 
       const now = Date.now()
       if (now - lastShotTime.current < 250) return
       lastShotTime.current = now
 
-      let currentAmmoLeft = 6
-      setAmmo((prev) => {
-        const next = Math.max(0, prev - 1)
-        currentAmmoLeft = next
-        return next
-      })
+      // Mermiyi anlık ref ve state üzerinden düşür
+      ammoRef.current -= 1
+      const currentAmmoLeft = ammoRef.current
+      setAmmo(currentAmmoLeft)
 
-      if (currentAmmoLeft === 0) {
+      if (currentAmmoLeft <= 0) {
         setTimeout(() => reloadGun(), 100)
       }
 
@@ -275,7 +286,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     const handleKeyDown = (e) => {
       if (['Space', 'Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault()
       keysPressed.current[e.code] = true
-      // Space veya Kumandanın ortasındaki OK tuşu (Enter) ateş etsin
       if (e.code === 'Space' || e.code === 'Enter') shoot()
       if (e.code === 'KeyR') reloadGun()
     }
@@ -479,7 +489,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         setTimeout(() => {
           setRoundMessage('')
           setCurrentRound(2)
+          ammoRef.current = maxAmmo
           setAmmo(maxAmmo)
+          isReloadingRef.current = false
           setIsReloading(false)
 
           const currentSide = gameStateRef.current.mySide
@@ -616,7 +628,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           </div>
         )}
 
-        {/* Fare sol tıkı ile ateş etme desteği eklendi */}
         <canvas 
           ref={canvasRef} 
           width={1000} 
