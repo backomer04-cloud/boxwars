@@ -22,12 +22,25 @@ function App() {
     trail: 'none'
   })
 
-  // Örnek Mağaza Ürünleri
+  // 🛍️ BÜSSÜRÜ ÜRÜN (MAĞAZA ENVANTERİ - GRID UYUMLU)
   const shopItems = [
+    // --- SKİNLER (KUTULAR) ---
     { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7' },
-    { id: 'skin_gold', type: 'skin', name: 'Altın Kaplama Küp', price: 100, desc: 'Zenginliğin ve gücün rengi!', preview: '#ffd700' },
+    { id: 'skin_gold', type: 'skin', name: 'Altın Kaplama Küp', price: 150, desc: 'Zenginliğin ve ihtişamın rengi!', preview: '#ffd700' },
+    { id: 'skin_fire_red', type: 'skin', name: 'Cehennem Ateşi Küpü', price: 120, desc: 'Alevler içinde yanan agresif tasarım.', preview: '#e71d36' },
+    { id: 'skin_matrix_green', type: 'skin', name: 'Matrix Yeşil Küp', price: 90, desc: 'Dijital kod evreninden fırlamış gibi.', preview: '#00f5d4' },
+    { id: 'skin_cyber_pink', type: 'skin', name: 'Cyber Pembe Küp', price: 80, desc: 'Sokakların en dikkat çeken neon pembe tarzı.', preview: '#f72585' },
+    { id: 'skin_shadow_black', type: 'skin', name: 'Gölge Karbon Küp', price: 200, desc: 'Karanlığın gücünü üzerinde taşı.', preview: '#1e293b' },
+
+    // --- MERMİ EFEKTLERİ ---
     { id: 'bullet_plasma_blue', type: 'bullet', name: 'Plazma Mavi Mermi', price: 40, desc: 'Mavi renkli keskin plazma mermileri.', preview: '#38bdf8' },
-    { id: 'trail_sparks', type: 'trail', name: 'Kıvılcım İz Efekti', price: 75, desc: 'Mermi ve hareket arkasından uçuşan kıvılcımlar.', preview: '#f72585' }
+    { id: 'bullet_laser_red', type: 'bullet', name: 'Lazer Kırmızı Mermi', price: 60, desc: 'Yüksek hızlı kızılötesi lazer mermisi.', preview: '#ff4d4d' },
+    { id: 'bullet_toxic_green', type: 'bullet', name: 'Zehirli Yeşil Mermi', price: 55, desc: 'Radyasyon yayan zehirli mermi izi.', preview: '#10b981' },
+
+    // --- HAREKET / İZ (TRAIL) EFEKTLERİ ---
+    { id: 'trail_sparks', type: 'trail', name: 'Kıvılcım İz Efekti', price: 75, desc: 'Hareket ederken arkasından uçuşan kıvılcımlar.', preview: '#f72585' },
+    { id: 'trail_star_dust', type: 'trail', name: 'Yıldız Tozu İz Efekti', price: 110, desc: 'Galaktik toz bulutu bırakan zarif efekt.', preview: '#a855f7' },
+    { id: 'trail_smoke', type: 'trail', name: 'Sis Duman Efekti', price: 65, desc: 'Arzdan süzülen gizemli gri duman izi.', preview: '#64748b' }
   ]
 
   // Oda ve Davet State'leri
@@ -335,10 +348,10 @@ function App() {
     if (session) fetchProfile(session.user.id)
   }
 
-  // --- SHOP & ENVANTER FONKSİYONLARI ---
+  // --- SHOP & ENVANTER (BU DOSYADAN YÖNETİLİYOR) ---
   const handleBuyItem = async (item) => {
     if (!profile || (profile.voxel ?? 0) < item.price) {
-      alert('❌ Yetersiz Voxel ($VXL$) banyosu!')
+      alert('❌ Yetersiz Voxel ($VXL$) bakiyesi!')
       return
     }
 
@@ -402,7 +415,7 @@ function App() {
           level: 1, 
           wins: 0, 
           losses: 0, 
-          voxel: 100, 
+          voxel: 250, // Başlangıç hediyesi 250 Voxel!
           is_online: true,
           inventory: [],
           equipped: { skin: 'default_box', bullet: 'default_bullet', trail: 'none' }
@@ -643,14 +656,15 @@ function App() {
 
         {/* İÇERİK ALANI (SEKMELERE GÖRE) */}
         {activeTab === 'shop' ? (
-          <div style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto' }}>
+          <div style={{ padding: '30px', maxWidth: '1100px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '30px' }}>
               <button 
                 onClick={() => setShopSubTab('store')}
                 style={{
                   background: shopSubTab === 'store' ? '#00f5d4' : 'rgba(255,255,255,0.05)',
                   color: shopSubTab === 'store' ? '#0f172a' : '#fff',
-                  border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer'
+                  border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer',
+                  boxShadow: shopSubTab === 'store' ? '0 0 15px rgba(0,245,212,0.4)' : 'none'
                 }}>
                 🛍️ Mağaza (Satın Al)
               </button>
@@ -659,7 +673,8 @@ function App() {
                 style={{
                   background: shopSubTab === 'inventory' ? '#00f5d4' : 'rgba(255,255,255,0.05)',
                   color: shopSubTab === 'inventory' ? '#0f172a' : '#fff',
-                  border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer'
+                  border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer',
+                  boxShadow: shopSubTab === 'inventory' ? '0 0 15px rgba(0,245,212,0.4)' : 'none'
                 }}>
                 🎒 Envanterim & Kuşan
               </button>
@@ -667,23 +682,38 @@ function App() {
 
             {shopSubTab === 'store' ? (
               <div>
-                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center' }}>Kutu & Efekt Mağazası</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>KUTU & EFEKT MAĞAZASI</h3>
+                {/* YAN YANA GÖRKEMLİ GRID YAPISI */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
                   {shopItems.map((item) => {
                     const owned = inventory.includes(item.id)
                     return (
-                      <div key={item.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                        <div style={{ width: '50px', height: '50px', background: item.preview, borderRadius: '12px', marginBottom: '15px', boxShadow: `0 0 15px ${item.preview}` }} />
-                        <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>{item.name}</h4>
-                        <p style={{ color: '#888', fontSize: '0.8rem', minHeight: '35px' }}>{item.desc}</p>
-                        <div style={{ color: '#00f5d4', fontWeight: 'bold', margin: '15px 0' }}>🔷 {item.price} VXL</div>
+                      <div key={item.id} style={{ 
+                        background: 'rgba(15, 23, 42, 0.6)', 
+                        backdropFilter: 'blur(15px)',
+                        border: '1px solid rgba(255,255,255,0.08)', 
+                        borderRadius: '20px', 
+                        padding: '22px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        textAlign: 'center',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                        transition: 'transform 0.3s ease'
+                      }}>
+                        <div style={{ width: '60px', height: '60px', background: item.preview, borderRadius: '16px', marginBottom: '15px', boxShadow: `0 0 20px ${item.preview}` }} />
+                        <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '1.05rem' }}>{item.name}</h4>
+                        <p style={{ color: '#94a3b8', fontSize: '0.8rem', minHeight: '40px', lineHeight: '1.4' }}>{item.desc}</p>
+                        <div style={{ color: '#00f5d4', fontWeight: 'bold', margin: '15px 0', fontSize: '1.1rem' }}>🔷 {item.price} VXL</div>
                         <button 
                           onClick={() => handleBuyItem(item)}
                           disabled={owned}
                           style={{
-                            width: '100%', padding: '10px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: owned ? 'default' : 'pointer',
-                            background: owned ? 'rgba(255,255,255,0.1)' : '#00f5d4',
-                            color: owned ? '#888' : '#0f172a'
+                            width: '100%', padding: '11px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: owned ? 'default' : 'pointer',
+                            background: owned ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #00f5d4, #2ec4b6)',
+                            color: owned ? '#64748b' : '#0f172a',
+                            boxShadow: owned ? 'none' : '0 5px 15px rgba(0,245,212,0.3)',
+                            transition: 'all 0.2s ease'
                           }}>
                           {owned ? 'Zaten Sende ✅' : 'Satın Al'}
                         </button>
@@ -694,10 +724,13 @@ function App() {
               </div>
             ) : (
               <div>
-                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center' }}>Sahip Olduğun Eşyalar (Kuşan)</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>ENVANTERİN VE KUŞANILANLAR</h3>
+                {/* YAN YANA GÖRKEMLİ GRID YAPISI */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
                   {inventory.length === 0 ? (
-                    <p style={{ color: '#888', textAlign: 'center', gridColumn: '1 / -1' }}>Henüz mağazadan hiç eşya almamışsın kanki!</p>
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>Envanterin henüz bomboş kanki! Mağazadan kendine havalı bir şeyler alabilirsin. 🚀</p>
+                    </div>
                   ) : (
                     inventory.map((invId) => {
                       const item = shopItems.find(i => i.id === invId)
@@ -705,16 +738,28 @@ function App() {
                       const isEquipped = equippedItems.skin === item.id || equippedItems.bullet === item.id || equippedItems.trail === item.id
 
                       return (
-                        <div key={item.id} style={{ background: 'rgba(255,255,255,0.03)', border: isEquipped ? '2px solid #00f5d4' : '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                          <div style={{ width: '50px', height: '50px', background: item.preview, borderRadius: '12px', marginBottom: '15px', boxShadow: `0 0 15px ${item.preview}` }} />
-                          <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>{item.name}</h4>
-                          <p style={{ color: '#888', fontSize: '0.8rem', minHeight: '35px' }}>{item.desc}</p>
+                        <div key={item.id} style={{ 
+                          background: 'rgba(15, 23, 42, 0.6)', 
+                          backdropFilter: 'blur(15px)',
+                          border: isEquipped ? '2px solid #00f5d4' : '1px solid rgba(255,255,255,0.08)', 
+                          borderRadius: '20px', 
+                          padding: '22px', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          textAlign: 'center',
+                          boxShadow: isEquipped ? '0 0 25px rgba(0,245,212,0.25)' : '0 10px 30px rgba(0,0,0,0.4)'
+                        }}>
+                          <div style={{ width: '60px', height: '60px', background: item.preview, borderRadius: '16px', marginBottom: '15px', boxShadow: `0 0 20px ${item.preview}` }} />
+                          <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '1.05rem' }}>{item.name}</h4>
+                          <p style={{ color: '#94a3b8', fontSize: '0.8rem', minHeight: '40px', lineHeight: '1.4' }}>{item.desc}</p>
                           <button 
                             onClick={() => handleEquipItem(item)}
                             style={{
-                              width: '100%', padding: '10px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px',
+                              width: '100%', padding: '11px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px',
                               background: isEquipped ? '#2ec4b6' : 'rgba(255,255,255,0.1)',
-                              color: isEquipped ? '#fff' : '#cbd5e1'
+                              color: isEquipped ? '#0f172a' : '#cbd5e1',
+                              boxShadow: isEquipped ? '0 0 15px rgba(46,196,182,0.4)' : 'none'
                             }}>
                             {isEquipped ? 'Aktif (Kuşanıldı) ✨' : 'Kuşan'}
                           </button>
