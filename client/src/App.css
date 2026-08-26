@@ -913,3 +913,325 @@ body {
   padding: 10px 15px;
   border-radius: 8px;
 }
+
+/* ==========================================================
+   EFSANE CAM EFEKTLİ HEADER & DAMLA ÇENTİK (NOTCH) STİLLERİ
+   ========================================================== */
+
+.lobby-header {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  padding: 16px 35px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.lobby-logo {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  text-shadow: 0 0 20px rgba(0, 245, 212, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  color: #00f5d4;
+}
+
+.user-badge-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.voxel-badge {
+  background: rgba(0, 245, 212, 0.1);
+  border: 1px solid rgba(0, 245, 212, 0.3);
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 15px rgba(0, 245, 212, 0.15);
+}
+
+.voxel-badge span {
+  color: #00f5d4;
+  font-weight: bold;
+}
+
+.user-name-text {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.logout-btn {
+  background: rgba(231, 29, 54, 0.15);
+  border: 1px solid rgba(231, 29, 54, 0.3);
+  color: #ff6b6b;
+  padding: 6px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(231, 29, 54, 0.3);
+}
+
+/* ÇENTİK (NOTCH) SEKME ALANI */
+.notch-container {
+  display: flex;
+  justify-content: center;
+  background: transparent;
+  position: relative;
+  z-index: 90;
+  margin-top: -1px;
+}
+
+.notch-tabs {
+  display: flex;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-radius: 0 0 32px 32px;
+  padding: 10px 30px 16px 30px;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: none;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.15);
+}
+
+.notch-tab-btn {
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 24px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notch-tab-btn.active {
+  background: linear-gradient(135deg, #00f5d4, #2ec4b6);
+  color: #0f172a;
+  border: none;
+  box-shadow: 0 10px 25px rgba(0, 245, 212, 0.4);
+}
+
+.notch-tab-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* LİDERLİK TABLOSU MODALI */
+.leaderboard-modal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.leaderboard-box {
+  background: #0f172a;
+  border: 1px solid rgba(0, 245, 212, 0.3);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 245, 212, 0.15);
+  overflow: hidden;
+}
+
+.leaderboard-header {
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-close-btn {
+  background: #e71d36;
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.leaderboard-list {
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.leaderboard-item.my-rank {
+  border-color: #00f5d4;
+  background: rgba(0, 245, 212, 0.1);
+}
+
+.leaderboard-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rank-number {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #888;
+}
+
+.rank-number.top-1 { font-size: 1.2rem; color: #ffd700; }
+.rank-number.top-2 { color: #c0c0c0; }
+.rank-number.top-3 { color: #cd7f32; }
+
+.leaderboard-username {
+  font-weight: bold;
+  color: #fff;
+}
+
+.status-indicator {
+  font-size: 0.75rem;
+}
+
+.status-indicator.online { color: #2ec4b6; }
+.status-indicator.offline { color: #888; }
+
+.leaderboard-item-right {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  text-align: right;
+}
+
+.stat-sublabel {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.stat-main-val {
+  font-weight: bold;
+  color: #38bdf8;
+  font-size: 0.95px;
+}
+
+.stat-win-val {
+  font-weight: bold;
+  color: #2ec4b6;
+}
+
+/* SEKMELER / DİĞER ALANLAR */
+.tab-content-container {
+  padding: 40px 30px;
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.tab-subtext {
+  color: #aaa;
+  margin-bottom: 30px;
+}
+
+.tab-card-placeholder {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 40px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.placeholder-emoji {
+  font-size: 3rem;
+}
+
+.about-align {
+  text-align: left;
+}
+
+.about-box {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 30px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  line-height: 1.6;
+  color: #ccc;
+}
+
+.about-mt {
+  margin-top: 15px;
+}
+
+.accent-text {
+  color: #00f5d4;
+}
+
+/* Ek Küçük Sınıflar */
+.room-id-text { color: #00f5d4; margin-bottom: 15px; }
+.room-members-list { display: flex; flexDirection: column; gap: 10px; margin-bottom: 20px; }
+.room-member-card { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; align-items: center; }
+.member-name { font-weight: bold; }
+.member-role { font-size: 12px; }
+.host-color { color: #00f5d4; }
+.guest-color { color: #888; }
+.ready-badge-green { color: #2ec4b6; font-weight: bold; font-size: 14px; }
+.ready-badge-red { color: #e71d36; font-weight: bold; font-size: 14px; }
+.room-actions-row { display: flex; gap: 10px; margin-bottom: 20px; }
+.room-ready-btn { flex: 1; }
+.room-leave-btn { flex: 1; padding: 12px; }
+.online-players-list { display: flex; flex-direction: column; gap: 10px; }
+.no-player-text { color: #888; }
+.player-row-card { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; align-items: center; }
+.online-tag { color: #2ec4b6; font-size: 12px; }
+.room-full-text { font-size: 12px; color: #e71d36; }
+.invite-action-btn { padding: 5px 10px; background: #00f5d4; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.leaderboard-card-trigger { margin-top: 15px; background: linear-gradient(135deg, rgba(0, 245, 212, 0.1), rgba(114, 9, 183, 0.1)); border-color: #00f5d4; }
+.leaderboard-title-glow { color: #00f5d4; }
+.leaderboard-badge-btn { background: #00f5d4; color: #0f172a; }
+.mb-space { margin-bottom: 20px; }
+.invite-buttons-group { display: flex; gap: 5px; }
+.accept-btn { padding: 5px 8px; background: #2ec4b6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+.reject-btn { padding: 5px 8px; background: #e71d36; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+.waiting-text { font-size: 12px; color: #888; }
