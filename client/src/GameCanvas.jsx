@@ -14,13 +14,19 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     xp: profile?.xp || 0,
     wins: profile?.wins || 0,
     losses: profile?.losses || 0,
-    voxel: profile?.voxel || 0
+    voxel: profile?.voxel || 0,
+    equippedSkin: profile?.equipped_skin || profile?.skin || 'default',
+    equippedBullet: profile?.equipped_bullet || profile?.bullet || 'normal',
+    equippedTrail: profile?.equipped_trail || profile?.trail || 'none'
   })
 
   const [enemyData, setEnemyData] = useState({
     name: 'Rakip',
     color: '#ff2e93',
-    id: null
+    id: null,
+    equippedSkin: 'default',
+    equippedBullet: 'normal',
+    equippedTrail: 'none'
   })
 
   const [isHost, setIsHost] = useState(false)
@@ -33,16 +39,14 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const maxAmmo = 6
   const [isReloading, setIsReloading] = useState(false)
 
-  // Şarjör durumunu anlık takip etmek için ref ekledik (closure sorununu çözer)
   const ammoRef = useRef(6)
   const isReloadingRef = useRef(false)
-
   const socketRef = useRef(null)
   
   const gameStateRef = useRef({
     mySide: 'left',
-    myPos: { x: 80, y: 250, hp: 200, maxHp: 200 },
-    enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200 },
+    myPos: { x: 80, y: 250, hp: 200, maxHp: 200, trailHistory: [] },
+    enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200, trailHistory: [] },
     bullets: [],
     isPaused: false
   })
@@ -87,7 +91,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           setEnemyData({
             name: enemyProfile.username,
             color: enemyProfile.color || '#ff2e93',
-            id: enemyProfile.id
+            id: enemyProfile.id,
+            equippedSkin: enemyProfile.equipped_skin || enemyProfile.skin || 'default',
+            equippedBullet: enemyProfile.equipped_bullet || enemyProfile.bullet || 'normal',
+            equippedTrail: enemyProfile.equipped_trail || enemyProfile.trail || 'none'
           })
         }
       }
@@ -98,7 +105,15 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       socket.emit('join_room', roomId)
 
       socket.on('player_move', (payload) => {
-        gameStateRef.current.enemyPos = { x: payload.x, y: payload.y, hp: payload.hp, maxHp: 200 }
+        gameStateRef.current.enemyPos = { 
+          ...gameStateRef.current.enemyPos,
+          x: payload.x, 
+          y: payload.y, 
+          hp: payload.hp, 
+          maxHp: 200,
+          skin: payload.skin,
+          trail: payload.trail
+        }
       })
 
       socket.on('player_shoot', (payload) => {
@@ -187,11 +202,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (currentXp < 0) currentXp = 0
     }
 
-    // Her seviye atlandığında Voxel ödülü verme mekaniği
     while (currentXp >= 200) {
       currentXp -= 200
       currentLevel += 1
-      currentVoxel += 50 // Her seviye atlayışta kazanılacak Voxel miktarı (örnek: 50)
+      currentVoxel += 50
     }
 
     await supabase.from('profiles').update({
@@ -219,7 +233,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }, 1200)
   }
 
-  // --- OYUN DÖNGÜSÜ ---
+  // --- OYUN DÖNGÜSÜ VE ÇİZİM ---
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -276,8 +290,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         x: muzzleX,
         y: muzzleY,
         vx, vy,
-        size: 7,
-        color: userData.color
+        size: userData.equippedBullet === 'heavy' ? 10 : 7,
+        color: userData.equippedBullet === 'neon' ? '#ff00ff' : userData.color,
+        type: userData.equippedBullet
       }
 
       gameStateRef.current.bullets.push(newBullet)
@@ -308,6 +323,47 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
+    // SKİN ÇİZİM YARDIMCISI
+    const drawCustomSkin = (x, y, skinType, baseColor) => {
+      // Taban Kutu
+      ctx.fillStyle = baseColor
+      ctx.fillRect(x, y, 32, 32)
+
+      // İç Detay / Skin Çeşitleri
+      if (skinType === 'cyber' || skinType === 'robot') {
+        ctx.fillStyle = '#38bdf8'
+        ctx.fillRect(x + 6, y + 8, 20, 6) // Vizör / Göz
+      } else if (skinType === 'gold' || skinType === 'golden') {
+        ctx.strokeStyle = '#facc15'
+        ctx.lineWidth = 3
+        ctx.strokeRect(x + 2, y + 2, 28, 28)
+      } else if (skinType === 'cat' || skinType === 'neko') {
+        // Kedi Kulakları
+        ctx.fillStyle = baseColor
+        ctx.beginPath()
+        ctx.moveTo(x + 4, y)
+        ctx.lineTo(x + 10, y - 8)
+        ctx.lineTo(x + 14, y)
+        ctx.fill()
+
+        ctx.beginPath()
+        ctx.moveTo(x + 18, y)
+        ctx.lineTo(x + 22, y - 8)
+        ctx.lineTo(x + 28, y)
+        ctx.fill()
+      }
+    }
+
+    // TRAIL (İZ) ÇİZİM YARDIMCISI
+    const drawTrail = (trailHistory, trailType, color) => {
+      if (trailType === 'none' || !trailType) return
+      trailHistory.forEach((pos, idx) => {
+        const alpha = (idx + 1) / trailHistory.length * 0.4
+        ctx.fillStyle = trailType === 'fire' ? `rgba(255, 100, 0, ${alpha})` : (trailType === 'rainbow' ? `hsla(${idx * 30}, 100%, 50%, ${alpha})` : `rgba(0, 245, 212, ${alpha})`)
+        ctx.fillRect(pos.x + 8, pos.y + 8, 16, 16)
+      })
+    }
+
     const updateGame = () => {
       let myP = gameStateRef.current.myPos
       let enP = gameStateRef.current.enemyPos
@@ -333,10 +389,24 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         if (canMoveX) myP.x = nextX
         if (canMoveY) myP.y = nextY
 
+        // Trail geçmişini güncelle
+        if (canMoveX || canMoveY) {
+          if (!myP.trailHistory) myP.trailHistory = []
+          myP.trailHistory.push({ x: myP.x, y: myP.y })
+          if (myP.trailHistory.length > 8) myP.trailHistory.shift()
+        }
+
         const now = Date.now()
         if (now - lastMoveSend > 20 && socketRef.current) {
           lastMoveSend = now
-          socketRef.current.emit('player_move', { roomId, x: myP.x, y: myP.y, hp: myP.hp })
+          socketRef.current.emit('player_move', { 
+            roomId, 
+            x: myP.x, 
+            y: myP.y, 
+            hp: myP.hp,
+            skin: userData.equippedSkin,
+            trail: userData.equippedTrail
+          })
         }
 
         const bullets = gameStateRef.current.bullets
@@ -389,6 +459,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+      // Arka plan grid
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)'
       for (let x = 0; x < canvas.width; x += 40) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke()
@@ -397,6 +468,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke()
       }
 
+      // Engeller
       mapObstacles.forEach((obs) => {
         ctx.fillStyle = '#1e293b'
         ctx.strokeStyle = '#38bdf8'
@@ -405,14 +477,18 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.strokeRect(obs.x, obs.y, obs.w, obs.h)
       })
 
-      ctx.fillStyle = userData.color
-      ctx.fillRect(myP.x, myP.y, 32, 32)
+      // İzleri (Trail) Çiz
+      drawTrail(myP.trailHistory, userData.equippedTrail, userData.color)
+      if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail, enemyData.color)
+
+      // Oyuncuları Çiz
+      drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
-      ctx.fillStyle = enemyData.color
-      ctx.fillRect(enP.x, enP.y, 32, 32)
+      drawCustomSkin(enP.x, enP.y, enemyData.equippedSkin, enemyData.color)
       drawEntityHeader(enP, enemyData.name, enemyData.color, 200)
 
+      // Mermileri Çiz
       gameStateRef.current.bullets.forEach((bullet) => {
         ctx.fillStyle = bullet.color
         ctx.beginPath()
@@ -469,7 +545,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [userData.color, userData.username, enemyData.color, enemyData.name, enemyData.id, userId, roomId])
+  }, [userData.color, userData.username, userData.equippedSkin, userData.equippedBullet, userData.equippedTrail, enemyData.color, enemyData.name, enemyData.id, userId, roomId])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
