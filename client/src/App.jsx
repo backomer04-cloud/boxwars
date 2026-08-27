@@ -18,9 +18,9 @@ function App() {
     trail: 'none'
   })
 
-  // 🛍️ 60 ÜRÜNLÜK DEV MAĞAZA (20 Skin, 20 Mermi, 20 Efekt)
+  // 🛍️ 60 ÜRÜNLÜK DEV MAĞAZA (Özel Yüz/Maske Skinleri Dahil)
   const shopItems = [
-    // --- SKİN / KUTU ÇEŞİTLERİ (20 Adet) ---
+    // --- SKİN / KUTU ÇEŞİTLERİ (20 Adet - Kedi, Köpek, Robot vb.) ---
     { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7' },
     { id: 'skin_gold', type: 'skin', name: 'Altın Kaplama Küp', price: 200, desc: 'Zenginliğin ve ihtişamın zirvesi!', preview: '#ffd700' },
     { id: 'skin_fire_red', type: 'skin', name: 'Cehennem Ateşi Küpü', price: 150, desc: 'Alevler içinde yanan agresif tasarım.', preview: '#e71d36' },
@@ -77,7 +77,7 @@ function App() {
     { id: 'trail_gold_coins', type: 'trail', name: 'Altın Parıltı İzi', price: 180, desc: 'Zenginlik hissi veren altın tanecikleri.', preview: '#eab308' },
     { id: 'trail_ice_frost', type: 'trail', name: 'Buz Patinası İzi', price: 100, desc: 'Yerde donan soğuk kristal izleri.', preview: '#22d3ee' },
     { id: 'trail_heart_beats', type: 'trail', name: 'Kalp Atışı Efekti', price: 130, desc: 'Sevgi dolu pembe kalp parçacıkları.', preview: '#f43f5e' },
-    { id: 'trail_music_notes', type: 'trail', name: 'Müzik Nota İzi', price: 115, desc: 'Havadا dans eden nota sembolleri.', preview: '#8b5cf6' },
+    { id: 'trail_music_notes', type: 'trail', name: 'Müzik Nota İzi', price: 115, desc: 'Havadа dans eden nota sembolleri.', preview: '#8b5cf6' },
     { id: 'trail_pixel_glitch', type: 'trail', name: 'Piksel Glitch İzi', price: 145, desc: 'Dijital hata veren retro piksel art izi.', preview: '#10b981' },
     { id: 'trail_feather_fall', type: 'trail', name: 'Tüy Düşüşü Efekti', price: 95, desc: 'Hafifçe süzülen beyaz tüy tanecikleri.', preview: '#f1f5f9' },
     { id: 'trail_plasma_trail', type: 'trail', name: 'Plazma Enerji İzi', price: 155, desc: 'Yüksek yoğunluklu saf plazma dalgası.', preview: '#0284c7' },
@@ -122,31 +122,6 @@ function App() {
 
     return () => subscription.unsubscribe()
   }, [])
-
-  useEffect(() => {
-    if (!session) return
-
-    const handleBeforeUnload = () => {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseKey) return
-
-      fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${session.user.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${session.access_token}`,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({ is_online: false }),
-        keepalive: true
-      })
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [session])
 
   const fetchProfile = async (userId, setOnline = false) => {
     if (setOnline) {
@@ -517,6 +492,7 @@ function App() {
           profile={profile}
           equippedItems={equippedItems}
           refreshProfile={() => fetchProfile(session.user.id)}
+          shopItems={shopItems}
         />
       )
     }
