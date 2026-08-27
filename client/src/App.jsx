@@ -22,28 +22,37 @@ function App() {
     trail: 'none'
   })
 
-  // 🛍️ KOCAMAN ÜRÜN LİSTESİ (TÜRÜNE GÖRE GÖRSEL ŞEKLİ VAR: 'skin', 'bullet', 'trail')
+  // 🛍️ DEV ÇEŞİTLİLİKTE MAĞAZA ÜRÜNLERİ (ZENGİN RENK & EFEKT HAVUZU)
   const shopItems = [
     // --- SKİNLER (KUTULAR) ---
     { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7' },
-    { id: 'skin_gold', type: 'skin', name: 'Altın Kaplama Küp', price: 150, desc: 'Zenginliğin ve ihtişamın rengi!', preview: '#ffd700' },
-    { id: 'skin_fire_red', type: 'skin', name: 'Cehennem Ateşi Küpü', price: 120, desc: 'Alevler içinde yanan agresif tasarım.', preview: '#e71d36' },
-    { id: 'skin_matrix_green', type: 'skin', name: 'Matrix Yeşil Küp', price: 90, desc: 'Dijital kod evreninden fırlamış gibi.', preview: '#00f5d4' },
-    { id: 'skin_cyber_pink', type: 'skin', name: 'Cyber Pembe Küp', price: 80, desc: 'Sokakların en dikkat çeken neon pembe tarzı.', preview: '#f72585' },
-    { id: 'skin_shadow_black', type: 'skin', name: 'Gölge Karbon Küp', price: 200, desc: 'Karanlığın gücünü üzerinde taşı.', preview: '#1e293b' },
+    { id: 'skin_gold', type: 'skin', name: 'Altın Kaplama Küp', price: 200, desc: 'Zenginliğin ve ihtişamın zirvesi!', preview: '#ffd700' },
+    { id: 'skin_fire_red', type: 'skin', name: 'Cehennem Ateşi Küpü', price: 150, desc: 'Alevler içinde yanan agresif tasarım.', preview: '#e71d36' },
+    { id: 'skin_matrix_green', type: 'skin', name: 'Matrix Yeşil Küp', price: 100, desc: 'Dijital kod evreninden fırlamış gibi.', preview: '#00f5d4' },
+    { id: 'skin_cyber_pink', type: 'skin', name: 'Cyber Pembe Küp', price: 90, desc: 'Sokakların en dikkat çeken neon pembe tarzı.', preview: '#f72585' },
+    { id: 'skin_shadow_black', type: 'skin', name: 'Gölge Karbon Küp', price: 250, desc: 'Karanlığın gücünü üzerinde taşı.', preview: '#1e293b' },
+    { id: 'skin_electric_blue', type: 'skin', name: 'Elektrik Mavisi Küp', price: 120, desc: 'Yüksek voltajlı akımlarla parıldayan küp.', preview: '#3b82f6' },
+    { id: 'skin_toxic_slime', type: 'skin', name: 'Radyoaktif Slime Küp', price: 140, desc: 'Asit yeşili zehirli toksik kutu.', preview: '#84cc16' },
+    { id: 'skin_sunset_orange', type: 'skin', name: 'Gün Batımı Küpü', price: 110, desc: 'Akşamüstü kızıllığı ve sıcak tonlar.', preview: '#f97316' },
+    { id: 'skin_galaxy_violet', type: 'skin', name: 'Galaksi Moru Küp', price: 220, desc: 'Derin uzayın sonsuz gizemini barındırır.', preview: '#8b5cf6' },
 
     // --- MERMİ RENKLERİ & PARILDAMALAR ---
     { id: 'bullet_plasma_blue', type: 'bullet', name: 'Plazma Mavi Mermi', price: 40, desc: 'Parlak mavi renkli keskin plazma mermileri.', preview: '#38bdf8' },
     { id: 'bullet_laser_red', type: 'bullet', name: 'Lazer Kırmızı Mermi', price: 60, desc: 'Yüksek hızlı kızılötesi parlayan lazer mermisi.', preview: '#ff4d4d' },
     { id: 'bullet_toxic_green', type: 'bullet', name: 'Zehirli Yeşil Mermi', price: 55, desc: 'Etrafa radyasyon ve yeşil parıltı yayan mermi.', preview: '#10b981' },
-    { id: 'bullet_gold_spark', type: 'bullet', name: 'Altın Sarısı Parıltılı Mermi', price: 85, desc: 'Altın tozlarıyla parıldayan özel mermi tipi.', preview: '#facc15' },
+    { id: 'bullet_gold_spark', type: 'bullet', name: 'Altın Sarısı Parıltılı Mermi', price: 90, desc: 'Altın tozlarıyla parıldayan özel mermi tipi.', preview: '#facc15' },
     { id: 'bullet_neon_cyan', type: 'bullet', name: 'Cyan Neon Mermi', price: 70, desc: 'Göz alıcı canlı cyan parıldayan mermi izi.', preview: '#22d3ee' },
+    { id: 'bullet_hot_pink', type: 'bullet', name: 'Kızıl Ötesi Pembe Mermi', price: 75, desc: 'Çarpıcı sıcak pembe mermi hüzmesi.', preview: '#ec4899' },
+    { id: 'bullet_sun_yellow', type: 'bullet', name: 'Güneş Işığı Mermisi', price: 50, desc: 'Göz alan sarı parıltılı enerji mermisi.', preview: '#eab308' },
+    { id: 'bullet_pure_white', type: 'bullet', name: 'Süpernova Beyaz Mermi', price: 100, desc: 'Kör edici saf beyaz lazer ışığı.', preview: '#f8fafc' },
 
     // --- HAREKET / İZ (TRAIL) EFEKTLERİ ---
     { id: 'trail_sparks', type: 'trail', name: 'Kıvılcım İz Efekti', price: 75, desc: 'Hareket ederken arkasından uçuşan kıvılcımlar.', preview: '#f72585' },
-    { id: 'trail_star_dust', type: 'trail', name: 'Yıldız Tozu İz Efekti', price: 110, desc: 'Galaktik toz bulutu bırakan zarif efekt.', preview: '#a855f7' },
+    { id: 'trail_star_dust', type: 'trail', name: 'Yıldız Tozu İz Efekti', price: 120, desc: 'Galaktik toz bulutu bırakan zarif efekt.', preview: '#a855f7' },
     { id: 'trail_smoke', type: 'trail', name: 'Sis Duman Efekti', price: 65, desc: 'Arzdan süzülen gizemli gri duman izi.', preview: '#64748b' },
-    { id: 'trail_fire_trail', type: 'trail', name: 'Alev Yolu İz Efekti', price: 130, desc: 'Aranda bıraktığın yanık alev izleri.', preview: '#ea580c' }
+    { id: 'trail_fire_trail', type: 'trail', name: 'Alev Yolu İz Efekti', price: 140, desc: 'Aranda bıraktığın yanık alev izleri.', preview: '#ea580c' },
+    { id: 'trail_lightning', type: 'trail', name: 'Yıldırım Çarpması İzi', price: 160, desc: 'Aranda çakıp sönen elektrik arkları.', preview: '#38bdf8' },
+    { id: 'trail_matrix_code', type: 'trail', name: 'Matrix Kod Akışı', price: 150, desc: 'Arzdan süzülen yeşil kod parçacıkları.', preview: '#22c55e' }
   ]
 
   // Oda ve Davet State'leri
@@ -662,7 +671,7 @@ function App() {
           </div>
         )}
 
-        {/* 4'ERLİ GRID VE TÜRÜNE GÖRE DOĞRU ÖNİZLEME ŞEKLİ (SKİN=KUTU, MERMİ=ÇUBUK/MERMİ, TRAİL=PARLAYAN TOP) */}
+        {/* 4'ERLİ GRID VE ÇEŞİT ÇEŞİT MAĞAZA */}
         {activeTab === 'shop' ? (
           <div style={{ padding: '30px', maxWidth: '1250px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '30px' }}>
@@ -690,7 +699,7 @@ function App() {
 
             {shopSubTab === 'store' ? (
               <div>
-                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>TÜM MAĞAZA ÜRÜNLERİ</h3>
+                <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>DEV MAĞAZA KOLEKSİYONU</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
                   {shopItems.map((item) => {
                     const owned = inventory.includes(item.id)
@@ -707,15 +716,14 @@ function App() {
                         textAlign: 'center',
                         boxShadow: '0 10px 30px rgba(0,0,0,0.4)'
                       }}>
-                        {/* 🎨 ÜRÜNÜN KENDİNE HAS ŞEKLİ (SKİN=KARE KUTU, MERMİ=İNCE UZUN ÇUBUK, TRAİL=YUVARLAK PARLAYAN TOP) */}
+                        {/* 🎨 ÜRÜN ÖNİZLEME ŞEKLİ */}
                         <div style={{ 
                           width: item.type === 'bullet' ? '24px' : '55px', 
                           height: item.type === 'bullet' ? '50px' : '55px', 
                           background: item.preview, 
                           borderRadius: item.type === 'skin' ? '14px' : (item.type === 'bullet' ? '12px' : '50%'), 
                           marginBottom: '14px', 
-                          boxShadow: `0 0 22px ${item.preview}`,
-                          transform: item.type === 'bullet' ? 'rotate(0deg)' : 'none'
+                          boxShadow: `0 0 22px ${item.preview}` 
                         }} />
 
                         <h4 style={{ color: '#fff', margin: '0 0 6px 0', fontSize: '1rem' }}>{item.name}</h4>
@@ -764,7 +772,6 @@ function App() {
                           textAlign: 'center',
                           boxShadow: isEquipped ? '0 0 25px rgba(0,245,212,0.25)' : '0 10px 30px rgba(0,0,0,0.4)'
                         }}>
-                          {/* 🎨 ENVANTERDE DE DOĞRU ŞEKİL GÖSTERİMİ */}
                           <div style={{ 
                             width: item.type === 'bullet' ? '24px' : '55px', 
                             height: item.type === 'bullet' ? '50px' : '55px', 
@@ -811,7 +818,7 @@ function App() {
           <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
             <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', lineHeight: '1.6', color: '#ccc' }}>
-              <p><strong>Box Wars</strong>, küplerin ve taktiksel kapışmaların merkezde olduğu gerçek zamanlı bir 1v1 web oyunudur.</p>
+              <p><strong>Box Wars</strong>, küplerin ve taktiksel kapışmaların merkezde olduğu gerçek zamanlı bir 1v1 web oyunudur. Her seviye ve galibiyette **50 VXL** kazanarak mağazadaki onlarca özelleştirmeyi açabilirsin!</p>
             </div>
           </div>
         ) : (
