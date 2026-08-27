@@ -99,7 +99,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         }
       }
 
-      const socket = io('https://boxwars-server.onrender.com')
+      const socket = io('https://boxwars-server.onrender.com', {
+        transports: ['websocket', 'polling'], // 409 çakışmasını engellemek için
+        reconnectionAttempts: 5,
+        timeout: 10000
+      })
       socketRef.current = socket
 
       socket.emit('join_room', roomId)
