@@ -51,6 +51,29 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     isPaused: false
   })
 
+  // --- KULLANICI PROFİLİNİ TAZELE VE GÜNCEL SKİNLERİ AL ---
+  useEffect(() => {
+    async function fetchLatestProfile() {
+      if (!userId) return
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+      if (data) {
+        setUserData({
+          username: data.username || 'Oyuncu',
+          color: data.color || '#00f5d4',
+          level: data.level || 1,
+          xp: data.xp || 0,
+          wins: data.wins || 0,
+          losses: data.losses || 0,
+          voxel: data.voxel || 0,
+          equippedSkin: data.equipped_skin || data.skin || 'default',
+          equippedBullet: data.equipped_bullet || data.bullet || 'normal',
+          equippedTrail: data.equipped_trail || data.trail || 'none'
+        })
+      }
+    }
+    fetchLatestProfile()
+  }, [userId])
+
   // --- TAM EKRAN ---
   useEffect(() => {
     const enterFullscreen = () => {
@@ -100,7 +123,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
 
       const socket = io('https://boxwars-server.onrender.com', {
-        transports: ['websocket', 'polling'], // 409 çakışmasını engellemek için
+        transports: ['websocket', 'polling'],
         reconnectionAttempts: 5,
         timeout: 10000
       })
@@ -114,9 +137,14 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           x: payload.x, 
           y: payload.y, 
           hp: payload.hp, 
-          maxHp: 200,
-          skin: payload.skin,
-          trail: payload.trail
+          maxHp: 200
+        }
+        if (payload.skin || payload.trail) {
+          setEnemyData(prev => ({
+            ...prev,
+            equippedSkin: payload.skin || prev.equippedSkin,
+            equippedTrail: payload.trail || prev.equippedTrail
+          }))
         }
       })
 
@@ -288,15 +316,27 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         else { muzzleY = myP.y; vy = -bulletSpeed; }
       }
 
+      const bulletType = userData.equippedBullet
+      let bulletColor = userData.color
+      let bulletSize = 7
+
+      if (bulletType === 'heavy') {
+        bulletSize = 10
+      } else if (bulletType === 'neon') {
+        bulletColor = '#ff00ff'
+      } else if (bulletType === 'gold') {
+        bulletColor = '#facc15'
+      }
+
       const newBullet = {
         id: `${userId}-${Date.now()}`,
         senderId: userId,
         x: muzzleX,
         y: muzzleY,
         vx, vy,
-        size: userData.equippedBullet === 'heavy' ? 10 : 7,
-        color: userData.equippedBullet === 'neon' ? '#ff00ff' : userData.color,
-        type: userData.equippedBullet
+        size: bulletSize,
+        color: bulletColor,
+        type: bulletType
       }
 
       gameStateRef.current.bullets.push(newBullet)
@@ -329,20 +369,17 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
     // SKİN ÇİZİM YARDIMCISI
     const drawCustomSkin = (x, y, skinType, baseColor) => {
-      // Taban Kutu
       ctx.fillStyle = baseColor
       ctx.fillRect(x, y, 32, 32)
 
-      // İç Detay / Skin Çeşitleri
       if (skinType === 'cyber' || skinType === 'robot') {
         ctx.fillStyle = '#38bdf8'
-        ctx.fillRect(x + 6, y + 8, 20, 6) // Vizör / Göz
+        ctx.fillRect(x + 6, y + 8, 20, 6)
       } else if (skinType === 'gold' || skinType === 'golden') {
         ctx.strokeStyle = '#facc15'
         ctx.lineWidth = 3
         ctx.strokeRect(x + 2, y + 2, 28, 28)
       } else if (skinType === 'cat' || skinType === 'neko') {
-        // Kedi Kulakları
         ctx.fillStyle = baseColor
         ctx.beginPath()
         ctx.moveTo(x + 4, y)
@@ -359,11 +396,17 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }
 
     // TRAIL (İZ) ÇİZİM YARDIMCISI
-    const drawTrail = (trailHistory, trailType, color) => {
-      if (trailType === 'none' || !trailType) return
+    const drawTrail = (trailHistory, trailType) => {
+      if (!trailType || trailType === 'none') return
       trailHistory.forEach((pos, idx) => {
         const alpha = (idx + 1) / trailHistory.length * 0.4
-        ctx.fillStyle = trailType === 'fire' ? `rgba(255, 100, 0, ${alpha})` : (trailType === 'rainbow' ? `hsla(${idx * 30}, 100%, 50%, ${alpha})` : `rgba(0, 245, 212, ${alpha})`)
+        if (trailType === 'fire') {
+          ctx.fillStyle = `rgba(255, 100, 0, ${alpha})`
+        } else if (trailType === 'rainbow') {
+          ctx.fillStyle = `hsla(${idx * 30}, 100%, 50%, ${alpha})`
+        } else {
+          ctx.fillStyle = `rgba(0, 245, 212, ${alpha})`
+        }
         ctx.fillRect(pos.x + 8, pos.y + 8, 16, 16)
       })
     }
@@ -393,7 +436,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         if (canMoveX) myP.x = nextX
         if (canMoveY) myP.y = nextY
 
-        // Trail geçmişini güncelle
         if (canMoveX || canMoveY) {
           if (!myP.trailHistory) myP.trailHistory = []
           myP.trailHistory.push({ x: myP.x, y: myP.y })
@@ -463,7 +505,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // Arka plan grid
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)'
       for (let x = 0; x < canvas.width; x += 40) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke()
@@ -472,7 +513,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke()
       }
 
-      // Engeller
       mapObstacles.forEach((obs) => {
         ctx.fillStyle = '#1e293b'
         ctx.strokeStyle = '#38bdf8'
@@ -482,10 +522,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       })
 
       // İzleri (Trail) Çiz
-      drawTrail(myP.trailHistory, userData.equippedTrail, userData.color)
-      if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail, enemyData.color)
+      drawTrail(myP.trailHistory, userData.equippedTrail)
+      if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail)
 
-      // Oyuncuları Çiz
+      // Oyuncuları ve Skinleri Çiz
       drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
@@ -549,7 +589,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [userData.color, userData.username, userData.equippedSkin, userData.equippedBullet, userData.equippedTrail, enemyData.color, enemyData.name, enemyData.id, userId, roomId])
+  }, [userData, enemyData, userId, roomId])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
