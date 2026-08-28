@@ -15,9 +15,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     wins: profile?.wins || 0,
     losses: profile?.losses || 0,
     voxel: profile?.voxel || 0,
-    equippedSkin: profile?.equipped_skin || profile?.skin || 'default',
-    equippedBullet: profile?.equipped_bullet || profile?.bullet || 'normal',
-    equippedTrail: profile?.equipped_trail || profile?.trail || 'none'
+    equippedSkin: profile?.equipped?.skin || profile?.skin || 'default',
+    equippedBullet: profile?.equipped?.bullet || profile?.bullet || 'normal',
+    equippedTrail: profile?.equipped?.trail || profile?.trail || 'none'
   })
 
   const [enemyData, setEnemyData] = useState({
@@ -51,7 +51,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     isPaused: false
   })
 
-  // --- KULLANICI PROFİLİNİ TAZELE VE GÜNCEL SKİNLERİ AL ---
+  // --- KULLANICI PROFİLİNİ TAZELE VE "EQUIPPED" JSON VERİSİNİ ÇEK ---
   useEffect(() => {
     async function fetchLatestProfile() {
       if (!userId) return
@@ -65,9 +65,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           wins: data.wins || 0,
           losses: data.losses || 0,
           voxel: data.voxel || 0,
-          equippedSkin: data.equipped_skin || data.skin || 'default',
-          equippedBullet: data.equipped_bullet || data.bullet || 'normal',
-          equippedTrail: data.equipped_trail || data.trail || 'none'
+          equippedSkin: data.equipped?.skin || data.skin || 'default',
+          equippedBullet: data.equipped?.bullet || data.bullet || 'normal',
+          equippedTrail: data.equipped?.trail || data.trail || 'none'
         })
       }
     }
@@ -115,9 +115,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             name: enemyProfile.username,
             color: enemyProfile.color || '#ff2e93',
             id: enemyProfile.id,
-            equippedSkin: enemyProfile.equipped_skin || enemyProfile.skin || 'default',
-            equippedBullet: enemyProfile.equipped_bullet || enemyProfile.bullet || 'normal',
-            equippedTrail: enemyProfile.equipped_trail || enemyProfile.trail || 'none'
+            equippedSkin: enemyProfile.equipped?.skin || enemyProfile.skin || 'default',
+            equippedBullet: enemyProfile.equipped?.bullet || enemyProfile.bullet || 'normal',
+            equippedTrail: enemyProfile.equipped?.trail || enemyProfile.trail || 'none'
           })
         }
       }
@@ -320,11 +320,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       let bulletColor = userData.color
       let bulletSize = 7
 
-      if (bulletType === 'heavy') {
+      if (bulletType === 'heavy' || bulletType?.includes('heavy')) {
         bulletSize = 10
-      } else if (bulletType === 'neon') {
+      } else if (bulletType === 'neon' || bulletType?.includes('neon')) {
         bulletColor = '#ff00ff'
-      } else if (bulletType === 'gold') {
+      } else if (bulletType === 'gold' || bulletType?.includes('gold')) {
         bulletColor = '#facc15'
       }
 
@@ -367,19 +367,19 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // SKİN ÇİZİM YARDIMCISI
+    // SKİN ÇİZİM YARDIMCISI (Farklı skin türlerini destekler)
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       ctx.fillStyle = baseColor
       ctx.fillRect(x, y, 32, 32)
 
-      if (skinType === 'cyber' || skinType === 'robot') {
+      if (skinType?.includes('cyber') || skinType?.includes('robot') || skinType?.includes('neon')) {
         ctx.fillStyle = '#38bdf8'
         ctx.fillRect(x + 6, y + 8, 20, 6)
-      } else if (skinType === 'gold' || skinType === 'golden') {
+      } else if (skinType?.includes('gold')) {
         ctx.strokeStyle = '#facc15'
         ctx.lineWidth = 3
         ctx.strokeRect(x + 2, y + 2, 28, 28)
-      } else if (skinType === 'cat' || skinType === 'neko') {
+      } else if (skinType?.includes('cat') || skinType?.includes('neko')) {
         ctx.fillStyle = baseColor
         ctx.beginPath()
         ctx.moveTo(x + 4, y)
@@ -400,9 +400,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       if (!trailType || trailType === 'none') return
       trailHistory.forEach((pos, idx) => {
         const alpha = (idx + 1) / trailHistory.length * 0.4
-        if (trailType === 'fire') {
+        if (trailType?.includes('fire')) {
           ctx.fillStyle = `rgba(255, 100, 0, ${alpha})`
-        } else if (trailType === 'rainbow') {
+        } else if (trailType?.includes('rainbow')) {
           ctx.fillStyle = `hsla(${idx * 30}, 100%, 50%, ${alpha})`
         } else {
           ctx.fillStyle = `rgba(0, 245, 212, ${alpha})`
