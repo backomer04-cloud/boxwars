@@ -306,7 +306,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       let vx = 0, vy = 0
       let muzzleX = myP.x + 16, muzzleY = myP.y + 16
-      const bulletSpeed = 4.5 // Eski dengeli ve rahat takip edilebilir hız
+      const bulletSpeed = 4.5
 
       if (Math.abs(dx) > Math.abs(dy)) {
         if (dx > 0) { muzzleX = myP.x + 32; vx = bulletSpeed; }
@@ -387,7 +387,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // Dış çizgi tamamen kaldırıldı, sade ve şık skin çizimi
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       if (!skinType || skinType === 'none') {
         ctx.fillStyle = baseColor || '#00f5d4'
@@ -403,11 +402,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       ctx.shadowBlur = 12
       ctx.shadowColor = fillColor
 
-      // Kutu Gövdesi (Harici kalın çizgi yok)
       ctx.fillStyle = fillColor
       ctx.fillRect(x, y, 32, 32)
 
-      // Özgün Tasarım Detayları
       if (iconType === 'cat') {
         ctx.fillStyle = fillColor
         ctx.beginPath(); ctx.moveTo(x + 4, y); ctx.lineTo(x + 9, y - 8); ctx.lineTo(x + 14, y); ctx.fill()
@@ -464,7 +461,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       ctx.restore()
     }
 
-    // Oyuncu Yürüme Efekti (Trail)
     const drawTrail = (trailHistory, trailType) => {
       if (!trailType || trailType === 'none') return
       trailHistory.forEach((pos, idx) => {
@@ -490,7 +486,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       })
     }
 
-    // Kuşandığın Efektin Kendi Rengine Tam Uygun Mermi Arkası İzi (Trail)
     const drawBulletTrail = (bullet) => {
       const trailType = bullet.trailType
       if (!trailType || trailType === 'none' || !bullet.trail) return
@@ -499,21 +494,20 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         const tAlpha = (tIdx + 1) / bullet.trail.length * 0.65
         let color = bullet.color
 
-        // Seçilen efekt türüne göre nokta renkleri
         if (trailType.includes('fire') || trailType.includes('meteor') || trailType.includes('magma')) {
-          color = `rgba(249, 115, 22, ${tAlpha})` // Turuncu/Ateş
+          color = `rgba(249, 115, 22, ${tAlpha})`
         } else if (trailType.includes('lightning') || trailType.includes('electric') || trailType.includes('plasma')) {
-          color = `rgba(56, 189, 248, ${tAlpha})` // Mavi/Elektrik
+          color = `rgba(56, 189, 248, ${tAlpha})`
         } else if (trailType.includes('gold') || trailType.includes('sun')) {
-          color = `rgba(234, 179, 8, ${tAlpha})` // Altın/Sarı
+          color = `rgba(234, 179, 8, ${tAlpha})`
         } else if (trailType.includes('pink') || trailType.includes('heart') || trailType.includes('rose')) {
-          color = `rgba(244, 63, 94, ${tAlpha})` // Pembe/Kalp
+          color = `rgba(244, 63, 94, ${tAlpha})`
         } else if (trailType.includes('matrix') || trailType.includes('toxic')) {
-          color = `rgba(34, 197, 94, ${tAlpha})` // Yeşil/Matrix
+          color = `rgba(34, 197, 94, ${tAlpha})`
         } else if (trailType.includes('star') || trailType.includes('galaxy') || trailType.includes('amethyst')) {
-          color = `rgba(168, 85, 247, ${tAlpha})` // Mor/Galaksi
+          color = `rgba(168, 85, 247, ${tAlpha})`
         } else if (trailType.includes('laser') || trailType.includes('ruby')) {
-          color = `rgba(239, 68, 68, ${tAlpha})` // Kırmızı
+          color = `rgba(239, 68, 68, ${tAlpha})`
         }
 
         ctx.save()
@@ -614,7 +608,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // Zemin Izgarası
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)'
       for (let x = 0; x < canvas.width; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke() }
       for (let y = 0; y < canvas.height; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke() }
@@ -636,7 +629,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawCustomSkin(enP.x, enP.y, enemyData.equippedSkin, enemyData.color)
       drawEntityHeader(enP, enemyData.name, enemyData.color, 200)
 
-      // Mermiler ve Rengine Göre Özelleşmiş Trail Çizimi
       gameStateRef.current.bullets.forEach((bullet) => {
         drawBulletTrail(bullet)
         ctx.save()
@@ -800,22 +792,48 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
         {roundMessage && <div className="round-banner">{roundMessage}</div>}
 
+        {canvasRef && <canvas ref={canvasRef} width={1000} height={550} className="game-canvas" />}
+
+        {/* KAZANMA / MAĞLUBİYET EKRANI (Doğrudan Üstte ve Görünür) */}
         {gameOverData && (
-          <div className={`game-over-modal ${gameOverData.resultType === 'win' ? '' : 'defeat'}`}>
-            <div className={`result-title ${gameOverData.resultType}`}>
+          <div style={{
+            position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(15, 23, 42, 0.92)', backdropFilter: 'blur(10px)',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+            zIndex: 999999, color: '#fff', animation: 'fadeIn 0.3s ease-out'
+          }}>
+            <div style={{
+              fontSize: '3.5rem', fontWeight: '900', letterSpacing: '2px', marginBottom: '1.5rem',
+              color: gameOverData.resultType === 'win' ? '#00f5d4' : '#ef4444',
+              textShadow: gameOverData.resultType === 'win' ? '0 0 25px rgba(0,245,212,0.6)' : '0 0 25px rgba(239,68,68,0.6)'
+            }}>
               {gameOverData.resultType === 'win' ? '🏆 ZAFER' : '💀 MAĞLUBİYET'}
             </div>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <span className="stat-label">Skor</span>
-                <span className="stat-value">{gameOverData.p1Score} - {gameOverData.p2Score}</span>
-              </div>
+
+            <div style={{
+              background: 'rgba(30, 41, 59, 0.8)', border: '2px solid rgba(255, 255, 255, 0.1)',
+              padding: '1.5rem 3rem', borderRadius: '16px', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', gap: '10px', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+            }}>
+              <span style={{ fontSize: '1rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Final Skoru</span>
+              <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f8fafc' }}>
+                {gameOverData.p1Score} - {gameOverData.p2Score}
+              </span>
+              <span style={{ fontSize: '0.9rem', color: gameOverData.addedXp >= 0 ? '#10b981' : '#ef4444', fontWeight: '600' }}>
+                {gameOverData.addedXp >= 0 ? `+${gameOverData.addedXp} XP` : `${gameOverData.addedXp} XP`}
+              </span>
             </div>
-            <button className="btn-lobby" onClick={handleReturnToLobby}>🏠 LOBİYE DÖN</button>
+
+            <button onClick={handleReturnToLobby} style={{
+              background: 'linear-gradient(135deg, #00f5d4, #38bdf8)', color: '#0f172a',
+              border: 'none', padding: '1rem 2.5rem', borderRadius: '12px', fontSize: '1.1rem',
+              fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,245,212,0.4)',
+              transition: 'transform 0.2s, box-shadow 0.2s'
+            }}>
+              🏠 LOBİYE DÖN
+            </button>
           </div>
         )}
-
-        <canvas ref={canvasRef} width={1000} height={550} className="game-canvas" />
 
         <div className="mobile-controls-overlay">
           <div className="dpad">
