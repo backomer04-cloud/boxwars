@@ -7,6 +7,7 @@ function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [inGame, setInGame] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false) // 🌐 Sunucu bekleme / yüklenme ekranı state'i
 
   const [activeTab, setActiveTab] = useState('home')
   const [shopSubTab, setShopSubTab] = useState('store')
@@ -221,8 +222,13 @@ function App() {
         return
       }
 
-      if (roomData.status === 'playing' && !inGame) {
-        setInGame(true)
+      // Oda durumu 'playing' olduğunda doğrudan oyuna girmek yerine önce kısa bir sunucu bağlantı/yüklenme ekranı tetikle
+      if (roomData.status === 'playing' && !inGame && !isConnecting) {
+        setIsConnecting(true)
+        setTimeout(() => {
+          setIsConnecting(false)
+          setInGame(true)
+        }, 1500)
         return
       }
 
@@ -267,7 +273,7 @@ function App() {
     fetchRoomDetails()
     const roomInterval = setInterval(fetchRoomDetails, 2000)
     return () => clearInterval(roomInterval)
-  }, [currentRoom, currentInviteId, session, inGame])
+  }, [currentRoom, currentInviteId, session, inGame, isConnecting])
 
   const handleCreateRoom = async () => {
     if (!session) return
@@ -344,8 +350,15 @@ function App() {
   const handleStartGame = async () => {
     if (!currentRoom) return
     const { error } = await supabase.from('rooms').update({ status: 'playing' }).eq('id', currentRoom.id)
-    if (!error) setInGame(true)
-    else alert('Oyun başlatılamadı: ' + error.message)
+    if (!error) {
+      setIsConnecting(true)
+      setTimeout(() => {
+        setIsConnecting(false)
+        setInGame(true)
+      }, 1500)
+    } else {
+      alert('Oyun başlatılamadı: ' + error.message)
+    }
   }
 
   const handleBackToLobby = async () => {
@@ -354,6 +367,7 @@ function App() {
       await supabase.from('invites').delete().eq('room_id', currentRoom.id)
     }
     setInGame(false)
+    setIsConnecting(false)
     setCurrentRoom(null)
     setCurrentInviteId(null)
     setRoomMembers([])
@@ -497,10 +511,8 @@ function App() {
     if (item.iconType === 'cat') {
       return (
         <div style={baseStyle}>
-          {/* Kedi Kulakları */}
           <div style={{ position: 'absolute', top: '-10px', left: '6px', width: '0', height: '0', borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: '14px solid #fb923c' }} />
           <div style={{ position: 'absolute', top: '-10px', right: '6px', width: '0', height: '0', borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: '14px solid #fb923c' }} />
-          {/* Gözler */}
           <div style={{ width: '8px', height: '8px', background: '#000', borderRadius: '50%', position: 'absolute', top: '22px', left: '16px' }} />
           <div style={{ width: '8px', height: '8px', background: '#000', borderRadius: '50%', position: 'absolute', top: '22px', right: '16px' }} />
         </div>
@@ -510,10 +522,8 @@ function App() {
     if (item.iconType === 'dog') {
       return (
         <div style={baseStyle}>
-          {/* Köpek Kulakları */}
           <div style={{ position: 'absolute', top: '4px', left: '-8px', width: '12px', height: '22px', background: '#b45309', borderRadius: '6px' }} />
           <div style={{ position: 'absolute', top: '4px', right: '-8px', width: '12px', height: '22px', background: '#b45309', borderRadius: '6px' }} />
-          {/* Gözler */}
           <div style={{ width: '8px', height: '8px', background: '#000', borderRadius: '50%', position: 'absolute', top: '22px', left: '16px' }} />
           <div style={{ width: '8px', height: '8px', background: '#000', borderRadius: '50%', position: 'absolute', top: '22px', right: '16px' }} />
         </div>
@@ -532,7 +542,6 @@ function App() {
     if (item.iconType === 'pirate') {
       return (
         <div style={baseStyle}>
-          {/* Korsan Bandana */}
           <div style={{ position: 'absolute', top: '8px', left: '0', right: '0', height: '14px', background: '#dc2626' }} />
           <div style={{ width: '8px', height: '8px', background: '#000', borderRadius: '50%', position: 'absolute', top: '28px', left: '26px' }} />
         </div>
@@ -542,7 +551,6 @@ function App() {
     if (item.iconType === 'robot') {
       return (
         <div style={baseStyle}>
-          {/* Robot Gözler */}
           <div style={{ width: '32px', height: '10px', background: '#00f5d4', borderRadius: '4px', position: 'absolute', top: '22px', boxShadow: '0 0 10px #00f5d4' }} />
         </div>
       )
@@ -569,6 +577,35 @@ function App() {
 
   const currentLevelXp = profile?.xp ? profile.xp % 200 : 0
   const xpPercent = (currentLevelXp / 200) * 100
+
+  // 🌐 SUNUCU BAĞLANTI VE YÜKLENME BEKLEME EKRANI
+  if (isConnecting) {
+    return (
+      <div style={{
+        width: '100vw', height: '100vh', background: '#0f172a',
+        display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+        color: '#fff', gap: '20px', zIndex: 99999, position: 'fixed', top: 0, left: 0
+      }}>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
+        <div style={{
+          width: '60px', height: '60px', border: '5px solid rgba(0, 245, 212, 0.2)',
+          borderTop: '5px solid #00f5d4', borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00f5d4', textShadow: '0 0 15px rgba(0,245,212,0.5)' }}>
+          Savaş Alanına Bağlanılıyor... 🌐
+        </div>
+        <div style={{ color: '#94a3b8', fontSize: '1.1rem' }}>Sunucu senkronize ediliyor, rakip bekleniyor.</div>
+      </div>
+    )
+  }
 
   if (session) {
     if (inGame) {
