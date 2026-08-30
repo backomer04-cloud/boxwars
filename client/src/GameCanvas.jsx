@@ -7,6 +7,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const keysPressed = useRef({})
   const lastShotTime = useRef(0)
 
+  // 🌐 Sunucu Tam Hazır (Sync) State'i (Oyuncular haritaya düşmeden donma yaşamaması için)
+  const [isServerReady, setIsServerReady] = useState(false)
+  const [loadingText, setLoadingText] = useState('Oda ve sunucu senkronizasyonu bekleniyor...')
+
   const [userData, setUserData] = useState({
     username: profile?.username || 'Oyuncu',
     color: profile?.color || '#00f5d4',
@@ -116,109 +120,147 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   }, []);
 
   useEffect(() => {
+    let isMounted = true
+
     async function initRoomAndSocket() {
       if (!roomId || !userId) return
 
-      const { data: roomData } = await supabase.from('rooms').select('*').eq('id', roomId).single()
-      if (!roomData) return
-      const hosting = roomData.host_id === userId
-      setIsHost(hosting)
-      const side = hosting ? 'left' : 'right'
-      
-      gameStateRef.current.mySide = side
-      gameStateRef.current.myPos.x = side === 'left' ? 80 : 850
-      gameStateRef.current.enemyPos.x = side === 'left' ? 850 : 80
-
-      const { data: invites } = await supabase.from('invites').select('*').eq('room_id', roomId).eq('status', 'accepted').single()
-      const enemyId = hosting ? invites?.receiver_id : roomData.host_id
-      
-      if (enemyId) {
-        const { data: enemyProfile } = await supabase.from('profiles').select('*').eq('id', enemyId).single()
-        if (enemyProfile) {
-          setEnemyData({
-            name: enemyProfile.username,
-            color: enemyProfile.color || '#ff2e93',
-            id: enemyProfile.id,
-            equippedSkin: enemyProfile.equipped?.skin || enemyProfile.skin || 'skin_neon_purple',
-            equippedBullet: enemyProfile.equipped?.bullet || enemyProfile.bullet || 'bullet_plasma_blue',
-            equippedTrail: enemyProfile.equipped?.trail || enemyProfile.trail || 'trail_sparks'
-          })
+      try {
+        setLoadingText('Supabase oda verileri doğrulanıyor...')
+        const { data: roomData } = await supabase.from('rooms').select('*').eq('id', roomId).single()
+        if (!roomData) {
+          if (isMounted) {
+            alert('Oda bulunamadı.')
+            onBack()
+          }
+          return
         }
-      }
 
-      const socket = io('https://boxwars-server.onrender.com', {
-        transports: ['websocket', 'polling'],
-        reconnectionAttempts: 5,
-        timeout: 10000
-      })
-      socketRef.current = socket
+        const hosting = roomData.host_id === userId
+        setIsHost(hosting)
+        const side = hosting ? 'left' : 'right'
+        
+        gameStateRef.current.mySide = side
+        gameStateRef.current.myPos.x = side === 'left' ? 80 : 850
+        gameStateRef.current.enemyPos.x = side === 'left' ? 850 : 80
 
-      socket.emit('join_room', roomId)
-
-      socket.on('player_move', (payload) => {
-        gameStateRef.current.enemyPos = { 
-          ...gameStateRef.current.enemyPos,
-          x: payload.x, 
-          y: payload.y, 
-          hp: payload.hp, 
-          maxHp: 200
+        const { data: invites } = await supabase.from('invites').select('*').eq('room_id', roomId).eq('status', 'accepted').single()
+        const enemyId = hosting ? invites?.receiver_id : roomData.host_id
+        
+        if (enemyId) {
+          const { data: enemyProfile } = await supabase.from('profiles').select('*').eq('id', enemyId).single()
+          if (enemyProfile && isMounted) {
+            setEnemyData({
+              name: enemyProfile.username,
+              color: enemyProfile.color || '#ff2e93',
+              id: enemyProfile.id,
+              equippedSkin: enemyProfile.equipped?.skin || enemyProfile.skin || 'skin_neon_purple',
+              equippedBullet: enemyProfile.equipped?.bullet || enemyProfile.bullet || 'bullet_plasma_blue',
+              equippedTrail: enemyProfile.equipped?.trail || enemyProfile.trail || 'trail_sparks'
+            })
+          }
         }
-        if (payload.skin || payload.trail || payload.bullet) {
-          setEnemyData(prev => ({
-            ...prev,
-            equippedSkin: payload.skin || prev.equippedSkin,
-            equippedTrail: payload.trail || prev.equippedTrail,
-            equippedBullet: payload.bullet || prev.equippedBullet
-          }))
-        }
-      })
 
-      socket.on('player_shoot', (payload) => {
-        gameStateRef.current.bullets.push(payload.bullet)
-      })
-
-      socket.on('player_hit', (payload) => {
-        if (payload.targetId === userId) {
-          gameStateRef.current.myPos.hp = Math.max(0, gameStateRef.current.myPos.hp - 20)
-        }
-      })
-
-      socket.on('round_won', (payload) => {
-        handleRoundEndRemote(payload.winnerId, payload.scores)
-      })
-
-      socket.on('game_over_sync', async (payload) => {
-        setScores(payload.scores)
-        const finalResultType = payload.gameOverData.resultType
-        const { addedXp } = await applyPenaltiesAndDatabase(finalResultType)
-
-        setGameOverData({
-          resultType: finalResultType,
-          addedXp,
-          p1Score: payload.gameOverData.p1Score,
-          p2Score: payload.gameOverData.p2Score,
-          isQuit: false
+        setLoadingText('Render oyun sunucusuna bağlanılıyor ve senkronize ediliyor...')
+        const socket = io('https://boxwars-server.onrender.com', {
+          transports: ['websocket', 'polling'],
+          reconnectionAttempts: 5,
+          timeout: 10000,
+          query: { userId, roomId }
         })
-      })
+        socketRef.current = socket
 
-      socket.on('player_quit', async () => {
-        showNotification('Rakip oyundan ayrıldı!')
-        if (!gameOverData) {
-          const res = await applyPenaltiesAndDatabase('win')
+        socket.emit('join_room', roomId)
+
+        // 🌐 Sunucudan "ready" veya ilk akış sinyali gelene kadar veya soket oturtulana kadar beklet
+        socket.on('connect', () => {
+          console.log('Sunucuya socket bağlantısı kuruldu.')
+        })
+
+        // Sunucunun oyuncuyu onayladığı veya hazır olduğu sinyal (Desteği yoksa fallback timer devreye girer)
+        socket.on('server_ready', () => {
+          if (isMounted) {
+            setIsServerReady(true)
+          }
+        })
+
+        // Emniyet Kalkanı / Fallback: Sunucu özel hazır sinyali göndermese bile 1.5 saniye içinde haritayı tam hazır hale getirerek donmaları önler
+        const safetyTimer = setTimeout(() => {
+          if (isMounted && !isServerReady) {
+            setIsServerReady(true)
+          }
+        }, 1500)
+
+        socket.on('player_move', (payload) => {
+          gameStateRef.current.enemyPos = { 
+            ...gameStateRef.current.enemyPos,
+            x: payload.x, 
+            y: payload.y, 
+            hp: payload.hp, 
+            maxHp: 200
+          }
+          if (payload.skin || payload.trail || payload.bullet) {
+            setEnemyData(prev => ({
+              ...prev,
+              equippedSkin: payload.skin || prev.equippedSkin,
+              equippedTrail: payload.trail || prev.equippedTrail,
+              equippedBullet: payload.bullet || prev.equippedBullet
+            }))
+          }
+        })
+
+        socket.on('player_shoot', (payload) => {
+          gameStateRef.current.bullets.push(payload.bullet)
+        })
+
+        socket.on('player_hit', (payload) => {
+          if (payload.targetId === userId) {
+            gameStateRef.current.myPos.hp = Math.max(0, gameStateRef.current.myPos.hp - 20)
+          }
+        })
+
+        socket.on('round_won', (payload) => {
+          handleRoundEndRemote(payload.winnerId, payload.scores)
+        })
+
+        socket.on('game_over_sync', async (payload) => {
+          setScores(payload.scores)
+          const finalResultType = payload.gameOverData.resultType
+          const { addedXp } = await applyPenaltiesAndDatabase(finalResultType)
+
           setGameOverData({
-            resultType: 'win',
-            addedXp: res.addedXp,
-            p1Score: scores.player1,
-            p2Score: scores.player2,
+            resultType: finalResultType,
+            addedXp,
+            p1Score: payload.gameOverData.p1Score,
+            p2Score: payload.gameOverData.p2Score,
             isQuit: false
           })
-        }
-      })
+        })
+
+        socket.on('player_quit', async () => {
+          showNotification('Rakip oyundan ayrıldı!')
+          if (!gameOverData) {
+            const res = await applyPenaltiesAndDatabase('win')
+            setGameOverData({
+              resultType: 'win',
+              addedXp: res.addedXp,
+              p1Score: scores.player1,
+              p2Score: scores.player2,
+              isQuit: false
+            })
+          }
+        })
+
+        return () => clearTimeout(safetyTimer)
+      } catch (err) {
+        console.error('Bağlantı hatası:', err)
+      }
     }
 
     initRoomAndSocket()
 
     return () => {
+      isMounted = false
       if (socketRef.current) socketRef.current.disconnect()
     }
   }, [roomId, userId])
@@ -274,6 +316,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   }
 
   useEffect(() => {
+    if (!isServerReady) return
+
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -680,7 +724,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       window.removeEventListener('keyup', handleKeyUp)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [userData, enemyData, userId, roomId])
+  }, [isServerReady, userData, enemyData, userId, roomId])
 
   const handleRoundEndRemote = (winnerId, remoteScores) => {
     if (winnerId !== userId) {
@@ -758,6 +802,39 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const handleReturnToLobby = () => {
     if (refreshProfile) refreshProfile()
     onBack()
+  }
+
+  // ⏳ SUNUCU TAM HAZIR OLANA KADAR GÖSTERİLECEK PROFESYONEL BAĞLANTI EKRANI
+  if (!isServerReady) {
+    return (
+      <div style={{
+        width: '100vw', height: '100vh', background: '#090d16',
+        display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+        color: '#fff', gap: '20px', zIndex: 999999, position: 'fixed', top: 0, left: 0,
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}>
+        <style>
+          {`
+            @keyframes spinPulse {
+              0% { transform: rotate(0deg) scale(1); box-shadow: 0 0 10px rgba(0,245,212,0.2); }
+              50% { transform: rotate(180deg) scale(1.1); box-shadow: 0 0 25px rgba(0,245,212,0.6); }
+              100% { transform: rotate(360deg) scale(1); box-shadow: 0 0 10px rgba(0,245,212,0.2); }
+            }
+          `}
+        </style>
+        <div style={{
+          width: '70px', height: '70px', border: '6px solid rgba(0, 245, 212, 0.15)',
+          borderTop: '6px solid #00f5d4', borderRadius: '50%',
+          animation: 'spinPulse 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite'
+        }} />
+        <div style={{ fontSize: '1.9rem', fontWeight: '800', color: '#00f5d4', letterSpacing: '1px', textShadow: '0 0 20px rgba(0,245,212,0.4)' }}>
+          SAVAŞ ALANINA BAĞLANILINIR...
+        </div>
+        <div style={{ color: '#94a3b8', fontSize: '1.1rem', maxWidth: '450px', textAlign: 'center', lineHeight: '1.5' }}>
+          {loadingText}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -857,3 +934,4 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     </>
   )
 }
+[cite: 2]
