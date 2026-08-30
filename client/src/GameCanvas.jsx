@@ -288,7 +288,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
 
       const now = Date.now()
-      if (now - lastShotTime.current < 250) return
+      if (now - lastShotTime.current < 400) return // Atış aralığı dengelendi (daha yavaş ve kontrollü)
       lastShotTime.current = now
 
       ammoRef.current -= 1
@@ -306,7 +306,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       let vx = 0, vy = 0
       let muzzleX = myP.x + 16, muzzleY = myP.y + 16
-      const bulletSpeed = 12
+      const bulletSpeed = 5.5 // Mermi hızı normal ve takip edilebilir seviyeye düşürüldü
 
       if (Math.abs(dx) > Math.abs(dy)) {
         if (dx > 0) { muzzleX = myP.x + 32; vx = bulletSpeed; }
@@ -318,10 +318,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       const bulletType = userData.equippedBullet
       let bulletColor = userData.color
-      let bulletSize = 7
+      let bulletSize = 6
 
       if (bulletType?.includes('heavy')) {
-        bulletSize = 10
+        bulletSize = 9
       } else if (bulletType?.includes('neon')) {
         bulletColor = '#ff00ff'
       } else if (bulletType?.includes('gold')) {
@@ -367,28 +367,39 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // --- MAĞAZADAKİ FOTOĞRAFLARLA %100 BİREBİR KUTU TASARIMI (TERS BOYUTLAR / İÇ DETAY YOK) ---
+    // --- NEON PARILTI VE MAĞAZAYLA BİREBİR KUTU TASARIMI ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       const normalizedSkin = (skinType || '').toLowerCase()
 
       let fillColor = baseColor || '#00f5d4'
+      let glowColor = 'rgba(0, 245, 212, 0.6)'
 
       if (normalizedSkin.includes('purple') || normalizedSkin.includes('neon_purple')) {
-        fillColor = '#a855f7' // Mağazadaki mor tonu
+        fillColor = '#a855f7'
+        glowColor = 'rgba(168, 85, 247, 0.8)' // Neon mor parıltı
       } else if (normalizedSkin.includes('gold') || normalizedSkin.includes('golden')) {
-        fillColor = '#eab308' // Mağazadaki altın sarısı tonu
+        fillColor = '#eab308'
+        glowColor = 'rgba(234, 179, 8, 0.8)' // Neon altın parıltı
       } else if (normalizedSkin.includes('fire') || normalizedSkin.includes('cehennem')) {
-        fillColor = '#ef4444' // Mağazadaki ateş kırmızısı tonu
+        fillColor = '#ef4444'
+        glowColor = 'rgba(239, 68, 68, 0.8)' // Neon ateş parıltısı
       } else if (normalizedSkin.includes('matrix') || normalizedSkin.includes('yesil')) {
-        fillColor = '#10b981' // Mağazadaki matris yeşili tonu
+        fillColor = '#10b981'
+        glowColor = 'rgba(16, 185, 129, 0.8)' // Neon yeşil parıltı
       }
 
-      // Mağaza kartındaki gibi saf, düz renk kutu ve hafif dış çerçeve (Ortasında hiçbir şey yok!)
+      ctx.save()
+      // Neon parıltı efekti (Glow)
+      ctx.shadowBlur = 12
+      ctx.shadowColor = glowColor
+
       ctx.fillStyle = fillColor
       ctx.fillRect(x, y, 32, 32)
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
+      
+      ctx.strokeStyle = '#ffffff'
       ctx.lineWidth = 2
       ctx.strokeRect(x, y, 32, 32)
+      ctx.restore()
     }
 
     // --- TRAIL (İZ) ÇİZİM SİSTEMİ ---
@@ -415,8 +426,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         let nextX = myP.x
         let nextY = myP.y
 
-        // Karakterin hızı stabil ve normal seviyede (ışınlanma yok, akıcı 2.8 hız)
-        const speed = 2.8
+        // Karakter hızı normal, yumuşak ve ideal akışa (2.0) çekildi (ışınlanma tamamen bitti)
+        const speed = 2.0
         if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= speed
         if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += speed
         if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= speed
@@ -441,7 +452,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         }
 
         const now = Date.now()
-        if (now - lastMoveSend > 25 && socketRef.current) {
+        if (now - lastMoveSend > 30 && socketRef.current) {
           lastMoveSend = now
           socketRef.current.emit('player_move', { 
             roomId, 
@@ -523,7 +534,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawTrail(myP.trailHistory, userData.equippedTrail)
       if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail)
 
-      // Oyuncuları ve Mağazadaki Gibi Saf Kutuları Çiz
+      // Oyuncuları ve Neon Parıltılı Skinleri Çiz
       drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
