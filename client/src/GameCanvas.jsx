@@ -57,7 +57,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     isPaused: false
   })
 
-  // Market görsellerindeki detaylar (Emoji yerine sadece vektörel/şekilsel çizimler)
   const shopSkinDetails = {
     'skin_neon_purple': { color: '#7209b7', icon: 'cube' },
     'skin_gold': { color: '#ffd700', icon: 'cube' },
@@ -307,7 +306,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       let vx = 0, vy = 0
       let muzzleX = myP.x + 16, muzzleY = myP.y + 16
-      const bulletSpeed = 7
+      const bulletSpeed = 4.5 // Eski dengeli ve rahat takip edilebilir hız
 
       if (Math.abs(dx) > Math.abs(dy)) {
         if (dx > 0) { muzzleX = myP.x + 32; vx = bulletSpeed; }
@@ -388,14 +387,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // Vektörel/Detaylı Skin Çizimi (Emoji Yok)
+    // Dış çizgi tamamen kaldırıldı, sade ve şık skin çizimi
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       if (!skinType || skinType === 'none') {
         ctx.fillStyle = baseColor || '#00f5d4'
         ctx.fillRect(x, y, 32, 32)
-        ctx.strokeStyle = '#ffffff'
-        ctx.lineWidth = 1.5
-        ctx.strokeRect(x, y, 32, 32)
         return
       }
 
@@ -404,15 +400,12 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       const iconType = skinData.icon
 
       ctx.save()
-      ctx.shadowBlur = 14
+      ctx.shadowBlur = 12
       ctx.shadowColor = fillColor
 
-      // Kutu Gövdesi
+      // Kutu Gövdesi (Harici kalın çizgi yok)
       ctx.fillStyle = fillColor
       ctx.fillRect(x, y, 32, 32)
-      ctx.strokeStyle = '#ffffff'
-      ctx.lineWidth = 1.5
-      ctx.strokeRect(x, y, 32, 32)
 
       // Özgün Tasarım Detayları
       if (iconType === 'cat') {
@@ -497,33 +490,36 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       })
     }
 
-    // Mermi Arka Efekti (Ateşlenirken giden trail)
+    // Kuşandığın Efektin Kendi Rengine Tam Uygun Mermi Arkası İzi (Trail)
     const drawBulletTrail = (bullet) => {
       const trailType = bullet.trailType
       if (!trailType || trailType === 'none' || !bullet.trail) return
 
       bullet.trail.forEach((tPos, tIdx) => {
-        const tAlpha = (tIdx + 1) / bullet.trail.length * 0.6
+        const tAlpha = (tIdx + 1) / bullet.trail.length * 0.65
         let color = bullet.color
 
-        if (trailType.includes('fire') || trailType.includes('meteor')) {
-          color = `rgba(249, 115, 22, ${tAlpha})`
-        } else if (trailType.includes('lightning') || trailType.includes('electric')) {
-          color = `rgba(56, 189, 248, ${tAlpha})`
-        } else if (trailType.includes('gold')) {
-          color = `rgba(234, 179, 8, ${tAlpha})`
-        } else if (trailType.includes('pink') || trailType.includes('heart')) {
-          color = `rgba(244, 63, 94, ${tAlpha})`
-        } else if (trailType.includes('matrix')) {
-          color = `rgba(34, 197, 94, ${tAlpha})`
-        } else {
-          color = bullet.color
+        // Seçilen efekt türüne göre nokta renkleri
+        if (trailType.includes('fire') || trailType.includes('meteor') || trailType.includes('magma')) {
+          color = `rgba(249, 115, 22, ${tAlpha})` // Turuncu/Ateş
+        } else if (trailType.includes('lightning') || trailType.includes('electric') || trailType.includes('plasma')) {
+          color = `rgba(56, 189, 248, ${tAlpha})` // Mavi/Elektrik
+        } else if (trailType.includes('gold') || trailType.includes('sun')) {
+          color = `rgba(234, 179, 8, ${tAlpha})` // Altın/Sarı
+        } else if (trailType.includes('pink') || trailType.includes('heart') || trailType.includes('rose')) {
+          color = `rgba(244, 63, 94, ${tAlpha})` // Pembe/Kalp
+        } else if (trailType.includes('matrix') || trailType.includes('toxic')) {
+          color = `rgba(34, 197, 94, ${tAlpha})` // Yeşil/Matrix
+        } else if (trailType.includes('star') || trailType.includes('galaxy') || trailType.includes('amethyst')) {
+          color = `rgba(168, 85, 247, ${tAlpha})` // Mor/Galaksi
+        } else if (trailType.includes('laser') || trailType.includes('ruby')) {
+          color = `rgba(239, 68, 68, ${tAlpha})` // Kırmızı
         }
 
         ctx.save()
         ctx.fillStyle = color
         ctx.beginPath()
-        ctx.arc(tPos.x, tPos.y, bullet.size * 0.6, 0, Math.PI * 2)
+        ctx.arc(tPos.x, tPos.y, bullet.size * 0.75, 0, Math.PI * 2)
         ctx.fill()
         ctx.restore()
       })
@@ -581,7 +577,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
             if (!bullet.trail) bullet.trail = []
             bullet.trail.push({ x: bullet.x, y: bullet.y })
-            if (bullet.trail.length > 6) bullet.trail.shift()
+            if (bullet.trail.length > 7) bullet.trail.shift()
 
             if (bullet.x > canvas.width || bullet.x < 0 || bullet.y > canvas.height || bullet.y < 0) {
               hitWall = true; break
@@ -640,11 +636,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawCustomSkin(enP.x, enP.y, enemyData.equippedSkin, enemyData.color)
       drawEntityHeader(enP, enemyData.name, enemyData.color, 200)
 
-      // Mermiler ve Mermi Arkası Efekti (Trail) Çizimi
+      // Mermiler ve Rengine Göre Özelleşmiş Trail Çizimi
       gameStateRef.current.bullets.forEach((bullet) => {
         drawBulletTrail(bullet)
         ctx.save()
-        ctx.shadowBlur = 12
+        ctx.shadowBlur = 10
         ctx.shadowColor = bullet.color
         ctx.fillStyle = bullet.color
         ctx.beginPath()
