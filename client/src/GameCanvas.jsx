@@ -288,7 +288,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
 
       const now = Date.now()
-      if (now - lastShotTime.current < 400) return // Atış aralığı dengelendi (daha yavaş ve kontrollü)
+      if (now - lastShotTime.current - 50 < 0) return 
       lastShotTime.current = now
 
       ammoRef.current -= 1
@@ -306,7 +306,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       let vx = 0, vy = 0
       let muzzleX = myP.x + 16, muzzleY = myP.y + 16
-      const bulletSpeed = 5.5 // Mermi hızı normal ve takip edilebilir seviyeye düşürüldü
+      const bulletSpeed = 5.5
 
       if (Math.abs(dx) > Math.abs(dy)) {
         if (dx > 0) { muzzleX = myP.x + 32; vx = bulletSpeed; }
@@ -367,38 +367,34 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // --- NEON PARILTI VE MAĞAZAYLA BİREBİR KUTU TASARIMI ---
+    // --- BEYAZ ÇERÇEVDEN ARINDIRILMIŞ NEON PARILTI VE SKIN SİSTEMİ ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       const normalizedSkin = (skinType || '').toLowerCase()
 
       let fillColor = baseColor || '#00f5d4'
-      let glowColor = 'rgba(0, 245, 212, 0.6)'
+      let glowColor = 'rgba(0, 245, 212, 0.7)'
 
       if (normalizedSkin.includes('purple') || normalizedSkin.includes('neon_purple')) {
         fillColor = '#a855f7'
-        glowColor = 'rgba(168, 85, 247, 0.8)' // Neon mor parıltı
+        glowColor = 'rgba(168, 85, 247, 0.9)'
       } else if (normalizedSkin.includes('gold') || normalizedSkin.includes('golden')) {
         fillColor = '#eab308'
-        glowColor = 'rgba(234, 179, 8, 0.8)' // Neon altın parıltı
+        glowColor = 'rgba(234, 179, 8, 0.9)'
       } else if (normalizedSkin.includes('fire') || normalizedSkin.includes('cehennem')) {
         fillColor = '#ef4444'
-        glowColor = 'rgba(239, 68, 68, 0.8)' // Neon ateş parıltısı
+        glowColor = 'rgba(239, 68, 68, 0.9)'
       } else if (normalizedSkin.includes('matrix') || normalizedSkin.includes('yesil')) {
         fillColor = '#10b981'
-        glowColor = 'rgba(16, 185, 129, 0.8)' // Neon yeşil parıltı
+        glowColor = 'rgba(16, 185, 129, 0.9)'
       }
 
       ctx.save()
-      // Neon parıltı efekti (Glow)
-      ctx.shadowBlur = 12
+      // Dıştaki tüm beyaz çerçeveler kaldırıldı, sadece renk ve neon glow bırakıldı
+      ctx.shadowBlur = 15
       ctx.shadowColor = glowColor
 
       ctx.fillStyle = fillColor
       ctx.fillRect(x, y, 32, 32)
-      
-      ctx.strokeStyle = '#ffffff'
-      ctx.lineWidth = 2
-      ctx.strokeRect(x, y, 32, 32)
       ctx.restore()
     }
 
@@ -426,8 +422,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         let nextX = myP.x
         let nextY = myP.y
 
-        // Karakter hızı normal, yumuşak ve ideal akışa (2.0) çekildi (ışınlanma tamamen bitti)
-        const speed = 2.5
+        const speed = 2.5 // Senin belirlediğin ideal ve dengeli karakter hızı
         if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= speed
         if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += speed
         if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= speed
@@ -534,7 +529,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawTrail(myP.trailHistory, userData.equippedTrail)
       if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail)
 
-      // Oyuncuları ve Neon Parıltılı Skinleri Çiz
+      // Oyuncuları Çiz (Beyaz Çerçevesiz, Tamamen Neon Parıltılı)
       drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
