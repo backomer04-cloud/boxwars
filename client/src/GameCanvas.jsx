@@ -51,7 +51,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     isPaused: false
   })
 
-  // --- KULLANICI PROFİLİNİ TAZELE VE "EQUIPPED" JSON VERİSİNİ ÇEK ---
+  // --- KULLANICI PROFİLİNİ TAZELE VE EQUIPPED BİLGİSİNİ ÇEK ---
   useEffect(() => {
     async function fetchLatestProfile() {
       if (!userId) return
@@ -320,11 +320,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       let bulletColor = userData.color
       let bulletSize = 7
 
-      if (bulletType === 'heavy' || bulletType?.includes('heavy')) {
+      if (bulletType?.includes('heavy')) {
         bulletSize = 10
-      } else if (bulletType === 'neon' || bulletType?.includes('neon')) {
+      } else if (bulletType?.includes('neon')) {
         bulletColor = '#ff00ff'
-      } else if (bulletType === 'gold' || bulletType?.includes('gold')) {
+      } else if (bulletType?.includes('gold')) {
         bulletColor = '#facc15'
       }
 
@@ -367,35 +367,51 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // SKİN ÇİZİM YARDIMCISI (Farklı skin türlerini destekler)
+    // --- SKİN ÇİZİM SİSTEMİ (ÖZEL GÖRSELLER VE EFEKTLER) ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       ctx.fillStyle = baseColor
       ctx.fillRect(x, y, 32, 32)
 
-      if (skinType?.includes('cyber') || skinType?.includes('robot') || skinType?.includes('neon')) {
-        ctx.fillStyle = '#38bdf8'
-        ctx.fillRect(x + 6, y + 8, 20, 6)
-      } else if (skinType?.includes('gold')) {
-        ctx.strokeStyle = '#facc15'
+      // Marketindeki skin isimlerine göre özel görünüm çizimleri
+      if (skinType?.includes('neon_purple') || skinType?.includes('purple')) {
+        ctx.fillStyle = '#c084fc'
+        ctx.fillRect(x + 6, y + 6, 20, 20)
+        ctx.strokeStyle = '#e879f9'
+        ctx.lineWidth = 2
+        ctx.strokeRect(x + 4, y + 4, 24, 24)
+      } else if (skinType?.includes('gold') || skinType?.includes('golden')) {
+        ctx.fillStyle = '#facc15'
+        ctx.fillRect(x + 8, y + 8, 16, 16)
+        ctx.strokeStyle = '#fef08a'
         ctx.lineWidth = 3
         ctx.strokeRect(x + 2, y + 2, 28, 28)
+      } else if (skinType?.includes('cyber') || skinType?.includes('robot')) {
+        ctx.fillStyle = '#38bdf8'
+        ctx.fillRect(x + 4, y + 10, 24, 12)
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(x + 8, y + 13, 6, 6)
       } else if (skinType?.includes('cat') || skinType?.includes('neko')) {
         ctx.fillStyle = baseColor
+        // Kulaklar
         ctx.beginPath()
         ctx.moveTo(x + 4, y)
         ctx.lineTo(x + 10, y - 8)
         ctx.lineTo(x + 14, y)
         ctx.fill()
-
         ctx.beginPath()
         ctx.moveTo(x + 18, y)
         ctx.lineTo(x + 22, y - 8)
         ctx.lineTo(x + 28, y)
         ctx.fill()
+      } else {
+        // Standart iç kutu detayı
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)'
+        ctx.lineWidth = 2
+        ctx.strokeRect(x + 4, y + 4, 24, 24)
       }
     }
 
-    // TRAIL (İZ) ÇİZİM YARDIMCISI
+    // --- TRAIL (İZ) ÇİZİM SİSTEMİ ---
     const drawTrail = (trailHistory, trailType) => {
       if (!trailType || trailType === 'none') return
       trailHistory.forEach((pos, idx) => {
@@ -521,11 +537,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.strokeRect(obs.x, obs.y, obs.w, obs.h)
       })
 
-      // İzleri (Trail) Çiz
+      // İzleri Çiz
       drawTrail(myP.trailHistory, userData.equippedTrail)
       if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail)
 
-      // Oyuncuları ve Skinleri Çiz
+      // Oyuncuları ve Özel Skinlerini Çiz
       drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
