@@ -35,6 +35,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [scores, setScores] = useState({ player1: 0, player2: 0 })
   const [gameOverData, setGameOverData] = useState(null)
 
+  // --- ŞEFFAF TOAST BİLDİRİM SİSTEMİ ---
+  const [toastMessage, setToastMessage] = useState(null)
+
+  const showNotification = (msg) => {
+    setToastMessage(msg)
+    setTimeout(() => {
+      setToastMessage(null)
+    }, 3500)
+  }
+
   const [ammo, setAmmo] = useState(6)
   const maxAmmo = 6
   const [isReloading, setIsReloading] = useState(false)
@@ -177,6 +187,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       })
 
       socket.on('player_quit', async () => {
+        showNotification('Rakip oyundan ayrıldı!')
         if (!gameOverData) {
           const res = await applyPenaltiesAndDatabase('win')
           setGameOverData({
@@ -367,7 +378,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // --- BEYAZ ÇERÇEVDEN ARINDIRILMIŞ NEON PARILTI VE SKIN SİSTEMİ ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       const normalizedSkin = (skinType || '').toLowerCase()
 
@@ -389,7 +399,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       }
 
       ctx.save()
-      // Dıştaki tüm beyaz çerçeveler kaldırıldı, sadece renk ve neon glow bırakıldı
       ctx.shadowBlur = 15
       ctx.shadowColor = glowColor
 
@@ -398,7 +407,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       ctx.restore()
     }
 
-    // --- TRAIL (İZ) ÇİZİM SİSTEMİ ---
     const drawTrail = (trailHistory, trailType) => {
       if (!trailType || trailType === 'none') return
       trailHistory.forEach((pos, idx) => {
@@ -422,7 +430,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         let nextX = myP.x
         let nextY = myP.y
 
-        const speed = 2.5 // Senin belirlediğin ideal ve dengeli karakter hızı
+        const speed = 2.5
         if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= speed
         if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += speed
         if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= speed
@@ -525,18 +533,15 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.strokeRect(obs.x, obs.y, obs.w, obs.h)
       })
 
-      // İzleri Çiz
       drawTrail(myP.trailHistory, userData.equippedTrail)
       if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail)
 
-      // Oyuncuları Çiz (Beyaz Çerçevesiz, Tamamen Neon Parıltılı)
       drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
       drawCustomSkin(enP.x, enP.y, enemyData.equippedSkin, enemyData.color)
       drawEntityHeader(enP, enemyData.name, enemyData.color, 200)
 
-      // Mermileri Çiz
       gameStateRef.current.bullets.forEach((bullet) => {
         ctx.fillStyle = bullet.color
         ctx.beginPath()
@@ -685,6 +690,14 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       <div className="portrait-warning">Lütfen Telefonu Yan Çevirin 🔄</div>
 
       <div className="game-wrapper" style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#0f172a', overflow: 'hidden' }}>
+        
+        {/* ŞEFFAF TOAST BİLDİRİM BALONU */}
+        {toastMessage && (
+          <div className="game-toast-notification">
+            {toastMessage}
+          </div>
+        )}
+
         <button className="back-btn-overlay" onClick={handleEarlyLeave}>⬅ Lobiye Dön (Terket)</button>
 
         {/* AMMO HUD */}
