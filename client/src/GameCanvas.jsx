@@ -276,7 +276,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }, 1200)
   }
 
-  // --- OYUN DÖNGÜSÜ VE ÇİZİM ---
+  // --- OYUN DÖNGÜSÜ VE 60 LIK SKİN / İZ / MERMİ HARİTALANDIRMASI ---
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -331,12 +331,35 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       let bulletColor = userData.color
       let bulletSize = 6
 
-      if (bulletType?.includes('heavy')) {
-        bulletSize = 9
-      } else if (bulletType?.includes('neon')) {
-        bulletColor = '#ff00ff'
-      } else if (bulletType?.includes('gold')) {
-        bulletColor = '#facc15'
+      // 20'li Mermi Listesi Dinamik Eşlemesi
+      const bulletColorMap = {
+        'bullet_plasma_blue': '#38bdf8',
+        'bullet_laser_red': '#ff4d4d',
+        'bullet_toxic_green': '#10b981',
+        'bullet_gold_spark': '#facc15',
+        'bullet_neon_cyan': '#22d3ee',
+        'bullet_hot_pink': '#ec4899',
+        'bullet_sun_yellow': '#eab308',
+        'bullet_pure_white': '#f8fafc',
+        'bullet_ruby_red': '#991b1b',
+        'bullet_emerald_ray': '#065f46',
+        'bullet_amethyst_bolt': '#581c87',
+        'bullet_copper_shot': '#9a3412',
+        'bullet_silver_flash': '#94a3b8',
+        'bullet_orange_flare': '#c2410c',
+        'bullet_lime_zap': '#65a30d',
+        'bullet_indigo_beam': '#3730a3',
+        'bullet_rose_quartz': '#fda4af',
+        'bullet_neon_teal': '#0d9488',
+        'bullet_carbon_dark': '#0f172a',
+        'bullet_rainbow_prism': '#db2777'
+      }
+
+      if (bulletColorMap[bulletType]) {
+        bulletColor = bulletColorMap[bulletType]
+      }
+      if (bulletType === 'bullet_rainbow_prism') {
+        bulletSize = 8
       }
 
       const newBullet = {
@@ -378,25 +401,35 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
+    // --- 20'Lİ SKİN / KÜP LİSTESİ DİNAMİK RENGİ VE NEON GLOW HARİTASI ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       const normalizedSkin = (skinType || '').toLowerCase()
 
-      let fillColor = baseColor || '#00f5d4'
-      let glowColor = 'rgba(0, 245, 212, 0.7)'
-
-      if (normalizedSkin.includes('purple') || normalizedSkin.includes('neon_purple')) {
-        fillColor = '#a855f7'
-        glowColor = 'rgba(168, 85, 247, 0.9)'
-      } else if (normalizedSkin.includes('gold') || normalizedSkin.includes('golden')) {
-        fillColor = '#eab308'
-        glowColor = 'rgba(234, 179, 8, 0.9)'
-      } else if (normalizedSkin.includes('fire') || normalizedSkin.includes('cehennem')) {
-        fillColor = '#ef4444'
-        glowColor = 'rgba(239, 68, 68, 0.9)'
-      } else if (normalizedSkin.includes('matrix') || normalizedSkin.includes('yesil')) {
-        fillColor = '#10b981'
-        glowColor = 'rgba(16, 185, 129, 0.9)'
+      const skinColorMap = {
+        'skin_neon_purple': '#7209b7',
+        'skin_gold': '#ffd700',
+        'skin_fire_red': '#e71d36',
+        'skin_matrix_green': '#00f5d4',
+        'skin_cyber_pink': '#f72585',
+        'skin_shadow_black': '#1e293b',
+        'skin_electric_blue': '#3b82f6',
+        'skin_toxic_slime': '#84cc16',
+        'skin_sunset_orange': '#f97316',
+        'skin_galaxy_violet': '#8b5cf6',
+        'skin_cat_face': '#fb923c',
+        'skin_dog_face': '#d97706',
+        'skin_ghost_white': '#e2e8f0',
+        'skin_pirate_box': '#78716c',
+        'skin_robot_droid': '#64748b',
+        'skin_camo_military': '#4d7c0f',
+        'skin_ice_crystal': '#06b6d4',
+        'skin_magma_core': '#c2410c',
+        'skin_toxic_hazard': '#ca8a04',
+        'skin_royal_crown': '#eab308'
       }
+
+      let fillColor = skinColorMap[normalizedSkin] || baseColor || '#00f5d4'
+      let glowColor = fillColor
 
       ctx.save()
       ctx.shadowBlur = 15
@@ -407,17 +440,32 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       ctx.restore()
     }
 
+    // --- 20'Lİ TRAIL (İZ) EFEKTLERİ DİNAMİK HARİTASI ---
     const drawTrail = (trailHistory, trailType) => {
       if (!trailType || trailType === 'none') return
       trailHistory.forEach((pos, idx) => {
         const alpha = (idx + 1) / trailHistory.length * 0.4
-        if (trailType?.includes('fire')) {
-          ctx.fillStyle = `rgba(255, 100, 0, ${alpha})`
-        } else if (trailType?.includes('rainbow')) {
-          ctx.fillStyle = `hsla(${idx * 30}, 100%, 50%, ${alpha})`
-        } else {
-          ctx.fillStyle = `rgba(0, 245, 212, ${alpha})`
+        let trailColor = 'rgba(0, 245, 212, ' + alpha + ')'
+
+        if (trailType === 'trail_fire_trail' || trailType === 'trail_meteor_tail') {
+          trailColor = `rgba(234, 88, 12, ${alpha})`
+        } else if (trailType === 'trail_lightning') {
+          trailColor = `rgba(56, 189, 248, ${alpha})`
+        } else if (trailType === 'trail_matrix_code') {
+          trailColor = `rgba(34, 197, 94, ${alpha})`
+        } else if (trailType === 'trail_gold_coins') {
+          trailColor = `rgba(234, 179, 8, ${alpha})`
+        } else if (trailType === 'trail_star_dust') {
+          trailColor = `rgba(168, 85, 247, ${alpha})`
+        } else if (trailType === 'trail_heart_beats') {
+          trailColor = `rgba(244, 63, 94, ${alpha})`
+        } else if (trailType === 'trail_sakura_petals') {
+          trailColor = `rgba(251, 113, 133, ${alpha})`
+        } else if (trailType === 'trail_cosmic_void') {
+          trailColor = `rgba(76, 29, 149, ${alpha})`
         }
+
+        ctx.fillStyle = trailColor
         ctx.fillRect(pos.x + 8, pos.y + 8, 16, 16)
       })
     }
@@ -691,7 +739,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       <div className="game-wrapper" style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#0f172a', overflow: 'hidden' }}>
         
-        {/* ŞEFFAF TOAST BİLDİRİM BALONU */}
         {toastMessage && (
           <div className="game-toast-notification">
             {toastMessage}
