@@ -57,7 +57,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     myPos: { x: 80, y: 250, hp: 200, maxHp: 200, trailHistory: [] },
     enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200, trailHistory: [] },
     bullets: [],
-    isPaused: false
+    isPaused: true // Oyun, her iki oyuncu da hazır sinyali verip başlama komutu gelene kadar duraklatılmış başlar
   })
 
   const shopSkinDetails = {
@@ -160,7 +160,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           }
         }
 
-        setLoadingText('Render oyun sunucusuna bağlanılıyor ve senkronize ediliyor...')
+        setLoadingText('Render oyun sunucusuna bağlanılıyor, rakip bekleniyor...')
         const socket = io('https://boxwars-server.onrender.com', {
           transports: ['websocket', 'polling'],
           reconnectionAttempts: 5,
@@ -175,17 +175,25 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           console.log('Sunucuya socket bağlantısı kuruldu.')
         })
 
-        socket.on('server_ready', () => {
+        // Her iki oyuncu da hazır olduğunda sunucudan 'start_game' sinyali gelecek
+        socket.on('start_game', () => {
           if (isMounted) {
             setIsServerReady(true)
+            gameStateRef.current.isPaused = false
+            setRoundMessage('SAVAŞ BAŞLADI!')
+            setTimeout(() => setRoundMessage(''), 1500)
           }
         })
 
+        // Geri sayım / güvenlik zaman aşımı: Eğer rakip geç kalırsa veya sinyal koparsa oyun otomatik başlar
         const safetyTimer = setTimeout(() => {
           if (isMounted && !isServerReady) {
             setIsServerReady(true)
+            gameStateRef.current.isPaused = false
+            setRoundMessage('SAVAŞ BAŞLADI!')
+            setTimeout(() => setRoundMessage(''), 1500)
           }
-        }, 1500)
+        }, 3000)
 
         socket.on('player_move', (payload) => {
           gameStateRef.current.enemyPos = { 
@@ -823,7 +831,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           animation: 'spinPulse 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite'
         }} />
         <div style={{ fontSize: '1.9rem', fontWeight: '800', color: '#00f5d4', letterSpacing: '1px', textShadow: '0 0 20px rgba(0,245,212,0.4)' }}>
-          SAVAŞ ALANINA BAĞLANILIYOR...
+          RAKİP BEKLENİYOR...
         </div>
         <div style={{ color: '#94a3b8', fontSize: '1.1rem', maxWidth: '450px', textAlign: 'center', lineHeight: '1.5' }}>
           {loadingText}
