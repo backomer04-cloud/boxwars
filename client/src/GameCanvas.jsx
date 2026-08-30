@@ -51,7 +51,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     isPaused: false
   })
 
-  // --- KULLANICI PROFİLİNİ TAZELE VE EQUIPPED BİLGİSİNİ ÇEK ---
+  // --- KULLANICI PROFİLİNİ TAZELE ---
   useEffect(() => {
     async function fetchLatestProfile() {
       if (!userId) return
@@ -367,73 +367,28 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // --- MARKETTEKİ KARTLARLA BİREBİR AYNI, TERTEMİZ TASARIM SİSTEMİ ---
+    // --- MAĞAZADAKİ FOTOĞRAFLARLA %100 BİREBİR KUTU TASARIMI (TERS BOYUTLAR / İÇ DETAY YOK) ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       const normalizedSkin = (skinType || '').toLowerCase()
 
-      if (normalizedSkin.includes('neon_purple') || normalizedSkin.includes('purple')) {
-        // Mor Neon Skin: Tamamen mor gövde, neon mor neon hatlar ve net cyberpunk iç detay
-        ctx.fillStyle = '#6b21a8'
-        ctx.fillRect(x, y, 32, 32)
-        ctx.strokeStyle = '#c084fc'
-        ctx.lineWidth = 3
-        ctx.strokeRect(x, y, 32, 32)
-        ctx.fillStyle = '#d8b4fe'
-        ctx.fillRect(x + 8, y + 8, 16, 16)
-      } 
-      else if (normalizedSkin.includes('gold') || normalizedSkin.includes('golden')) {
-        // Altın Skin: Tamamen altın sarısı, parlak sarı çerçeve ve lüks merkez kare
-        ctx.fillStyle = '#ca8a04'
-        ctx.fillRect(x, y, 32, 32)
-        ctx.strokeStyle = '#fef08a'
-        ctx.lineWidth = 3
-        ctx.strokeRect(x, y, 32, 32)
-        ctx.fillStyle = '#facc15'
-        ctx.fillRect(x + 8, y + 8, 16, 16)
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(x + 12, y + 12, 8, 8)
-      } 
-      else if (normalizedSkin.includes('cyber') || normalizedSkin.includes('robot')) {
-        // Siber / Robot Skin: Metalik koyu mavi zemin, siber açık mavi çizgiler
-        ctx.fillStyle = '#0369a1'
-        ctx.fillRect(x, y, 32, 32)
-        ctx.strokeStyle = '#38bdf8'
-        ctx.lineWidth = 3
-        ctx.strokeRect(x, y, 32, 32)
-        ctx.fillStyle = '#bae6fd'
-        ctx.fillRect(x + 4, y + 12, 24, 8)
-      } 
-      else if (normalizedSkin.includes('cat') || normalizedSkin.includes('neko')) {
-        // Kedi / Neko Skin: Sevimli kedi kulakları ve yumuşak pembe-beyaz tonlar (market kartıyla birebir)
-        ctx.fillStyle = '#f472b6'
-        ctx.fillRect(x, y, 32, 32)
-        ctx.strokeStyle = '#db2777'
-        ctx.lineWidth = 2
-        ctx.strokeRect(x, y, 32, 32)
-        // Kulaklar
-        ctx.fillStyle = '#f472b6'
-        ctx.beginPath()
-        ctx.moveTo(x + 2, y)
-        ctx.lineTo(x + 9, y - 8)
-        ctx.lineTo(x + 14, y)
-        ctx.fill()
-        ctx.beginPath()
-        ctx.moveTo(x + 18, y)
-        ctx.lineTo(x + 23, y - 8)
-        ctx.lineTo(x + 30, y)
-        ctx.fill()
-        // İç yüz detayı
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(x + 10, y + 10, 12, 12)
-      } 
-      else {
-        // Default (Standart Kuşanılmamış veya Düz Karakter)
-        ctx.fillStyle = baseColor || '#00f5d4'
-        ctx.fillRect(x, y, 32, 32)
-        ctx.strokeStyle = '#ffffff'
-        ctx.lineWidth = 2
-        ctx.strokeRect(x, y, 32, 32)
+      let fillColor = baseColor || '#00f5d4'
+
+      if (normalizedSkin.includes('purple') || normalizedSkin.includes('neon_purple')) {
+        fillColor = '#a855f7' // Mağazadaki mor tonu
+      } else if (normalizedSkin.includes('gold') || normalizedSkin.includes('golden')) {
+        fillColor = '#eab308' // Mağazadaki altın sarısı tonu
+      } else if (normalizedSkin.includes('fire') || normalizedSkin.includes('cehennem')) {
+        fillColor = '#ef4444' // Mağazadaki ateş kırmızısı tonu
+      } else if (normalizedSkin.includes('matrix') || normalizedSkin.includes('yesil')) {
+        fillColor = '#10b981' // Mağazadaki matris yeşili tonu
       }
+
+      // Mağaza kartındaki gibi saf, düz renk kutu ve hafif dış çerçeve (Ortasında hiçbir şey yok!)
+      ctx.fillStyle = fillColor
+      ctx.fillRect(x, y, 32, 32)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
+      ctx.lineWidth = 2
+      ctx.strokeRect(x, y, 32, 32)
     }
 
     // --- TRAIL (İZ) ÇİZİM SİSTEMİ ---
@@ -460,8 +415,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         let nextX = myP.x
         let nextY = myP.y
 
-        // Akıcı ve dengeli hız (3.2)
-        const speed = 3.2
+        // Karakterin hızı stabil ve normal seviyede (ışınlanma yok, akıcı 2.8 hız)
+        const speed = 2.8
         if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= speed
         if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += speed
         if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= speed
@@ -486,7 +441,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         }
 
         const now = Date.now()
-        if (now - lastMoveSend > 20 && socketRef.current) {
+        if (now - lastMoveSend > 25 && socketRef.current) {
           lastMoveSend = now
           socketRef.current.emit('player_move', { 
             roomId, 
@@ -568,7 +523,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawTrail(myP.trailHistory, userData.equippedTrail)
       if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail)
 
-      // Oyuncuları ve Marketle Birebir Uyumlu Skinlerini Çiz
+      // Oyuncuları ve Mağazadaki Gibi Saf Kutuları Çiz
       drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
