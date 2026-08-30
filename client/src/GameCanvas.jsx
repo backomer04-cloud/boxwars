@@ -367,34 +367,35 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // --- MARKET SİKİNLERİYLE BİREBİR AYNI VE KARAKTERİN TAMAMINI KAPLAYAN ÇİZİM SİSTEMİ ---
+    // --- MARKETTEKİ KARTLARLA BİREBİR AYNI, TERTEMİZ TASARIM SİSTEMİ ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
       const normalizedSkin = (skinType || '').toLowerCase()
 
       if (normalizedSkin.includes('neon_purple') || normalizedSkin.includes('purple')) {
-        // Mor Neon Skin: Tamamı mor dolgu, parlak neon mor kenarlık ve iç çapraz şık detay
-        ctx.fillStyle = '#9333ea'
+        // Mor Neon Skin: Tamamen mor gövde, neon mor neon hatlar ve net cyberpunk iç detay
+        ctx.fillStyle = '#6b21a8'
         ctx.fillRect(x, y, 32, 32)
         ctx.strokeStyle = '#c084fc'
         ctx.lineWidth = 3
         ctx.strokeRect(x, y, 32, 32)
-        // İç detay
-        ctx.fillStyle = '#e879f9'
-        ctx.fillRect(x + 10, y + 10, 12, 12)
+        ctx.fillStyle = '#d8b4fe'
+        ctx.fillRect(x + 8, y + 8, 16, 16)
       } 
       else if (normalizedSkin.includes('gold') || normalizedSkin.includes('golden')) {
-        // Altın Skin: Tamamı lüks altın rengi, parıltılı sarı çerçeve ve merkez nokta
-        ctx.fillStyle = '#eab308'
+        // Altın Skin: Tamamen altın sarısı, parlak sarı çerçeve ve lüks merkez kare
+        ctx.fillStyle = '#ca8a04'
         ctx.fillRect(x, y, 32, 32)
         ctx.strokeStyle = '#fef08a'
         ctx.lineWidth = 3
         ctx.strokeRect(x, y, 32, 32)
+        ctx.fillStyle = '#facc15'
+        ctx.fillRect(x + 8, y + 8, 16, 16)
         ctx.fillStyle = '#ffffff'
         ctx.fillRect(x + 12, y + 12, 8, 8)
       } 
       else if (normalizedSkin.includes('cyber') || normalizedSkin.includes('robot')) {
-        // Siber / Robot Skin: Tamamı metalik siber mavi, yatay tarama çizgileri
-        ctx.fillStyle = '#0284c7'
+        // Siber / Robot Skin: Metalik koyu mavi zemin, siber açık mavi çizgiler
+        ctx.fillStyle = '#0369a1'
         ctx.fillRect(x, y, 32, 32)
         ctx.strokeStyle = '#38bdf8'
         ctx.lineWidth = 3
@@ -403,14 +404,14 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.fillRect(x + 4, y + 12, 24, 8)
       } 
       else if (normalizedSkin.includes('cat') || normalizedSkin.includes('neko')) {
-        // Kedi / Neko Skin: Taban renk + kulak detayları ve sevimli yüz
-        ctx.fillStyle = baseColor || '#f472b6'
+        // Kedi / Neko Skin: Sevimli kedi kulakları ve yumuşak pembe-beyaz tonlar (market kartıyla birebir)
+        ctx.fillStyle = '#f472b6'
         ctx.fillRect(x, y, 32, 32)
         ctx.strokeStyle = '#db2777'
         ctx.lineWidth = 2
         ctx.strokeRect(x, y, 32, 32)
         // Kulaklar
-        ctx.fillStyle = baseColor || '#f472b6'
+        ctx.fillStyle = '#f472b6'
         ctx.beginPath()
         ctx.moveTo(x + 2, y)
         ctx.lineTo(x + 9, y - 8)
@@ -421,6 +422,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.lineTo(x + 23, y - 8)
         ctx.lineTo(x + 30, y)
         ctx.fill()
+        // İç yüz detayı
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(x + 10, y + 10, 12, 12)
       } 
       else {
         // Default (Standart Kuşanılmamış veya Düz Karakter)
@@ -456,7 +460,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         let nextX = myP.x
         let nextY = myP.y
 
-        // Hız eski dengeli ve akıcı hızına (3.2) çekildi
+        // Akıcı ve dengeli hız (3.2)
         const speed = 3.2
         if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= speed
         if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += speed
@@ -564,7 +568,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawTrail(myP.trailHistory, userData.equippedTrail)
       if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail)
 
-      // Oyuncuları ve Tam Kaplayan Özel Skinlerini Çiz
+      // Oyuncuları ve Marketle Birebir Uyumlu Skinlerini Çiz
       drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
