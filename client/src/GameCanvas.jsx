@@ -7,7 +7,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const keysPressed = useRef({})
   const lastShotTime = useRef(0)
 
-  // 🌐 Sunucu Tam Hazır (Sync) State'i (Oyuncular haritaya düşmeden donma yaşamaması için)
   const [isServerReady, setIsServerReady] = useState(false)
   const [loadingText, setLoadingText] = useState('Oda ve sunucu senkronizasyonu bekleniyor...')
 
@@ -172,19 +171,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
         socket.emit('join_room', roomId)
 
-        // 🌐 Sunucudan "ready" veya ilk akış sinyali gelene kadar veya soket oturtulana kadar beklet
         socket.on('connect', () => {
           console.log('Sunucuya socket bağlantısı kuruldu.')
         })
 
-        // Sunucunun oyuncuyu onayladığı veya hazır olduğu sinyal (Desteği yoksa fallback timer devreye girer)
         socket.on('server_ready', () => {
           if (isMounted) {
             setIsServerReady(true)
           }
         })
 
-        // Emniyet Kalkanı / Fallback: Sunucu özel hazır sinyali göndermese bile 1.5 saniye içinde haritayı tam hazır hale getirerek donmaları önler
         const safetyTimer = setTimeout(() => {
           if (isMounted && !isServerReady) {
             setIsServerReady(true)
@@ -804,7 +800,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     onBack()
   }
 
-  // ⏳ SUNUCU TAM HAZIR OLANA KADAR GÖSTERİLECEK PROFESYONEL BAĞLANTI EKRANI
   if (!isServerReady) {
     return (
       <div style={{
@@ -828,7 +823,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           animation: 'spinPulse 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite'
         }} />
         <div style={{ fontSize: '1.9rem', fontWeight: '800', color: '#00f5d4', letterSpacing: '1px', textShadow: '0 0 20px rgba(0,245,212,0.4)' }}>
-          SAVAŞ ALANINA BAĞLANILINIR...
+          SAVAŞ ALANINA BAĞLANILIYOR...
         </div>
         <div style={{ color: '#94a3b8', fontSize: '1.1rem', maxWidth: '450px', textAlign: 'center', lineHeight: '1.5' }}>
           {loadingText}
@@ -847,7 +842,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
         <button className="back-btn-overlay" onClick={handleEarlyLeave}>⬅ Lobiye Dön (Terket)</button>
 
-        {/* AMMO HUD */}
         <div style={{
           position: 'fixed', top: '20px', right: '25px', background: 'rgba(15, 23, 42, 0.9)',
           border: '2px solid rgba(0, 245, 212, 0.5)', padding: '0.6rem 1.2rem', borderRadius: '14px',
@@ -869,9 +863,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
         {roundMessage && <div className="round-banner">{roundMessage}</div>}
 
-        {canvasRef && <canvas ref={canvasRef} width={1000} height={550} className="game-canvas" />}
+        <canvas ref={canvasRef} width={1000} height={550} className="game-canvas" />
 
-        {/* KAZANMA / MAĞLUBİYET EKRANI (Doğrudan Üstte ve Görünür) */}
         {gameOverData && (
           <div style={{
             position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh',
@@ -934,4 +927,3 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     </>
   )
 }
-[cite: 2]
