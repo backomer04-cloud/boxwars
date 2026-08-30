@@ -15,18 +15,18 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     wins: profile?.wins || 0,
     losses: profile?.losses || 0,
     voxel: profile?.voxel || 0,
-    equippedSkin: profile?.equipped?.skin || profile?.skin || 'default',
-    equippedBullet: profile?.equipped?.bullet || profile?.bullet || 'normal',
-    equippedTrail: profile?.equipped?.trail || profile?.trail || 'none'
+    equippedSkin: profile?.equipped?.skin || profile?.skin || 'skin_neon_purple',
+    equippedBullet: profile?.equipped?.bullet || profile?.bullet || 'bullet_plasma_blue',
+    equippedTrail: profile?.equipped?.trail || profile?.trail || 'trail_sparks'
   })
 
   const [enemyData, setEnemyData] = useState({
     name: 'Rakip',
     color: '#ff2e93',
     id: null,
-    equippedSkin: 'default',
-    equippedBullet: 'normal',
-    equippedTrail: 'none'
+    equippedSkin: 'skin_neon_purple',
+    equippedBullet: 'bullet_plasma_blue',
+    equippedTrail: 'trail_sparks'
   })
 
   const [isHost, setIsHost] = useState(false)
@@ -34,15 +34,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   const [roundMessage, setRoundMessage] = useState('')
   const [scores, setScores] = useState({ player1: 0, player2: 0 })
   const [gameOverData, setGameOverData] = useState(null)
-
-  // --- ŞEFFAF TOAST BİLDİRİM SİSTEMİ ---
   const [toastMessage, setToastMessage] = useState(null)
 
   const showNotification = (msg) => {
     setToastMessage(msg)
-    setTimeout(() => {
-      setToastMessage(null)
-    }, 3500)
+    setTimeout(() => setToastMessage(null), 3500)
   }
 
   const [ammo, setAmmo] = useState(6)
@@ -61,7 +57,30 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     isPaused: false
   })
 
-  // --- KULLANICI PROFİLİNİ TAZELE ---
+  // Market verilerindeki skin tanımları (İkon tipi ve görselleri için)
+  const shopSkinDetails = {
+    'skin_neon_purple': { color: '#7209b7', icon: 'cube' },
+    'skin_gold': { color: '#ffd700', icon: 'cube' },
+    'skin_fire_red': { color: '#e71d36', icon: 'fire' },
+    'skin_matrix_green': { color: '#00f5d4', icon: 'cube' },
+    'skin_cyber_pink': { color: '#f72585', icon: 'cube' },
+    'skin_shadow_black': { color: '#1e293b', icon: 'cube' },
+    'skin_electric_blue': { color: '#3b82f6', icon: 'lightning' },
+    'skin_toxic_slime': { color: '#84cc16', icon: 'cube' },
+    'skin_sunset_orange': { color: '#f97316', icon: 'cube' },
+    'skin_galaxy_violet': { color: '#8b5cf6', icon: 'cube' },
+    'skin_cat_face': { color: '#fb923c', icon: 'cat' },
+    'skin_dog_face': { color: '#d97706', icon: 'dog' },
+    'skin_ghost_white': { color: '#e2e8f0', icon: 'ghost' },
+    'skin_pirate_box': { color: '#78716c', icon: 'pirate' },
+    'skin_robot_droid': { color: '#64748b', icon: 'robot' },
+    'skin_camo_military': { color: '#4d7c0f', icon: 'cube' },
+    'skin_ice_crystal': { color: '#06b6d4', icon: 'cube' },
+    'skin_magma_core': { color: '#c2410c', icon: 'fire' },
+    'skin_toxic_hazard': { color: '#ca8a04', icon: 'cube' },
+    'skin_royal_crown': { color: '#eab308', icon: 'crown' }
+  }
+
   useEffect(() => {
     async function fetchLatestProfile() {
       if (!userId) return
@@ -75,32 +94,28 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           wins: data.wins || 0,
           losses: data.losses || 0,
           voxel: data.voxel || 0,
-          equippedSkin: data.equipped?.skin || data.skin || 'default',
-          equippedBullet: data.equipped?.bullet || data.bullet || 'normal',
-          equippedTrail: data.equipped?.trail || data.trail || 'none'
+          equippedSkin: data.equipped?.skin || data.skin || 'skin_neon_purple',
+          equippedBullet: data.equipped?.bullet || data.bullet || 'bullet_plasma_blue',
+          equippedTrail: data.equipped?.trail || data.trail || 'trail_sparks'
         })
       }
     }
     fetchLatestProfile()
   }, [userId])
 
-  // --- TAM EKRAN ---
   useEffect(() => {
     const enterFullscreen = () => {
       const elem = document.documentElement;
       if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
-      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
     };
-    const exitFullscreen = () => {
+    enterFullscreen();
+    return () => {
       if (document.fullscreenElement && document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
       }
     };
-    enterFullscreen();
-    return () => { exitFullscreen(); };
   }, []);
 
-  // --- ODA VE SOCKET BAĞLANTISI ---
   useEffect(() => {
     async function initRoomAndSocket() {
       if (!roomId || !userId) return
@@ -125,9 +140,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             name: enemyProfile.username,
             color: enemyProfile.color || '#ff2e93',
             id: enemyProfile.id,
-            equippedSkin: enemyProfile.equipped?.skin || enemyProfile.skin || 'default',
-            equippedBullet: enemyProfile.equipped?.bullet || enemyProfile.bullet || 'normal',
-            equippedTrail: enemyProfile.equipped?.trail || enemyProfile.trail || 'none'
+            equippedSkin: enemyProfile.equipped?.skin || enemyProfile.skin || 'skin_neon_purple',
+            equippedBullet: enemyProfile.equipped?.bullet || enemyProfile.bullet || 'bullet_plasma_blue',
+            equippedTrail: enemyProfile.equipped?.trail || enemyProfile.trail || 'trail_sparks'
           })
         }
       }
@@ -153,7 +168,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           setEnemyData(prev => ({
             ...prev,
             equippedSkin: payload.skin || prev.equippedSkin,
-            equippedTrail: payload.trail || prev.equippedTrail
+            equippedTrail: payload.trail || prev.equippedTrail,
+            equippedBullet: payload.bullet || prev.equippedBullet
           }))
         }
       })
@@ -210,9 +226,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
   const handleEarlyLeave = async () => {
     if (!gameOverData) {
-      if (socketRef.current) {
-        socketRef.current.emit('player_quit', {})
-      }
+      if (socketRef.current) socketRef.current.emit('player_quit', {})
       await applyPenaltiesAndDatabase('lose')
     }
     if (refreshProfile) refreshProfile()
@@ -228,35 +242,19 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let addedXp = 0
 
     if (resultType === 'win') {
-      addedXp = 100
-      currentXp += 100
-      currentWins += 1
+      addedXp = 100; currentXp += 100; currentWins += 1
     } else if (resultType === 'draw') {
-      addedXp = 50
-      currentXp += 50
+      addedXp = 50; currentXp += 50
     } else {
-      addedXp = -50
-      currentXp -= 50
-      currentLosses += 1
-      if (currentXp < 0 && currentLevel > 1) {
-        currentLevel -= 1
-        currentXp += 200
-      }
+      addedXp = -50; currentXp -= 50; currentLosses += 1
+      if (currentXp < 0 && currentLevel > 1) { currentLevel -= 1; currentXp += 200 }
       if (currentXp < 0) currentXp = 0
     }
 
-    while (currentXp >= 200) {
-      currentXp -= 200
-      currentLevel += 1
-      currentVoxel += 50
-    }
+    while (currentXp >= 200) { currentXp -= 200; currentLevel += 1; currentVoxel += 50 }
 
     await supabase.from('profiles').update({
-      xp: currentXp,
-      level: currentLevel,
-      wins: currentWins,
-      losses: currentLosses,
-      voxel: currentVoxel
+      xp: currentXp, level: currentLevel, wins: currentWins, losses: currentLosses, voxel: currentVoxel
     }).eq('id', userId)
 
     if (refreshProfile) refreshProfile()
@@ -276,7 +274,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     }, 1200)
   }
 
-  // --- OYUN DÖNGÜSÜ VE 60 LIK SKİN / İZ / MERMİ HARİTALANDIRMASI ---
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -292,23 +289,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
     const shoot = () => {
       if (gameStateRef.current.isPaused || isReloadingRef.current) return
-      
-      if (ammoRef.current <= 0) { 
-        reloadGun(); 
-        return 
-      }
+      if (ammoRef.current <= 0) { reloadGun(); return }
 
       const now = Date.now()
       if (now - lastShotTime.current - 50 < 0) return 
       lastShotTime.current = now
 
       ammoRef.current -= 1
-      const currentAmmoLeft = ammoRef.current
-      setAmmo(currentAmmoLeft)
+      setAmmo(ammoRef.current)
 
-      if (currentAmmoLeft <= 0) {
-        setTimeout(() => reloadGun(), 100)
-      }
+      if (ammoRef.current <= 0) setTimeout(() => reloadGun(), 100)
 
       const myP = gameStateRef.current.myPos
       const enP = gameStateRef.current.enemyPos
@@ -317,7 +307,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       let vx = 0, vy = 0
       let muzzleX = myP.x + 16, muzzleY = myP.y + 16
-      const bulletSpeed = 5.5
+      const bulletSpeed = 6
 
       if (Math.abs(dx) > Math.abs(dy)) {
         if (dx > 0) { muzzleX = myP.x + 32; vx = bulletSpeed; }
@@ -327,11 +317,11 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         else { muzzleY = myP.y; vy = -bulletSpeed; }
       }
 
+      // MERMİ EFEKTLERİ DİNAMİK EŞLEMESİ
       const bulletType = userData.equippedBullet
-      let bulletColor = userData.color
+      let bulletColor = '#38bdf8'
       let bulletSize = 6
 
-      // 20'li Mermi Listesi Dinamik Eşlemesi
       const bulletColorMap = {
         'bullet_plasma_blue': '#38bdf8',
         'bullet_laser_red': '#ff4d4d',
@@ -357,9 +347,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       if (bulletColorMap[bulletType]) {
         bulletColor = bulletColorMap[bulletType]
-      }
-      if (bulletType === 'bullet_rainbow_prism') {
-        bulletSize = 8
       }
 
       const newBullet = {
@@ -401,68 +388,83 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // --- 20'Lİ SKİN / KÜP LİSTESİ DİNAMİK RENGİ VE NEON GLOW HARİTASI ---
+    // --- ÖZEL KARAKTER SKİNLERİ (KEDİ, KÖPEK, TAÇ, ATEŞ VB. GERÇEK GÖRÜNÜM) ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
-      const normalizedSkin = (skinType || '').toLowerCase()
-
-      const skinColorMap = {
-        'skin_neon_purple': '#7209b7',
-        'skin_gold': '#ffd700',
-        'skin_fire_red': '#e71d36',
-        'skin_matrix_green': '#00f5d4',
-        'skin_cyber_pink': '#f72585',
-        'skin_shadow_black': '#1e293b',
-        'skin_electric_blue': '#3b82f6',
-        'skin_toxic_slime': '#84cc16',
-        'skin_sunset_orange': '#f97316',
-        'skin_galaxy_violet': '#8b5cf6',
-        'skin_cat_face': '#fb923c',
-        'skin_dog_face': '#d97706',
-        'skin_ghost_white': '#e2e8f0',
-        'skin_pirate_box': '#78716c',
-        'skin_robot_droid': '#64748b',
-        'skin_camo_military': '#4d7c0f',
-        'skin_ice_crystal': '#06b6d4',
-        'skin_magma_core': '#c2410c',
-        'skin_toxic_hazard': '#ca8a04',
-        'skin_royal_crown': '#eab308'
-      }
-
-      let fillColor = skinColorMap[normalizedSkin] || baseColor || '#00f5d4'
-      let glowColor = fillColor
+      const skinData = shopSkinDetails[skinType] || { color: baseColor || '#00f5d4', icon: 'cube' }
+      const fillColor = skinData.color
+      const iconType = skinData.icon
 
       ctx.save()
       ctx.shadowBlur = 15
-      ctx.shadowColor = glowColor
+      ctx.shadowColor = fillColor
 
+      // Ana Kutu Gövdesi
       ctx.fillStyle = fillColor
       ctx.fillRect(x, y, 32, 32)
+
+      // İç Detaylar ve Karakter Yüzleri
+      ctx.fillStyle = '#ffffff'
+      if (iconType === 'cat') {
+        // Kedi kulakları ve gözler
+        ctx.beginPath(); ctx.moveTo(x + 4, y); ctx.lineTo(x + 10, y - 8); ctx.lineTo(x + 14, y); ctx.fill()
+        ctx.beginPath(); ctx.moveTo(x + 18, y); ctx.lineTo(x + 22, y - 8); ctx.lineTo(x + 28, y); ctx.fill()
+        ctx.fillStyle = '#0f172a'
+        ctx.fillRect(x + 8, y + 10, 4, 6)
+        ctx.fillRect(x + 20, y + 10, 4, 6)
+      } else if (iconType === 'dog') {
+        // Köpek sarkık kulaklar
+        ctx.fillRect(x - 2, y + 4, 6, 12)
+        ctx.fillRect(x + 28, y + 4, 6, 12)
+        ctx.fillStyle = '#0f172a'
+        ctx.fillRect(x + 9, y + 12, 4, 4)
+        ctx.fillRect(x + 19, y + 12, 4, 4)
+      } else if (iconType === 'ghost') {
+        // Hayalet gözleri
+        ctx.fillStyle = '#0f172a'
+        ctx.beginPath(); ctx.arc(x + 10, y + 12, 4, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(x + 22, y + 12, 4, 0, Math.PI * 2); ctx.fill()
+      } else if (iconType === 'crown' || skinType === 'skin_royal_crown') {
+        // Altın Taç Detayı
+        ctx.fillStyle = '#facc15'
+        ctx.beginPath()
+        ctx.moveTo(x + 6, y + 6)
+        ctx.lineTo(x + 10, y - 4)
+        ctx.lineTo(x + 16, y + 4)
+        ctx.lineTo(x + 22, y - 4)
+        ctx.lineTo(x + 26, y + 6)
+        ctx.closePath()
+        ctx.fill()
+      } else if (iconType === 'fire') {
+        // Alev detayı
+        ctx.fillStyle = '#f97316'
+        ctx.fillRect(x + 10, y - 6, 12, 10)
+      } else if (iconType === 'robot') {
+        // Robot vizör
+        ctx.fillStyle = '#38bdf8'
+        ctx.fillRect(x + 6, y + 10, 20, 6)
+      }
+
       ctx.restore()
     }
 
-    // --- 20'Lİ TRAIL (İZ) EFEKTLERİ DİNAMİK HARİTASI ---
     const drawTrail = (trailHistory, trailType) => {
       if (!trailType || trailType === 'none') return
       trailHistory.forEach((pos, idx) => {
         const alpha = (idx + 1) / trailHistory.length * 0.4
-        let trailColor = 'rgba(0, 245, 212, ' + alpha + ')'
+        let trailColor = `rgba(0, 245, 212, ${alpha})`
 
-        if (trailType === 'trail_fire_trail' || trailType === 'trail_meteor_tail') {
+        if (trailType.includes('fire') || trailType.includes('meteor')) {
           trailColor = `rgba(234, 88, 12, ${alpha})`
-        } else if (trailType === 'trail_lightning') {
+        } else if (trailType.includes('lightning')) {
           trailColor = `rgba(56, 189, 248, ${alpha})`
-        } else if (trailType === 'trail_matrix_code') {
+        } else if (trailType.includes('matrix')) {
           trailColor = `rgba(34, 197, 94, ${alpha})`
-        } else if (trailType === 'trail_gold_coins') {
+        } else if (trailType.includes('gold')) {
           trailColor = `rgba(234, 179, 8, ${alpha})`
-        } else if (trailType === 'trail_star_dust') {
+        } else if (trailType.includes('star')) {
           trailColor = `rgba(168, 85, 247, ${alpha})`
-        } else if (trailType === 'trail_heart_beats') {
+        } else if (trailType.includes('heart')) {
           trailColor = `rgba(244, 63, 94, ${alpha})`
-        } else if (trailType === 'trail_sakura_petals') {
-          trailColor = `rgba(251, 113, 133, ${alpha})`
-        } else if (trailType === 'trail_cosmic_void') {
-          trailColor = `rgba(76, 29, 149, ${alpha})`
         }
 
         ctx.fillStyle = trailColor
@@ -475,9 +477,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       let enP = gameStateRef.current.enemyPos
 
       if (!gameStateRef.current.isPaused) {
-        let nextX = myP.x
-        let nextY = myP.y
-
+        let nextX = myP.x, nextY = myP.y
         const speed = 2.5
         if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= speed
         if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += speed
@@ -506,12 +506,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         if (now - lastMoveSend > 30 && socketRef.current) {
           lastMoveSend = now
           socketRef.current.emit('player_move', { 
-            roomId, 
-            x: myP.x, 
-            y: myP.y, 
-            hp: myP.hp,
+            roomId, x: myP.x, y: myP.y, hp: myP.hp,
             skin: userData.equippedSkin,
-            trail: userData.equippedTrail
+            trail: userData.equippedTrail,
+            bullet: userData.equippedBullet
           })
         }
 
@@ -535,17 +533,13 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             if (hitWall) break
           }
 
-          if (hitWall) {
-            bullets.splice(i, 1)
-            continue
-          }
+          if (hitWall) { bullets.splice(i, 1); continue }
 
           const isMyBullet = bullet.senderId === userId || !bullet.senderId
           if (isMyBullet) {
-            const hitBoxMargin = 6
             if (
-              bullet.x >= enP.x - hitBoxMargin && bullet.x <= enP.x + 32 + hitBoxMargin &&
-              bullet.y >= enP.y - hitBoxMargin && bullet.y <= enP.y + 32 + hitBoxMargin
+              bullet.x >= enP.x - 6 && bullet.x <= enP.x + 38 &&
+              bullet.y >= enP.y - 6 && bullet.y <= enP.y + 38
             ) {
               bullets.splice(i, 1)
               enP.hp = Math.max(0, enP.hp - 20)
@@ -554,9 +548,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
                 socketRef.current.emit('player_hit', { roomId, targetId: enemyData.id })
               }
 
-              if (enP.hp <= 0) {
-                triggerRoundWin()
-              }
+              if (enP.hp <= 0) triggerRoundWin()
               continue
             }
           }
@@ -565,13 +557,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+      // Zemin Izgarası
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)'
-      for (let x = 0; x < canvas.width; x += 40) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke()
-      }
-      for (let y = 0; y < canvas.height; y += 40) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke()
-      }
+      for (let x = 0; x < canvas.width; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke() }
+      for (let y = 0; y < canvas.height; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke() }
 
       mapObstacles.forEach((obs) => {
         ctx.fillStyle = '#1e293b'
@@ -590,11 +579,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawCustomSkin(enP.x, enP.y, enemyData.equippedSkin, enemyData.color)
       drawEntityHeader(enP, enemyData.name, enemyData.color, 200)
 
+      // Mermileri Çiz (Efektleri ile)
       gameStateRef.current.bullets.forEach((bullet) => {
+        ctx.save()
+        ctx.shadowBlur = 10
+        ctx.shadowColor = bullet.color
         ctx.fillStyle = bullet.color
         ctx.beginPath()
         ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2)
         ctx.fill()
+        ctx.restore()
       })
 
       animationFrameId = requestAnimationFrame(updateGame)
@@ -622,18 +616,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       gameStateRef.current.myPos.hp = 200
 
       setScores((prevScores) => {
-        const updatedScores = { 
-          ...prevScores, 
-          player1: Math.min(2, prevScores.player1 + 1) 
-        }
-
-        if (socketRef.current) {
-          socketRef.current.emit('round_won', { 
-            roomId, 
-            winnerId: userId, 
-            scores: updatedScores 
-          })
-        }
+        const updatedScores = { ...prevScores, player1: Math.min(2, prevScores.player1 + 1) }
+        if (socketRef.current) socketRef.current.emit('round_won', { roomId, winnerId: userId, scores: updatedScores })
         handleRoundTransition(updatedScores)
         return updatedScores
       })
@@ -700,11 +684,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           const { addedXp } = await applyPenaltiesAndDatabase(hostResultType)
 
           setGameOverData({
-            resultType: hostResultType,
-            addedXp,
-            p1Score: currentScores.player1,
-            p2Score: currentScores.player2,
-            isQuit: false
+            resultType: hostResultType, addedXp,
+            p1Score: currentScores.player1, p2Score: currentScores.player2, isQuit: false
           })
 
           if (isHost && socketRef.current) {
@@ -714,11 +695,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
             socketRef.current.emit('game_over_sync', {
               roomId,
-              gameOverData: {
-                resultType: enemyResultType,
-                p1Score: currentScores.player2,
-                p2Score: currentScores.player1
-              },
+              gameOverData: { resultType: enemyResultType, p1Score: currentScores.player2, p2Score: currentScores.player1 },
               scores: { player1: currentScores.player2, player2: currentScores.player1 }
             })
           }
@@ -739,43 +716,25 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       <div className="game-wrapper" style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#0f172a', overflow: 'hidden' }}>
         
-        {toastMessage && (
-          <div className="game-toast-notification">
-            {toastMessage}
-          </div>
-        )}
+        {toastMessage && <div className="game-toast-notification">{toastMessage}</div>}
 
         <button className="back-btn-overlay" onClick={handleEarlyLeave}>⬅ Lobiye Dön (Terket)</button>
 
         {/* AMMO HUD */}
         <div style={{
-          position: 'fixed',
-          top: '20px',
-          right: '25px',
-          background: 'rgba(15, 23, 42, 0.9)',
-          border: '2px solid rgba(0, 245, 212, 0.5)',
-          padding: '0.6rem 1.2rem',
-          borderRadius: '14px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          backdropFilter: 'blur(8px)',
-          zIndex: 99999,
-          color: '#fff',
-          fontWeight: 'bold',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+          position: 'fixed', top: '20px', right: '25px', background: 'rgba(15, 23, 42, 0.9)',
+          border: '2px solid rgba(0, 245, 212, 0.5)', padding: '0.6rem 1.2rem', borderRadius: '14px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', backdropFilter: 'blur(8px)', zIndex: 99999, color: '#fff', fontWeight: 'bold'
         }}>
-          <div style={{ fontSize: '0.8rem', color: isReloading ? '#e71d36' : '#38bdf8', marginBottom: '4px', letterSpacing: '1px' }}>
+          <div style={{ fontSize: '0.8rem', color: isReloading ? '#e71d36' : '#38bdf8', marginBottom: '4px' }}>
             {isReloading ? 'RELOADING...' : `AMMO: ${ammo} / ${maxAmmo}`}
           </div>
           <div style={{ display: 'flex', gap: '5px' }}>
             {Array.from({ length: maxAmmo }).map((_, i) => (
               <div key={i} style={{
-                width: '9px',
-                height: '18px',
+                width: '9px', height: '18px',
                 backgroundColor: i < ammo ? '#00f5d4' : 'rgba(255,255,255,0.2)',
-                borderRadius: '3px',
-                boxShadow: i < ammo ? '0 0 10px rgba(0, 245, 212, 0.7)' : 'none'
+                borderRadius: '3px'
               }} />
             ))}
           </div>
@@ -784,46 +743,21 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         {roundMessage && <div className="round-banner">{roundMessage}</div>}
 
         {gameOverData && (
-          <div className={`game-over-modal ${gameOverData.resultType === 'win' ? '' : (gameOverData.resultType === 'draw' ? 'draw' : 'defeat')}`}>
-            <div className={`result-title ${gameOverData.resultType === 'win' ? 'win' : (gameOverData.resultType === 'draw' ? 'draw' : 'lose')}`}>
-              {gameOverData.resultType === 'win' ? '🏆 ZAFER' : (gameOverData.resultType === 'draw' ? '🤝 BERABERE' : '💀 MAĞLUBİYET')}
+          <div className={`game-over-modal ${gameOverData.resultType === 'win' ? '' : 'defeat'}`}>
+            <div className={`result-title ${gameOverData.resultType}`}>
+              {gameOverData.resultType === 'win' ? '🏆 ZAFER' : '💀 MAĞLUBİYET'}
             </div>
-            
-            <div className="result-subtitle">
-              {gameOverData.isQuit 
-                ? 'Oyundan erken ayrıldığın için mağlup sayıldın (-50 XP)!' 
-                : (gameOverData.resultType === 'win' ? 'Rakibini mağlup ettin (+100 XP)!' : (gameOverData.resultType === 'draw' ? 'Kıyasıya mücadele, puanlar paylaşıldı (+50 XP)!' : 'Daha güçlü geri döneceksin (-50 XP)!'))}
-            </div>
-
             <div className="stats-grid">
               <div className="stat-card">
-                <span className="stat-label">Maç Skoru (2 Round)</span>
+                <span className="stat-label">Skor</span>
                 <span className="stat-value">{gameOverData.p1Score} - {gameOverData.p2Score}</span>
               </div>
-
-              <div className="stat-card">
-                <span className="stat-label">XP Değişimi</span>
-                <span className="stat-value xp" style={{ color: gameOverData.addedXp > 0 ? '#2ec4b6' : '#e71d36' }}>
-                  {gameOverData.addedXp > 0 ? `+${gameOverData.addedXp}` : gameOverData.addedXp}
-                </span>
-              </div>
             </div>
-
-            <button className="btn-lobby" onClick={handleReturnToLobby}>
-              🏠 BEKLEME ODASINA DÖN (RÖVANŞ)
-            </button>
+            <button className="btn-lobby" onClick={handleReturnToLobby}>🏠 LOBİYE DÖN</button>
           </div>
         )}
 
-        <canvas 
-          ref={canvasRef} 
-          width={1000} 
-          height={550} 
-          className="game-canvas" 
-          onMouseDown={() => {
-            if (window.mobileShoot) window.mobileShoot();
-          }}
-        />
+        <canvas ref={canvasRef} width={1000} height={550} className="game-canvas" />
 
         <div className="mobile-controls-overlay">
           <div className="dpad">
@@ -836,27 +770,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           </div>
 
           <div style={{ display: 'flex', position: 'relative', width: '160px', height: '160px', justifyContent: 'center', alignItems: 'center' }}>
-            <button 
-              onClick={() => window.mobileReload()} 
-              style={{
-                position: 'absolute',
-                top: '-5px',
-                left: '-15px',
-                background: 'rgba(15, 23, 42, 0.85)',
-                border: '2px solid #38bdf8',
-                color: '#38bdf8',
-                padding: '0.4rem 0.8rem',
-                borderRadius: '10px',
-                fontWeight: 'bold',
-                fontSize: '0.75rem',
-                backdropFilter: 'blur(4px)',
-                cursor: 'pointer',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                zIndex: 10
-              }}
-            >
-              🔄 Reload
-            </button>
+            <button onClick={() => window.mobileReload()} style={{
+              position: 'absolute', top: '-5px', left: '-15px', background: 'rgba(15, 23, 42, 0.85)',
+              border: '2px solid #38bdf8', color: '#38bdf8', padding: '0.4rem 0.8rem', borderRadius: '10px', fontWeight: 'bold', zIndex: 10
+            }}>🔄 Reload</button>
             <button className="shoot-btn" onTouchStart={(e) => { e.preventDefault(); window.mobileShoot() }}>Ateş</button>
           </div>
         </div>
