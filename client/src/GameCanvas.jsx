@@ -57,28 +57,28 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     isPaused: false
   })
 
-  // Market görsellerindeki emojilere ve detaylara tam uyumlu skin eşlemeleri
+  // Market görsellerindeki detaylar (Emoji yerine sadece vektörel/şekilsel çizimler)
   const shopSkinDetails = {
-    'skin_neon_purple': { color: '#7209b7', emoji: '🟣', icon: 'cube' },
-    'skin_gold': { color: '#ffd700', emoji: '🟡', icon: 'cube' },
-    'skin_fire_red': { color: '#e71d36', emoji: '🔥', icon: 'fire' },
-    'skin_matrix_green': { color: '#00f5d4', emoji: '🟢', icon: 'cube' },
-    'skin_cyber_pink': { color: '#f72585', emoji: '💖', icon: 'cube' },
-    'skin_shadow_black': { color: '#1e293b', emoji: '🖤', icon: 'cube' },
-    'skin_electric_blue': { color: '#3b82f6', emoji: '⚡', icon: 'lightning' },
-    'skin_toxic_slime': { color: '#84cc16', emoji: '🧪', icon: 'cube' },
-    'skin_sunset_orange': { color: '#f97316', emoji: '🌅', icon: 'cube' },
-    'skin_galaxy_violet': { color: '#8b5cf6', emoji: '🌌', icon: 'cube' },
-    'skin_cat_face': { color: '#fb923c', emoji: '🐱', icon: 'cat' },
-    'skin_dog_face': { color: '#d97706', emoji: '🐶', icon: 'dog' },
-    'skin_ghost_white': { color: '#e2e8f0', emoji: '👻', icon: 'ghost' },
-    'skin_pirate_box': { color: '#78716c', emoji: '🏴‍☠️', icon: 'pirate' },
-    'skin_robot_droid': { color: '#64748b', emoji: '🤖', icon: 'robot' },
-    'skin_camo_military': { color: '#4d7c0f', emoji: '🪖', icon: 'cube' },
-    'skin_ice_crystal': { color: '#06b6d4', emoji: '💎', icon: 'cube' },
-    'skin_magma_core': { color: '#c2410c', emoji: '🌋', icon: 'fire' },
-    'skin_toxic_hazard': { color: '#ca8a04', emoji: '☢️', icon: 'cube' },
-    'skin_royal_crown': { color: '#eab308', emoji: '👑', icon: 'crown' }
+    'skin_neon_purple': { color: '#7209b7', icon: 'cube' },
+    'skin_gold': { color: '#ffd700', icon: 'cube' },
+    'skin_fire_red': { color: '#e71d36', icon: 'fire' },
+    'skin_matrix_green': { color: '#00f5d4', icon: 'cube' },
+    'skin_cyber_pink': { color: '#f72585', icon: 'cube' },
+    'skin_shadow_black': { color: '#1e293b', icon: 'cube' },
+    'skin_electric_blue': { color: '#3b82f6', icon: 'lightning' },
+    'skin_toxic_slime': { color: '#84cc16', icon: 'cube' },
+    'skin_sunset_orange': { color: '#f97316', icon: 'cube' },
+    'skin_galaxy_violet': { color: '#8b5cf6', icon: 'cube' },
+    'skin_cat_face': { color: '#fb923c', icon: 'cat' },
+    'skin_dog_face': { color: '#d97706', icon: 'dog' },
+    'skin_ghost_white': { color: '#e2e8f0', icon: 'ghost' },
+    'skin_pirate_box': { color: '#78716c', icon: 'pirate' },
+    'skin_robot_droid': { color: '#64748b', icon: 'robot' },
+    'skin_camo_military': { color: '#4d7c0f', icon: 'cube' },
+    'skin_ice_crystal': { color: '#06b6d4', icon: 'cube' },
+    'skin_magma_core': { color: '#c2410c', icon: 'fire' },
+    'skin_toxic_hazard': { color: '#ca8a04', icon: 'cube' },
+    'skin_royal_crown': { color: '#eab308', icon: 'crown' }
   }
 
   useEffect(() => {
@@ -356,6 +356,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         size: 6,
         color: bulletColor,
         type: bulletType,
+        trailType: userData.equippedTrail,
         trail: []
       }
 
@@ -387,12 +388,20 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // Market görsellerindeki emojilere tam karşılık gelen şık çizim fonksiyonu
+    // Vektörel/Detaylı Skin Çizimi (Emoji Yok)
     const drawCustomSkin = (x, y, skinType, baseColor) => {
-      const skinData = shopSkinDetails[skinType] || { color: baseColor || '#00f5d4', emoji: '📦', icon: 'cube' }
+      if (!skinType || skinType === 'none') {
+        ctx.fillStyle = baseColor || '#00f5d4'
+        ctx.fillRect(x, y, 32, 32)
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = 1.5
+        ctx.strokeRect(x, y, 32, 32)
+        return
+      }
+
+      const skinData = shopSkinDetails[skinType] || { color: baseColor || '#00f5d4', icon: 'cube' }
       const fillColor = skinData.color
       const iconType = skinData.icon
-      const emoji = skinData.emoji
 
       ctx.save()
       ctx.shadowBlur = 14
@@ -405,41 +414,34 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       ctx.lineWidth = 1.5
       ctx.strokeRect(x, y, 32, 32)
 
-      // Detaylar veya Emojinin Karşılığı Vektörel Çizimler
+      // Özgün Tasarım Detayları
       if (iconType === 'cat') {
-        // Kedi Kulakları
         ctx.fillStyle = fillColor
         ctx.beginPath(); ctx.moveTo(x + 4, y); ctx.lineTo(x + 9, y - 8); ctx.lineTo(x + 14, y); ctx.fill()
         ctx.beginPath(); ctx.moveTo(x + 18, y); ctx.lineTo(x + 23, y - 8); ctx.lineTo(x + 28, y); ctx.fill()
-        // Yüz
         ctx.fillStyle = '#0f172a'
         ctx.fillRect(x + 8, y + 10, 4, 5)
         ctx.fillRect(x + 20, y + 10, 4, 5)
         ctx.fillRect(x + 14, y + 18, 4, 3)
       } else if (iconType === 'dog') {
-        // Köpek Kulakları (Sarkık)
         ctx.fillStyle = '#b45309'
         ctx.fillRect(x - 3, y + 4, 6, 14)
         ctx.fillRect(x + 29, y + 4, 6, 14)
-        // Yüz
         ctx.fillStyle = '#0f172a'
         ctx.fillRect(x + 8, y + 12, 4, 5)
         ctx.fillRect(x + 20, y + 12, 4, 5)
       } else if (iconType === 'ghost') {
-        // Hayalet Gözleri
         ctx.fillStyle = '#0f172a'
         ctx.beginPath(); ctx.arc(x + 10, y + 12, 4, 0, Math.PI * 2); ctx.fill()
         ctx.beginPath(); ctx.arc(x + 22, y + 12, 4, 0, Math.PI * 2); ctx.fill()
       } else if (iconType === 'pirate') {
-        // Korsan Bandanası ve Göz Bandı
-        ctx.fillStyle = '#0f172a'
-        ctx.fillRect(x, y + 4, 32, 8)
+        ctx.fillStyle = '#1e293b'
+        ctx.fillRect(x, y + 6, 32, 8)
         ctx.fillStyle = '#facc15'
-        ctx.fillRect(x + 12, y + 6, 8, 4) // Bandana tokası
+        ctx.fillRect(x + 12, y + 6, 8, 4)
         ctx.fillStyle = '#000000'
-        ctx.beginPath(); ctx.arc(x + 22, y + 18, 5, 0, Math.PI * 2); ctx.fill() // Göz bandı
+        ctx.beginPath(); ctx.arc(x + 22, y + 18, 5, 0, Math.PI * 2); ctx.fill()
       } else if (iconType === 'crown' || skinType === 'skin_royal_crown') {
-        // Kraliyet Altın Tacı
         ctx.fillStyle = '#facc15'
         ctx.beginPath()
         ctx.moveTo(x + 6, y + 8)
@@ -449,7 +451,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.lineTo(x + 26, y + 8)
         ctx.closePath()
         ctx.fill()
-        ctx.fillStyle = '#ef4444' // Mücevher
+        ctx.fillStyle = '#ef4444'
         ctx.fillRect(x + 14, y + 2, 4, 4)
       } else if (iconType === 'fire' || skinType === 'skin_fire_red') {
         ctx.fillStyle = '#f97316'
@@ -464,17 +466,12 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         ctx.fillRect(x + 6, y + 10, 20, 6)
         ctx.fillStyle = '#ffffff'
         ctx.fillRect(x + 14, y - 4, 4, 4)
-      } else {
-        // Standart kutular için ortaya marketteki emoji simgesini basıyoruz
-        ctx.font = '16px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(emoji, x + 16, y + 16)
       }
 
       ctx.restore()
     }
 
+    // Oyuncu Yürüme Efekti (Trail)
     const drawTrail = (trailHistory, trailType) => {
       if (!trailType || trailType === 'none') return
       trailHistory.forEach((pos, idx) => {
@@ -497,6 +494,38 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
         ctx.fillStyle = trailColor
         ctx.fillRect(pos.x + 8, pos.y + 8, 16, 16)
+      })
+    }
+
+    // Mermi Arka Efekti (Ateşlenirken giden trail)
+    const drawBulletTrail = (bullet) => {
+      const trailType = bullet.trailType
+      if (!trailType || trailType === 'none' || !bullet.trail) return
+
+      bullet.trail.forEach((tPos, tIdx) => {
+        const tAlpha = (tIdx + 1) / bullet.trail.length * 0.6
+        let color = bullet.color
+
+        if (trailType.includes('fire') || trailType.includes('meteor')) {
+          color = `rgba(249, 115, 22, ${tAlpha})`
+        } else if (trailType.includes('lightning') || trailType.includes('electric')) {
+          color = `rgba(56, 189, 248, ${tAlpha})`
+        } else if (trailType.includes('gold')) {
+          color = `rgba(234, 179, 8, ${tAlpha})`
+        } else if (trailType.includes('pink') || trailType.includes('heart')) {
+          color = `rgba(244, 63, 94, ${tAlpha})`
+        } else if (trailType.includes('matrix')) {
+          color = `rgba(34, 197, 94, ${tAlpha})`
+        } else {
+          color = bullet.color
+        }
+
+        ctx.save()
+        ctx.fillStyle = color
+        ctx.beginPath()
+        ctx.arc(tPos.x, tPos.y, bullet.size * 0.6, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.restore()
       })
     }
 
@@ -550,10 +579,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             bullet.x += bullet.vx / 2
             bullet.y += bullet.vy / 2
 
-            // Mermi Arkası Efekt Noktası Kaydı
             if (!bullet.trail) bullet.trail = []
             bullet.trail.push({ x: bullet.x, y: bullet.y })
-            if (bullet.trail.length > 5) bullet.trail.shift()
+            if (bullet.trail.length > 6) bullet.trail.shift()
 
             if (bullet.x > canvas.width || bullet.x < 0 || bullet.y > canvas.height || bullet.y < 0) {
               hitWall = true; break
@@ -612,20 +640,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawCustomSkin(enP.x, enP.y, enemyData.equippedSkin, enemyData.color)
       drawEntityHeader(enP, enemyData.name, enemyData.color, 200)
 
-      // Mermileri ve Arkasındaki Efekt Kuyruğunu Çiz
+      // Mermiler ve Mermi Arkası Efekti (Trail) Çizimi
       gameStateRef.current.bullets.forEach((bullet) => {
+        drawBulletTrail(bullet)
         ctx.save()
-        if (bullet.trail && bullet.trail.length > 0) {
-          bullet.trail.forEach((tPos, tIdx) => {
-            const tAlpha = (tIdx + 1) / bullet.trail.length * 0.5
-            ctx.fillStyle = bullet.color
-            ctx.globalAlpha = tAlpha
-            ctx.beginPath()
-            ctx.arc(tPos.x, tPos.y, bullet.size * 0.7, 0, Math.PI * 2)
-            ctx.fill()
-          })
-        }
-        ctx.globalAlpha = 1.0
         ctx.shadowBlur = 12
         ctx.shadowColor = bullet.color
         ctx.fillStyle = bullet.color
