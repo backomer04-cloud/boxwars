@@ -367,47 +367,68 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let animationFrameId
     let lastMoveSend = 0
 
-    // --- SKİN ÇİZİM SİSTEMİ (ÖZEL GÖRSELLER VE EFEKTLER) ---
+    // --- MARKET SİKİNLERİYLE BİREBİR AYNI VE KARAKTERİN TAMAMINI KAPLAYAN ÇİZİM SİSTEMİ ---
     const drawCustomSkin = (x, y, skinType, baseColor) => {
-      ctx.fillStyle = baseColor
-      ctx.fillRect(x, y, 32, 32)
+      const normalizedSkin = (skinType || '').toLowerCase()
 
-      // Marketindeki skin isimlerine göre özel görünüm çizimleri
-      if (skinType?.includes('neon_purple') || skinType?.includes('purple')) {
-        ctx.fillStyle = '#c084fc'
-        ctx.fillRect(x + 6, y + 6, 20, 20)
-        ctx.strokeStyle = '#e879f9'
-        ctx.lineWidth = 2
-        ctx.strokeRect(x + 4, y + 4, 24, 24)
-      } else if (skinType?.includes('gold') || skinType?.includes('golden')) {
-        ctx.fillStyle = '#facc15'
-        ctx.fillRect(x + 8, y + 8, 16, 16)
+      if (normalizedSkin.includes('neon_purple') || normalizedSkin.includes('purple')) {
+        // Mor Neon Skin: Tamamı mor dolgu, parlak neon mor kenarlık ve iç çapraz şık detay
+        ctx.fillStyle = '#9333ea'
+        ctx.fillRect(x, y, 32, 32)
+        ctx.strokeStyle = '#c084fc'
+        ctx.lineWidth = 3
+        ctx.strokeRect(x, y, 32, 32)
+        // İç detay
+        ctx.fillStyle = '#e879f9'
+        ctx.fillRect(x + 10, y + 10, 12, 12)
+      } 
+      else if (normalizedSkin.includes('gold') || normalizedSkin.includes('golden')) {
+        // Altın Skin: Tamamı lüks altın rengi, parıltılı sarı çerçeve ve merkez nokta
+        ctx.fillStyle = '#eab308'
+        ctx.fillRect(x, y, 32, 32)
         ctx.strokeStyle = '#fef08a'
         ctx.lineWidth = 3
-        ctx.strokeRect(x + 2, y + 2, 28, 28)
-      } else if (skinType?.includes('cyber') || skinType?.includes('robot')) {
-        ctx.fillStyle = '#38bdf8'
-        ctx.fillRect(x + 4, y + 10, 24, 12)
+        ctx.strokeRect(x, y, 32, 32)
         ctx.fillStyle = '#ffffff'
-        ctx.fillRect(x + 8, y + 13, 6, 6)
-      } else if (skinType?.includes('cat') || skinType?.includes('neko')) {
-        ctx.fillStyle = baseColor
+        ctx.fillRect(x + 12, y + 12, 8, 8)
+      } 
+      else if (normalizedSkin.includes('cyber') || normalizedSkin.includes('robot')) {
+        // Siber / Robot Skin: Tamamı metalik siber mavi, yatay tarama çizgileri
+        ctx.fillStyle = '#0284c7'
+        ctx.fillRect(x, y, 32, 32)
+        ctx.strokeStyle = '#38bdf8'
+        ctx.lineWidth = 3
+        ctx.strokeRect(x, y, 32, 32)
+        ctx.fillStyle = '#bae6fd'
+        ctx.fillRect(x + 4, y + 12, 24, 8)
+      } 
+      else if (normalizedSkin.includes('cat') || normalizedSkin.includes('neko')) {
+        // Kedi / Neko Skin: Taban renk + kulak detayları ve sevimli yüz
+        ctx.fillStyle = baseColor || '#f472b6'
+        ctx.fillRect(x, y, 32, 32)
+        ctx.strokeStyle = '#db2777'
+        ctx.lineWidth = 2
+        ctx.strokeRect(x, y, 32, 32)
         // Kulaklar
+        ctx.fillStyle = baseColor || '#f472b6'
         ctx.beginPath()
-        ctx.moveTo(x + 4, y)
-        ctx.lineTo(x + 10, y - 8)
+        ctx.moveTo(x + 2, y)
+        ctx.lineTo(x + 9, y - 8)
         ctx.lineTo(x + 14, y)
         ctx.fill()
         ctx.beginPath()
         ctx.moveTo(x + 18, y)
-        ctx.lineTo(x + 22, y - 8)
-        ctx.lineTo(x + 28, y)
+        ctx.lineTo(x + 23, y - 8)
+        ctx.lineTo(x + 30, y)
         ctx.fill()
-      } else {
-        // Standart iç kutu detayı
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)'
+      } 
+      else {
+        // Default (Standart Kuşanılmamış veya Düz Karakter)
+        ctx.fillStyle = baseColor || '#00f5d4'
+        ctx.fillRect(x, y, 32, 32)
+        ctx.strokeStyle = '#ffffff'
         ctx.lineWidth = 2
-        ctx.strokeRect(x + 4, y + 4, 24, 24)
+        ctx.strokeRect(x, y, 32, 32)
       }
     }
 
@@ -435,10 +456,12 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         let nextX = myP.x
         let nextY = myP.y
 
-        if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= 4.5
-        if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += 4.5
-        if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= 4.5
-        if (keysPressed.current['KeyD'] || keysPressed.current['ArrowRight'] || keysPressed.current['RIGHT']) nextX += 4.5
+        // Hız eski dengeli ve akıcı hızına (3.2) çekildi
+        const speed = 3.2
+        if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= speed
+        if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += speed
+        if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= speed
+        if (keysPressed.current['KeyD'] || keysPressed.current['ArrowRight'] || keysPressed.current['RIGHT']) nextX += speed
 
         nextX = Math.max(0, Math.min(canvas.width - 32, nextX))
         nextY = Math.max(0, Math.min(canvas.height - 32, nextY))
@@ -541,7 +564,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
       drawTrail(myP.trailHistory, userData.equippedTrail)
       if (enP.trailHistory) drawTrail(enP.trailHistory, enemyData.equippedTrail)
 
-      // Oyuncuları ve Özel Skinlerini Çiz
+      // Oyuncuları ve Tam Kaplayan Özel Skinlerini Çiz
       drawCustomSkin(myP.x, myP.y, userData.equippedSkin, userData.color)
       drawEntityHeader(myP, userData.username, userData.color, 200)
 
