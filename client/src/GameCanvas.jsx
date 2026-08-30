@@ -427,7 +427,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         let nextY = myP.y
 
         // Karakter hızı normal, yumuşak ve ideal akışa (2.0) çekildi (ışınlanma tamamen bitti)
-        const speed = 2.4
+        const speed = 2.5
         if (keysPressed.current['KeyW'] || keysPressed.current['ArrowUp'] || keysPressed.current['UP']) nextY -= speed
         if (keysPressed.current['KeyS'] || keysPressed.current['ArrowDown'] || keysPressed.current['DOWN']) nextY += speed
         if (keysPressed.current['KeyA'] || keysPressed.current['ArrowLeft'] || keysPressed.current['LEFT']) nextX -= speed
