@@ -944,7 +944,7 @@ function App() {
         </div>
         <div>
           <a 
-            href="https://instagram.com/" 
+            href="https://instagram.com/omer_k.04?igsi=dnJnZTYwMWk4NXVp" 
             target="_blank" 
             rel="noopener noreferrer"
             style={{ 
