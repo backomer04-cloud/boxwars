@@ -833,7 +833,7 @@ function App() {
             {shopSubTab === 'store' ? (
               <div>
                 <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>60 ÜRÜNLÜK DEV KOLEKSİYON (20 Skin - 20 Mermi - 20 Efekt)</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
+                <div className="shop-grid-container">
                   {shopItems.map((item) => {
                     const owned = inventory.includes(item.id)
                     return (
@@ -873,7 +873,7 @@ function App() {
             ) : (
               <div>
                 <h3 style={{ color: '#00f5d4', marginBottom: '20px', textAlign: 'center', letterSpacing: '1px' }}>ENVANTERİN VE KUŞANIM MERKEZİ</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
+                <div className="shop-grid-container">
                   {inventory.length === 0 ? (
                     <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>Envanterinde hiç eşya yok! Mağazadan dilediğin gibi satın alabilirsin. 🚀</p>
