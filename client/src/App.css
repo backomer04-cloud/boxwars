@@ -1132,6 +1132,18 @@ body {
   }
 }
 
+/* ── SABİT (STICKY) ÜST MENÜ VE BUTONLAR ── */
+.sticky-nav-container {
+  position: sticky;
+  top: 15px;
+  z-index: 100;
+  background-color: rgba(11, 11, 18, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 10px 0;
+  margin-bottom: 20px;
+}
+
 /* --- ŞEFFAF TOAST BİLDİRİM BALONU --- */
 @keyframes toastSlideDown {
   0% {

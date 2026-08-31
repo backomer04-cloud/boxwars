@@ -684,22 +684,11 @@ function App() {
         </header>
 
 <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', position: 'relative', zIndex: 90, marginTop: '-1px', width: '100%', boxSizing: 'border-box', padding: '0 10px' }}>
-  <div style={{ 
+  <div className="sticky-nav-container" style={{ 
     display: 'flex', 
     flexWrap: 'wrap',
     justifyContent: 'center',
-    background: 'rgba(15, 23, 42, 0.85)', 
-    backdropFilter: 'blur(25px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(25px) saturate(180%)',
-    borderRadius: '0 0 32px 32px', 
-    padding: '12px 20px 16px 20px', 
     gap: '10px', 
-    border: '1px solid rgba(255, 255, 255, 0.1)', 
-    borderTop: 'none',
-    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.15)',
-    width: '100%',
-    maxWidth: '650px',
-    boxSizing: 'border-box'
   }}>
     <button 
       onClick={() => setActiveTab('home')} 
