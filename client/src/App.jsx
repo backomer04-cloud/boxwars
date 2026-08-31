@@ -622,6 +622,7 @@ function App() {
       )
     }
 
+
     const isHost = currentRoom && session?.user?.id === currentRoom.host_id
     const isRoomFull = roomMembers.length >= 2
     const guestMember = roomMembers.find(m => m.role === 'guest')
@@ -630,20 +631,7 @@ function App() {
 
     return (
       <div className="lobby-wrap">
-        <header className="lobby-header" style={{
-          background: 'rgba(15, 23, 42, 0.75)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-          padding: '16px 35px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100
-        }}>
+        <header className="lobby-header" >
           <span className="lobby-logo" style={{ 
             fontSize: '24px', 
             fontWeight: '800', 

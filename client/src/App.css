@@ -10,11 +10,10 @@
 html, body {
   width: 100%;
   min-height: 100vh;
-  min-height: 100dvh; /* Mobilde tarayıcı alt/üst barlarının ekranı sıkıştırmasını engeller */
+  overflow-x: hidden;
+  overflow-y: auto; /* Dikey kaydırmayı ve sticky'yi kesin olarak açar */
   background-color: #0a0a0f;
   color: #e0e0e0;
-  overflow-x: hidden;
-  overflow-y: auto; /* Sayfanın dikeyde kaydırılabilmesini ve sticky menünün çalışmasını sağlar */
 }
 
 body {
@@ -919,6 +918,7 @@ body {
    RESPONSIVE CAM EFEKTLİ HEADER & NOTCH (MOBİL UYUMLU)
    ========================================================== */
 
+/* Üstteki ana header - Sticky DEĞİL, normal akışta kaybolacak */
 .lobby-header {
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(20px) saturate(180%);
@@ -929,8 +929,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
   z-index: 100;
   flex-wrap: wrap;
   gap: 12px;
@@ -999,18 +997,22 @@ body {
 
 /* ÇENTİK (NOTCH) SEKME ALANI - MOBİL UYUMLU */
 .notch-container {
+  position: sticky;
+  top: 0;
+  z-index: 999;
   display: flex;
   justify-content: center;
-  background: transparent;
-  position: relative;
-  z-index: 90;
-  margin-top: -1px;
-  padding: 0 15px;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 15px;
 }
 
 .notch-tabs {
   display: flex;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.95); /* Yapıştığı an arkası görünmesin */
   backdrop-filter: blur(25px) saturate(180%);
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   border-radius: 0 0 24px 24px;
@@ -1018,7 +1020,7 @@ body {
   gap: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-top: none;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.15);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 0, 245, 212, 0.15);
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -1058,6 +1060,7 @@ body {
   margin: 0 auto;
   text-align: center;
   box-sizing: border-box;
+  padding-top: 80px;
 }
 
 .tab-subtext {
@@ -1158,23 +1161,24 @@ body {
   }
 }
 
+/* 2. Anasayfa / Mağaza sekmelerini tutan kapsayıcı (DeepSeek örneğindeki .sticky-menu mantığı) */
 .sticky-nav-container {
-  position: fixed;
-  top: 70px; /* Bu mesafeyi artırıp azaltarak başlığın tam altına denk getirebilirsin */
-  left: 50%;
-  transform: translateX(-50%); /* Tam ortada durmasını sağlar */
-  width: 85%;
-  max-width: 1200px;
-  z-index: 9999;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 10px 20px;
-  border-radius: 16px;
+  position: sticky;
+  top: 0;                    /* Ekranın tepesine değdiği an yapışır */
+  z-index: 1000;             /* Diğer içeriklerin üstünde kalır */
+  width: 100%;
+  max-width: 1250px;
+  margin: 0 auto 20px auto;
   display: flex;
   justify-content: center;
   gap: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+  background: rgba(15, 23, 42, 0.95); /* Yapıştığı an arkası görünmesin diye cam efekti */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 12px 20px;
+  border-radius: 0 0 16px 16px; /* Sadece alt köşeler kavisli olur */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
