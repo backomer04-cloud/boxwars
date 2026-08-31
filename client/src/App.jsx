@@ -683,66 +683,58 @@ function App() {
           </div>
         </header>
 
-        <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', position: 'relative', zIndex: 90, marginTop: '-1px' }}>
-          <div style={{ 
-            display: 'flex', 
-            background: 'rgba(15, 23, 42, 0.85)', 
-            backdropFilter: 'blur(25px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(25px) saturate(180%)',
-            borderRadius: '0 0 32px 32px', 
-            padding: '10px 30px 16px 30px', 
-            gap: '12px', 
-            border: '1px solid rgba(255, 255, 255, 0.1)', 
-            borderTop: 'none',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.15)'
-          }}>
-            <button 
-              onClick={() => setActiveTab('home')} 
-              style={{ 
-                background: activeTab === 'home' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
-                color: activeTab === 'home' ? '#0f172a' : '#94a3b8', 
-                border: activeTab === 'home' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-                padding: '10px 24px', 
-                borderRadius: '50px', 
-                cursor: 'pointer', 
-                fontWeight: '600', 
-                fontSize: '0.95rem',
-                boxShadow: activeTab === 'home' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
-              }}>
-              🏠 Anasayfa
-            </button>
-            <button 
-              onClick={() => setActiveTab('shop')} 
-              style={{ 
-                background: activeTab === 'shop' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
-                color: activeTab === 'shop' ? '#0f172a' : '#94a3b8', 
-                border: activeTab === 'shop' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-                padding: '10px 24px', 
-                borderRadius: '50px', 
-                cursor: 'pointer', 
-                fontWeight: '600', 
-                fontSize: '0.95rem',
-                boxShadow: activeTab === 'shop' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
-              }}>
-              🛍️ Mağaza (60 Ürün) & Envanter
-            </button>
-            <button 
-              onClick={() => setActiveTab('about')} 
-              style={{ 
-                background: activeTab === 'about' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
-                color: activeTab === 'about' ? '#0f172a' : '#94a3b8', 
-                border: activeTab === 'about' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-                padding: '10px 24px', 
-                borderRadius: '50px', 
-                cursor: 'pointer', 
-                fontWeight: '600', 
-                fontSize: '0.95rem',
-                boxShadow: activeTab === 'about' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
-              }}>
-              📖 Hakkında
-            </button>
-          </div>
-        </div>
+<div className="nav-tabs-wrapper">
+  <div className="nav-tabs-container">
+    <button 
+      onClick={() => setActiveTab('home')} 
+      style={{ 
+        background: activeTab === 'home' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
+        color: activeTab === 'home' ? '#0f172a' : '#94a3b8', 
+        border: activeTab === 'home' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+        padding: '10px 24px', 
+        borderRadius: '50px', 
+        cursor: 'pointer', 
+        fontWeight: '600', 
+        fontSize: '0.95rem',
+        whiteSpace: 'nowrap',
+        boxShadow: activeTab === 'home' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
+      }}>
+      🏠 Anasayfa
+    </button>
+    <button 
+      onClick={() => setActiveTab('shop')} 
+      style={{ 
+        background: activeTab === 'shop' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
+        color: activeTab === 'shop' ? '#0f172a' : '#94a3b8', 
+        border: activeTab === 'shop' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+        padding: '10px 24px', 
+        borderRadius: '50px', 
+        cursor: 'pointer', 
+        fontWeight: '600', 
+        fontSize: '0.95rem',
+        whiteSpace: 'nowrap',
+        boxShadow: activeTab === 'shop' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
+      }}>
+      🛍️ Mağaza (60 Ürün) & Envanter
+    </button>
+    <button 
+      onClick={() => setActiveTab('about')} 
+      style={{ 
+        background: activeTab === 'about' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
+        color: activeTab === 'about' ? '#0f172a' : '#94a3b8', 
+        border: activeTab === 'about' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
+        padding: '10px 24px', 
+        borderRadius: '50px', 
+        cursor: 'pointer', 
+        fontWeight: '600', 
+        fontSize: '0.95rem',
+        whiteSpace: 'nowrap',
+        boxShadow: activeTab === 'about' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
+      }}>
+      📖 Hakkında
+    </button>
+  </div>
+</div>
 
         {showLeaderboard && (
           <div className="leaderboard-modal-bg">
