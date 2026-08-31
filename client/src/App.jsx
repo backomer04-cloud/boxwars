@@ -956,10 +956,18 @@ function App() {
               textDecoration: 'none', 
               fontSize: '0.85rem',
               boxShadow: '0 4px 15px rgba(0,245,212,0.3)',
-              display: 'inline-block'
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
             }}
           >
-            📸 Instagram'da Takip Et
+            {/* Instagram SVG İkonu */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+            </svg>
+            Instagram'da Takip Et
           </a>
         </div>
       </div>
