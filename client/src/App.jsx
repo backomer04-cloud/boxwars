@@ -6,6 +6,7 @@ import './App.css'
 function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [toastMessage, setToastMessage] = useState(null);
   const [inGame, setInGame] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false) // 🌐 Sunucu bekleme / yüklenme ekranı state'i
 
@@ -628,9 +629,45 @@ function App() {
     const guestMember = roomMembers.find(m => m.role === 'guest')
     const isGuestReady = guestMember ? guestMember.isReady : false
     const canStartGame = isRoomFull && isGuestReady
+    const handleFeedbackSubmit = (e) => {
+  e.preventDefault();
+  setToastMessage("Geri bildirimin başarıyla gönderildi! Teşekkürler, Ömer'e iletildi. 🚀");
+  e.target.reset();
+
+  setTimeout(() => {
+    setToastMessage(null);
+  }, 4500);
+};
 
     return (
       <div className="lobby-wrap">
+      {/* TOAST BİLDİRİMİ EN ÜSTE KOYUYORUZ */}
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(0, 245, 212, 0.15)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid #00f5d4',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '14px',
+          boxShadow: '0 10px 30px rgba(0, 245, 212, 0.3)',
+          zIndex: 9999,
+          fontWeight: '600',
+          fontSize: '0.95rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          animation: 'fadeInOut 4.5s ease forwards'
+        }}>
+          <span style={{ color: '#00f5d4' }}>✨</span> {toastMessage}
+        </div>
+      )}
+
+
         <header className="lobby-header" >
           <span className="lobby-logo" style={{ 
             fontSize: '24px', 
@@ -977,60 +1014,55 @@ function App() {
         Oyunda bir hata (bug) mı yakaladın, yeni bir özellik mi öneriyorsun yoksa sadece teşekkür etmek mi istiyorsun? Aşağıdaki formu kullanarak doğrudan geliştiriciye mesajını iletebilirsin!
       </p>
 
-      <form 
-        onSubmit={(e) => {
-          e.preventDefault();
-          alert("Geri bildirimin başarıyla gönderildi! Teşekkürler Ömer'e iletildi.");
-          e.target.reset();
-        }}
-        style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
-      >
-        <input 
-          type="text" 
-          placeholder="Oyuncu Adın (İsteğe bağlı)" 
-          style={{ 
-            background: 'rgba(0,0,0,0.3)', 
-            border: '1px solid rgba(255,255,255,0.1)', 
-            padding: '12px 16px', 
-            borderRadius: '12px', 
-            color: '#fff',
-            outline: 'none',
-            fontSize: '0.9rem'
-          }} 
-        />
-        <textarea 
-          rows="4" 
-          placeholder="Hata bildirimi, öneri veya teşekkür mesajını buraya yaz..." 
-          required
-          style={{ 
-            background: 'rgba(0,0,0,0.3)', 
-            border: '1px solid rgba(255,255,255,0.1)', 
-            padding: '12px 16px', 
-            borderRadius: '12px', 
-            color: '#fff',
-            outline: 'none',
-            fontSize: '0.9rem',
-            resize: 'vertical'
-          }} 
-        />
-        <button 
-          type="submit"
-          style={{ 
-            background: 'linear-gradient(135deg, #00f5d4, #00b4ff)', 
-            color: '#0a0a12', 
-            padding: '12px', 
-            borderRadius: '12px', 
-            fontWeight: '700', 
-            border: 'none', 
-            cursor: 'pointer',
-            fontSize: '0.95rem',
-            boxShadow: '0 4px 15px rgba(0,245,212,0.2)',
-            transition: 'transform 0.2s'
-          }}
-        >
-          🚀 Raporu / Mesajı Gönder
-        </button>
-      </form>
+ <form 
+  onSubmit={handleFeedbackSubmit}
+  style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+>
+  <input 
+    type="text" 
+    placeholder="Oyuncu Adın (İsteğe bağlı)" 
+    style={{ 
+      background: 'rgba(0,0,0,0.3)', 
+      border: '1px solid rgba(255,255,255,0.1)', 
+      padding: '12px 16px', 
+      borderRadius: '12px', 
+      color: '#fff',
+      outline: 'none',
+      fontSize: '0.9rem'
+    }} 
+  />
+  <textarea 
+    rows="4" 
+    placeholder="Hata bildirimi, öneri veya teşekkür mesajını buraya yaz..." 
+    required
+    style={{ 
+      background: 'rgba(0,0,0,0.3)', 
+      border: '1px solid rgba(255,255,255,0.1)', 
+      padding: '12px 16px', 
+      borderRadius: '12px', 
+      color: '#fff',
+      outline: 'none',
+      fontSize: '0.9rem',
+      resize: 'vertical'
+    }} 
+  />
+  <button 
+    type="submit"
+    style={{ 
+      background: 'linear-gradient(135deg, #00f5d4, #00b4ff)', 
+      color: '#0a0a12', 
+      padding: '12px', 
+      borderRadius: '12px', 
+      fontWeight: '700', 
+      border: 'none', 
+      cursor: 'pointer',
+      fontSize: '0.95rem',
+      boxShadow: '0 4px 15px rgba(0,245,212,0.2)'
+    }}
+  >
+    🚀 Raporu / Mesajı Gönder
+  </button>
+</form>
 
     </div>
   </div>
