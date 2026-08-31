@@ -911,24 +911,58 @@ function App() {
           </div>
         ) :activeTab === 'about' ? (
   <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
-    <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
+    <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında & Künye</h2>
     <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', lineHeight: '1.6', color: '#ccc' }}>
       
+      {/* Temel Giriş ve VXL Detayı */}
       <p style={{ marginBottom: '20px' }}>
-        <strong style={{ color: '#fff' }}>Box Wars</strong>, 60 farklı özelleştirme seçeneği (20 skin, 20 mermi, 20 efekt) sunan rekabetçi bir 1v1 web oyunudur. Her seviye ve galibiyette <strong style={{ color: '#00f5d4' }}>50 VXL</strong> kazanırsın!
+        <strong style={{ color: '#fff' }}>Box Wars</strong>, toplamda 60 farklı özelleştirme seçeneği (20 özel skin, 20 mermi efekti ve 20 görsel efekt) sunan, yüksek tempolu ve rekabetçi bir 1v1 web tabanlı aksiyon oyunudur. Arenada aldığın her galibiyette ve atladığın her seviyede <strong style={{ color: '#00f5d4' }}>50 VXL</strong> kazanarak cüzdanını büyütebilirsin!
       </p>
 
-      <h3 style={{ color: '#00f5d4', fontSize: '1.1rem', marginBottom: '8px', marginTop: '20px' }}>⚡ Oynanış ve Özellikler</h3>
+      {/* Oyun Mekanikleri ve Detaylı Anlatım */}
+      <h3 style={{ color: '#00f5d4', fontSize: '1.1rem', marginBottom: '8px', marginTop: '20px' }}>🎮 Detaylı Oyun Mekanikleri</h3>
+      <p style={{ marginBottom: '12px' }}>
+        Oyunda temel amaç, taktiksel hareketler ve nişan yeteneğini kullanarak rakibinden önce onun kutularını veya can barını bitirmektir. 
+      </p>
       <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px' }}>
-        <li><span style={{ color: '#fff' }}>Hızlı 1v1 Savaşlar:</span> Reflekslerini konuştur, rakibini alt et ve zaferi kap.</li>
-        <li><span style={{ color: '#fff' }}>Mağaza & Envanter:</span> Kazandığın VXL'lerle karakterini, mermilerini ve efektlerini tamamen kişiselleştir.</li>
-        <li><span style={{ color: '#fff' }}>Mobil Uyumlu Kontroller:</span> İster klavye ile ister ekrandaki dokunmatik D-Pad ve ateş butonlarıyla kesintisiz oyna.</li>
+        <li><span style={{ color: '#fff' }}>Dinamik 1v1 Savaş Arenası:</span> Her maç anlık refleks gerektirir. Doğru pozisyon al, mermilerden kaç ve en uygun zamanda karşı atağa geç.</li>
+        <li><span style={{ color: '#fff' }}>Zengin Mağaza Sistemi:</span> Mağaza üzerinden topladığın VXL'lerle karakterinin görünümünü tamamen değiştirebilir, mermilerine ve vuruşlarına nefis görsel efektler ekleyebilirsin.</li>
+        <li><span style={{ color: '#fff' }}>Gelişmiş İlerleme (XP & Seviye):</span> Savaşlarda gösterdiğin performans sana XP kazandırır. Seviye atladıkça hem profilini güçlendirir hem de ödülleri toplarsın.</li>
+        <li><span style={{ color: '#fff' }}>Çoklu Platform Desteği:</span> İster klavye ve fare kombinasyonuyla masaüstünde, ister mobil cihazlar/tabletler için özel olarak optimize edilmiş dokunmatik D-Pad ve ateş butonlarıyla kesintisiz oyna.</li>
       </ul>
 
-      <h3 style={{ color: '#00f5d4', fontSize: '1.1rem', marginBottom: '8px', marginTop: '20px' }}>🚀 Nasıl Gelişirsin?</h3>
-      <p>
-        Arenaya dal, maçları kazanarak XP topla, seviye atla ve cüzdanını VXL ile doldur. En nadir eşyaları açarak envanterini dize ve liderlik tablosunun zirvesine adını yazdır!
+      {/* Geliştirici & Patent / Telif Hakları */}
+      <h3 style={{ color: '#00f5d4', fontSize: '1.1rem', marginBottom: '8px', marginTop: '20px' }}>⚖️ Patent, Telif Hakları ve İletişim</h3>
+      <p style={{ marginBottom: '15px' }}>
+        Bu oyunun tüm mimarisi, tasarımı, kod altyapısı ve hakları <strong style={{ color: '#00f5d4' }}>Ömer Koçoğlu</strong> adına tescilli olup tüm patent ve telif hakları saklıdır. İzinsiz kopyalanamaz veya çoğaltılamaz.
       </p>
+
+      <div style={{ background: 'rgba(0, 245, 212, 0.05)', border: '1px solid rgba(0, 245, 212, 0.2)', padding: '15px 20px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+        <div>
+          <span style={{ display: 'block', fontSize: '0.8rem', color: '#888', textTransform: 'uppercase' }}>Geliştirici & Hak Sahibi</span>
+          <strong style={{ color: '#fff', fontSize: '1.05rem' }}>Ömer Koçoğlu</strong>
+        </div>
+        <div>
+          <a 
+            href="https://instagram.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ 
+              background: 'linear-gradient(135deg, #00f5d4, #00b4ff)', 
+              color: '#0a0a12', 
+              padding: '8px 16px', 
+              borderRadius: '20px', 
+              fontWeight: '700', 
+              textDecoration: 'none', 
+              fontSize: '0.85rem',
+              boxShadow: '0 4px 15px rgba(0,245,212,0.3)',
+              display: 'inline-block'
+            }}
+          >
+            📸 Instagram'da Takip Et
+          </a>
+        </div>
+      </div>
 
     </div>
   </div>
