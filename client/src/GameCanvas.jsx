@@ -57,7 +57,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     myPos: { x: 80, y: 250, hp: 200, maxHp: 200, trailHistory: [] },
     enemyPos: { x: 850, y: 250, hp: 200, maxHp: 200, trailHistory: [] },
     bullets: [],
-    isPaused: true // Oyun, her iki oyuncu da hazır sinyali verip başlama komutu gelene kadar duraklatılmış başlar
+    isPaused: true
   })
 
   const shopSkinDetails = {
@@ -82,6 +82,17 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     'skin_toxic_hazard': { color: '#ca8a04', icon: 'cube' },
     'skin_royal_crown': { color: '#eab308', icon: 'crown' }
   }
+
+  // Sayfa yenilendiğinde (F5) odada kalabilmek için roomId'yi sessionStorage'a kaydediyoruz
+  useEffect(() => {
+    if (roomId) {
+      sessionStorage.setItem('active_room_id', roomId)
+    }
+    return () => {
+      // Eğer normal çıkış yapılıyorsa sessionStorage temizlenebilir, 
+      // ancak burada kalıcı tutarak yenilemelerde yakalayacağız.
+    }
+  }, [roomId])
 
   useEffect(() => {
     async function fetchLatestProfile() {
@@ -122,13 +133,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
     let isMounted = true
 
     async function initRoomAndSocket() {
-      if (!roomId || !userId) return
+      // Aktif oda ID'sini props'tan veya sessionStorage'dan alarak F5 koruması sağlıyoruz
+      const currentRoomId = roomId || sessionStorage.getItem('active_room_id')
+      if (!currentRoomId || !userId) return
 
       try {
         setLoadingText('Supabase oda verileri doğrulanıyor...')
-        const { data: roomData } = await supabase.from('rooms').select('*').eq('id', roomId).single()
+        const { data: roomData } = await supabase.from('rooms').select('*').eq('id', currentRoomId).single()
         if (!roomData) {
           if (isMounted) {
+            sessionStorage.removeItem('active_room_id')
             alert('Oda bulunamadı.')
             onBack()
           }
@@ -143,7 +157,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         gameStateRef.current.myPos.x = side === 'left' ? 80 : 850
         gameStateRef.current.enemyPos.x = side === 'left' ? 850 : 80
 
-        const { data: invites } = await supabase.from('invites').select('*').eq('room_id', roomId).eq('status', 'accepted').single()
+        const { data: invites } = await supabase.from('invites').select('*').eq('room_id', currentRoomId).eq('status', 'accepted').single()
         const enemyId = hosting ? invites?.receiver_id : roomData.host_id
         
         if (enemyId) {
@@ -165,17 +179,16 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           transports: ['websocket', 'polling'],
           reconnectionAttempts: 5,
           timeout: 10000,
-          query: { userId, roomId }
+          query: { userId, roomId: currentRoomId }
         })
         socketRef.current = socket
 
-        socket.emit('join_room', roomId)
+        socket.emit('join_room', currentRoomId)
 
         socket.on('connect', () => {
           console.log('Sunucuya socket bağlantısı kuruldu.')
         })
 
-        // Her iki oyuncu da hazır olduğunda sunucudan 'start_game' sinyali gelecek
         socket.on('start_game', () => {
           if (isMounted) {
             setIsServerReady(true)
@@ -185,7 +198,6 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           }
         })
 
-        // Geri sayım / güvenlik zaman aşımı: Eğer rakip geç kalırsa veya sinyal koparsa oyun otomatik başlar
         const safetyTimer = setTimeout(() => {
           if (isMounted && !isServerReady) {
             setIsServerReady(true)
@@ -232,6 +244,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           const finalResultType = payload.gameOverData.resultType
           const { addedXp } = await applyPenaltiesAndDatabase(finalResultType)
 
+          sessionStorage.removeItem('active_room_id')
           setGameOverData({
             resultType: finalResultType,
             addedXp,
@@ -243,6 +256,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
         socket.on('player_quit', async () => {
           showNotification('Rakip oyundan ayrıldı!')
+          sessionStorage.removeItem('active_room_id')
           if (!gameOverData) {
             const res = await applyPenaltiesAndDatabase('win')
             setGameOverData({
@@ -270,6 +284,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   }, [roomId, userId])
 
   const handleEarlyLeave = async () => {
+    sessionStorage.removeItem('active_room_id')
     if (!gameOverData) {
       if (socketRef.current) socketRef.current.emit('player_quit', {})
       await applyPenaltiesAndDatabase('lose')
@@ -394,6 +409,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         bulletColor = bulletColorMap[bulletType]
       }
 
+      const currentRoomId = roomId || sessionStorage.getItem('active_room_id')
       const newBullet = {
         id: `${userId}-${Date.now()}`,
         senderId: userId,
@@ -409,7 +425,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       gameStateRef.current.bullets.push(newBullet)
       if (socketRef.current) {
-        socketRef.current.emit('player_shoot', { roomId, bullet: newBullet })
+        socketRef.current.emit('player_shoot', { roomId: currentRoomId, bullet: newBullet })
       }
     }
 
@@ -600,8 +616,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
         const now = Date.now()
         if (now - lastMoveSend > 30 && socketRef.current) {
           lastMoveSend = now
+          const currentRoomId = roomId || sessionStorage.getItem('active_room_id')
           socketRef.current.emit('player_move', { 
-            roomId, x: myP.x, y: myP.y, hp: myP.hp,
+            roomId: currentRoomId, x: myP.x, y: myP.y, hp: myP.hp,
             skin: userData.equippedSkin,
             trail: userData.equippedTrail,
             bullet: userData.equippedBullet
@@ -644,7 +661,8 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
               enP.hp = Math.max(0, enP.hp - 20)
 
               if (socketRef.current && enemyData.id) {
-                socketRef.current.emit('player_hit', { roomId, targetId: enemyData.id })
+                const currentRoomId = roomId || sessionStorage.getItem('active_room_id')
+                socketRef.current.emit('player_hit', { roomId: currentRoomId, targetId: enemyData.id })
               }
 
               if (enP.hp <= 0) triggerRoundWin()
@@ -715,7 +733,10 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
 
       setScores((prevScores) => {
         const updatedScores = { ...prevScores, player1: Math.min(2, prevScores.player1 + 1) }
-        if (socketRef.current) socketRef.current.emit('round_won', { roomId, winnerId: userId, scores: updatedScores })
+        if (socketRef.current) {
+          const currentRoomId = roomId || sessionStorage.getItem('active_room_id')
+          socketRef.current.emit('round_won', { roomId: currentRoomId, winnerId: userId, scores: updatedScores })
+        }
         handleRoundTransition(updatedScores)
         return updatedScores
       })
@@ -780,6 +801,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
           else if (currentScores.player1 === currentScores.player2) hostResultType = 'draw'
 
           const { addedXp } = await applyPenaltiesAndDatabase(hostResultType)
+          sessionStorage.removeItem('active_room_id')
 
           setGameOverData({
             resultType: hostResultType, addedXp,
@@ -791,8 +813,9 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
             if (currentScores.player2 > currentScores.player1) enemyResultType = 'win'
             else if (currentScores.player1 === currentScores.player2) enemyResultType = 'draw'
 
+            const currentRoomId = roomId || sessionStorage.getItem('active_room_id')
             socketRef.current.emit('game_over_sync', {
-              roomId,
+              roomId: currentRoomId,
               gameOverData: { resultType: enemyResultType, p1Score: currentScores.player2, p2Score: currentScores.player1 },
               scores: { player1: currentScores.player2, player2: currentScores.player1 }
             })
@@ -804,6 +827,7 @@ export default function GameCanvas({ onBack, userId, roomId, profile, refreshPro
   }
 
   const handleReturnToLobby = () => {
+    sessionStorage.removeItem('active_room_id')
     if (refreshProfile) refreshProfile()
     onBack()
   }
