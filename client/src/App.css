@@ -1164,3 +1164,132 @@ body {
   animation: toastSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   text-align: center;
 }
+
+/* ==========================================================
+   MAĞAZA (SHOP) VE ÜRÜN KARTLARI ÖZEL STİLLERİ
+   ========================================================== */
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.shop-item-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-item-card:hover {
+  border-color: rgba(0, 245, 212, 0.4);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(0, 245, 212, 0.15);
+}
+
+.shop-item-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 0 10px rgba(0, 245, 212, 0.3));
+}
+
+.shop-item-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 0.4rem;
+}
+
+.shop-item-desc {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin-bottom: 1.2rem;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.shop-item-btn {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.5px;
+}
+
+.shop-item-btn.buyable {
+  background: linear-gradient(135deg, #00f5d4, #00b4ff);
+  color: #0a0a12;
+  box-shadow: 0 4px 15px rgba(0, 245, 212, 0.3);
+}
+
+.shop-item-btn.buyable:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(0, 245, 212, 0.5);
+}
+
+.shop-item-btn.owned {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #64748b;
+  cursor: default;
+}
+
+/* ==========================================================
+   GENEL BUTON VE PANEL OPTİMİZASYONLARI (MOBİL & MASAÜSTÜ)
+   ========================================================== */
+
+.action-btn-group {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  padding: 0.8rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Küçük ekranlarda buton ve kart taşmalarını engellemek için ek düzenleme */
+@media (max-width: 480px) {
+  .shop-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .shop-item-card {
+    padding: 1.2rem;
+  }
+
+  .action-btn-group {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+}
