@@ -14,6 +14,7 @@ html, body {
   background-color: #0a0a0f;
   color: #e0e0e0;
   overflow-x: hidden;
+  overflow-y: auto; /* Sayfanın dikeyde kaydırılabilmesini ve sticky menünün çalışmasını sağlar */
 }
 
 body {
