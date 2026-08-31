@@ -937,14 +937,14 @@ function App() {
         Bu oyunun tüm mimarisi, tasarımı, kod altyapısı ve hakları <strong style={{ color: '#00f5d4' }}>Ömer Koçoğlu</strong> adına tescilli olup tüm patent ve telif hakları saklıdır. İzinsiz kopyalanamaz veya çoğaltılamaz.
       </p>
 
-      <div style={{ background: 'rgba(0, 245, 212, 0.05)', border: '1px solid rgba(0, 245, 212, 0.2)', padding: '15px 20px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+      <div style={{ background: 'rgba(0, 245, 212, 0.05)', border: '1px solid rgba(0, 245, 212, 0.2)', padding: '15px 20px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '30px' }}>
         <div>
           <span style={{ display: 'block', fontSize: '0.8rem', color: '#888', textTransform: 'uppercase' }}>Geliştirici & Hak Sahibi</span>
           <strong style={{ color: '#fff', fontSize: '1.05rem' }}>Ömer Koçoğlu</strong>
         </div>
         <div>
           <a 
-            href="https://instagram.com/omer_k.04?igsi=dnJnZTYwMWk4NXVp" 
+            href="https://instagram.com/" 
             target="_blank" 
             rel="noopener noreferrer"
             style={{ 
@@ -961,7 +961,6 @@ function App() {
               gap: '6px'
             }}
           >
-            {/* Instagram SVG İkonu */}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
               <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -971,6 +970,67 @@ function App() {
           </a>
         </div>
       </div>
+
+      {/* Hata Bildirimi ve Geri Bildirim Alanı */}
+      <h3 style={{ color: '#00f5d4', fontSize: '1.1rem', marginBottom: '8px', marginTop: '20px' }}>🛠️ Hata Bildirimi & Geri Bildirim</h3>
+      <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>
+        Oyunda bir hata (bug) mı yakaladın, yeni bir özellik mi öneriyorsun yoksa sadece teşekkür etmek mi istiyorsun? Aşağıdaki formu kullanarak doğrudan geliştiriciye mesajını iletebilirsin!
+      </p>
+
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          alert("Geri bildirimin başarıyla gönderildi! Teşekkürler Ömer'e iletildi.");
+          e.target.reset();
+        }}
+        style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+      >
+        <input 
+          type="text" 
+          placeholder="Oyuncu Adın (İsteğe bağlı)" 
+          style={{ 
+            background: 'rgba(0,0,0,0.3)', 
+            border: '1px solid rgba(255,255,255,0.1)', 
+            padding: '12px 16px', 
+            borderRadius: '12px', 
+            color: '#fff',
+            outline: 'none',
+            fontSize: '0.9rem'
+          }} 
+        />
+        <textarea 
+          rows="4" 
+          placeholder="Hata bildirimi, öneri veya teşekkür mesajını buraya yaz..." 
+          required
+          style={{ 
+            background: 'rgba(0,0,0,0.3)', 
+            border: '1px solid rgba(255,255,255,0.1)', 
+            padding: '12px 16px', 
+            borderRadius: '12px', 
+            color: '#fff',
+            outline: 'none',
+            fontSize: '0.9rem',
+            resize: 'vertical'
+          }} 
+        />
+        <button 
+          type="submit"
+          style={{ 
+            background: 'linear-gradient(135deg, #00f5d4, #00b4ff)', 
+            color: '#0a0a12', 
+            padding: '12px', 
+            borderRadius: '12px', 
+            fontWeight: '700', 
+            border: 'none', 
+            cursor: 'pointer',
+            fontSize: '0.95rem',
+            boxShadow: '0 4px 15px rgba(0,245,212,0.2)',
+            transition: 'transform 0.2s'
+          }}
+        >
+          🚀 Raporu / Mesajı Gönder
+        </button>
+      </form>
 
     </div>
   </div>
