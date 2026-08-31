@@ -1132,16 +1132,43 @@ body {
   }
 }
 
-/* ── SABİT (STICKY) ÜST MENÜ VE BUTONLAR ── */
+/* ── MAĞAZA VE ENVANTER GRID YAPISI ── */
+.shop-grid-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 1200px) {
+  .shop-grid-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .shop-grid-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 550px) {
+  .shop-grid-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── ÜST MENÜ VE SEKME SABİTLEME (STİCKY) ── */
 .sticky-nav-container {
   position: sticky;
-  top: 15px;
-  z-index: 100;
-  background-color: rgba(11, 11, 18, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 10px 0;
-  margin-bottom: 20px;
+  top: 0;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 15px 10px;
+  margin: -30px -30px 25px -30px; /* İçerik boşluklarını kapatıp tam tepeye oturmasını sağlar */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 /* --- ŞEFFAF TOAST BİLDİRİM BALONU --- */
