@@ -682,55 +682,22 @@ function App() {
             }}>Çıkış</button>
           </div>
         </header>
-
-<div className="nav-tabs-wrapper">
+        
+ <div className="nav-tabs-wrapper">
   <div className="nav-tabs-container">
     <button 
       onClick={() => setActiveTab('home')} 
-      style={{ 
-        background: activeTab === 'home' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
-        color: activeTab === 'home' ? '#0f172a' : '#94a3b8', 
-        border: activeTab === 'home' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-        padding: '10px 24px', 
-        borderRadius: '50px', 
-        cursor: 'pointer', 
-        fontWeight: '600', 
-        fontSize: '0.95rem',
-        whiteSpace: 'nowrap',
-        boxShadow: activeTab === 'home' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
-      }}>
+      className={`nav-tab-custom ${activeTab === 'home' ? 'active' : ''}`}>
       🏠 Anasayfa
     </button>
     <button 
       onClick={() => setActiveTab('shop')} 
-      style={{ 
-        background: activeTab === 'shop' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
-        color: activeTab === 'shop' ? '#0f172a' : '#94a3b8', 
-        border: activeTab === 'shop' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-        padding: '10px 24px', 
-        borderRadius: '50px', 
-        cursor: 'pointer', 
-        fontWeight: '600', 
-        fontSize: '0.95rem',
-        whiteSpace: 'nowrap',
-        boxShadow: activeTab === 'shop' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
-      }}>
+      className={`nav-tab-custom ${activeTab === 'shop' ? 'active' : ''}`}>
       🛍️ Mağaza (60 Ürün) & Envanter
     </button>
     <button 
       onClick={() => setActiveTab('about')} 
-      style={{ 
-        background: activeTab === 'about' ? 'linear-gradient(135deg, #00f5d4, #2ec4b6)' : 'rgba(255, 255, 255, 0.04)', 
-        color: activeTab === 'about' ? '#0f172a' : '#94a3b8', 
-        border: activeTab === 'about' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', 
-        padding: '10px 24px', 
-        borderRadius: '50px', 
-        cursor: 'pointer', 
-        fontWeight: '600', 
-        fontSize: '0.95rem',
-        whiteSpace: 'nowrap',
-        boxShadow: activeTab === 'about' ? '0 10px 25px rgba(0, 245, 212, 0.4)' : 'none'
-      }}>
+      className={`nav-tab-custom ${activeTab === 'about' ? 'active' : ''}`}>
       📖 Hakkında
     </button>
   </div>
