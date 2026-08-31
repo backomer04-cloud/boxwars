@@ -909,14 +909,30 @@ function App() {
               </div>
             )}
           </div>
-        ) : activeTab === 'about' ? (
-          <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
-            <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', lineHeight: '1.6', color: '#ccc' }}>
-              <p><strong>Box Wars</strong>, 60 farklı özelleştirme seçeneği (20 skin, 20 mermi, 20 efekt) sunan rekabetçi bir 1v1 web oyunudur. Her seviye ve galibiyette **50 VXL** kazanırsın!</p>
-            </div>
-          </div>
-        ) : (
+        ) :activeTab === 'about' ? (
+  <div style={{ padding: '40px 30px', maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
+    <h2 style={{ color: '#00f5d4', marginBottom: '15px' }}>📖 Box Wars Hakkında</h2>
+    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', lineHeight: '1.6', color: '#ccc' }}>
+      
+      <p style={{ marginBottom: '20px' }}>
+        <strong style={{ color: '#fff' }}>Box Wars</strong>, 60 farklı özelleştirme seçeneği (20 skin, 20 mermi, 20 efekt) sunan rekabetçi bir 1v1 web oyunudur. Her seviye ve galibiyette <strong style={{ color: '#00f5d4' }}>50 VXL</strong> kazanırsın!
+      </p>
+
+      <h3 style={{ color: '#00f5d4', fontSize: '1.1rem', marginBottom: '8px', marginTop: '20px' }}>⚡ Oynanış ve Özellikler</h3>
+      <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px' }}>
+        <li><span style={{ color: '#fff' }}>Hızlı 1v1 Savaşlar:</span> Reflekslerini konuştur, rakibini alt et ve zaferi kap.</li>
+        <li><span style={{ color: '#fff' }}>Mağaza & Envanter:</span> Kazandığın VXL'lerle karakterini, mermilerini ve efektlerini tamamen kişiselleştir.</li>
+        <li><span style={{ color: '#fff' }}>Mobil Uyumlu Kontroller:</span> İster klavye ile ister ekrandaki dokunmatik D-Pad ve ateş butonlarıyla kesintisiz oyna.</li>
+      </ul>
+
+      <h3 style={{ color: '#00f5d4', fontSize: '1.1rem', marginBottom: '8px', marginTop: '20px' }}>🚀 Nasıl Gelişirsin?</h3>
+      <p>
+        Arenaya dal, maçları kazanarak XP topla, seviye atla ve cüzdanını VXL ile doldur. En nadir eşyaları açarak envanterini dize ve liderlik tablosunun zirvesine adını yazdır!
+      </p>
+
+    </div>
+  </div>
+) : (
           currentRoom ? (
             <div className="lobby-grid">
               <section className="mods-panel">
