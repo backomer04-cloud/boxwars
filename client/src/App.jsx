@@ -105,6 +105,14 @@ function App() {
   const [isRegistering, setIsRegistering] = useState(false)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  
+  // showToast fonksiyonu bu yapıya göre çalışacak
+  const showToast = (message) => {
+    setToast({ show: true, message });
+    setTimeout(() => {
+      setToast({ show: false, message: '' });
+    }, 4500);
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -181,21 +189,21 @@ function App() {
         { event: 'INSERT', schema: 'public', table: 'invites', filter: `receiver_id=eq.${session.user.id}` },
         (payload) => setIncomingInvites((prev) => [...prev, payload.new])
       )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'invites', filter: `sender_id=eq.${session.user.id}` },
-        (payload) => {
-          const updated = payload.new
-          if (updated.status === 'accepted') {
-            alert('🎉 Rakip daveti kabul etti! Odaya giriliyor...')
-            setCurrentRoom({ id: updated.room_id, status: 'waiting' })
-            setCurrentInviteId(updated.id)
-            setActiveTab('home')
-          } else if (updated.status === 'rejected') {
-            alert('❌ Rakip daveti reddetti.')
-          }
-        }
-      )
+    .on(
+    'postgres_changes',
+    { event: 'UPDATE', schema: 'public', table: 'invites', filter: `sender_id=eq.${session.user.id}` },
+    (payload) => {
+      const updated = payload.new
+      if (updated.status === 'accepted') {
+        showToast('🎉 Rakip daveti kabul etti! Odaya giriliyor...')
+        setCurrentRoom({ id: updated.room_id, status: 'waiting' })
+        setCurrentInviteId(updated.id)
+        setActiveTab('home')
+      } else if (updated.status === 'rejected') {
+        showToast('❌ Rakip daveti reddetti.')
+      }
+    }
+  )
       .subscribe()
 
     return () => {
@@ -218,7 +226,7 @@ function App() {
         .single()
 
       if (error || !roomData) {
-        alert('⚠️ Oda kapatıldı!')
+        showToast('⚠️ Oda kapatıldı!')
         handleBackToLobby()
         return
       }
@@ -284,7 +292,7 @@ function App() {
       .select()
       .single()
 
-    if (error) alert('Oda oluşturulamadı: ' + error.message)
+   if (error) showToast('Oda oluşturulamadı: ' + error.message)
     else {
       setCurrentRoom(data)
       setCurrentInviteId(null)
@@ -314,7 +322,7 @@ function App() {
       .single()
 
     if (existing) {
-      alert('Bu oyuncuya zaten aktif bir davet gönderilmiş!')
+     showToast('Bu oyuncuya zaten aktif bir davet gönderilmiş!')
       return
     }
 
@@ -326,8 +334,11 @@ function App() {
       is_ready: false
     }])
 
-    if (error) alert('Davet gönderilemedi: ' + error.message)
-    else alert('Davet gönderildi!')
+    if (error) {
+      showToast('Davet gönderilemedi: ' + error.message)
+    } else {
+      showToast('Davet gönderildi!')
+    }
   }
 
   const handleAcceptInvite = async (invite) => {
@@ -358,7 +369,7 @@ function App() {
         setInGame(true)
       }, 1500)
     } else {
-      alert('Oyun başlatılamadı: ' + error.message)
+      showToast('Oyun başlatılamadı: ' + error.message)
     }
   }
 
@@ -375,14 +386,14 @@ function App() {
     if (session) fetchProfile(session.user.id)
   }
 
-  const handleBuyItem = async (item) => {
+ const handleBuyItem = async (item) => {
     if (!profile || (profile.voxel ?? 0) < item.price) {
-      alert('❌ Yetersiz Voxel ($VXL$) bakiyesi!')
+      showToast('❌ Yetersiz Voxel (VXL) bakiyesi!')
       return
     }
 
     if (inventory.includes(item.id)) {
-      alert('⚠️ Bu ürüne zaten sahipsin!')
+      showToast('⚠️ Bu ürüne zaten sahipsin!')
       return
     }
 
@@ -395,11 +406,11 @@ function App() {
       .eq('id', session.user.id)
 
     if (error) {
-      alert('Satın alma başarısız: ' + error.message)
+      showToast('Satın alma başarısız: ' + error.message)
     } else {
       setProfile({ ...profile, voxel: newVoxel })
       setInventory(newInventory)
-      alert(`🎉 Tebrikler! Başarıyla satın aldın: ${item.name}`)
+      showToast(`🎉 Tebrikler! Başarıyla satın aldın: ${item.name}`)
     }
   }
 
@@ -416,7 +427,7 @@ function App() {
 
     if (!error) {
       setEquippedItems(updatedEquipped)
-      alert(`✅ Kuşanıldı: ${item.name}`)
+      showToast(`✅ Kuşanıldı: ${item.name}`)
     }
   }
 
@@ -433,7 +444,7 @@ function App() {
 
     if (!error) {
       setEquippedItems(updatedEquipped)
-      alert('🛡️ Eşya üzerinden kaldırıldı.')
+      showToast('🛡️ Eşya üzerinden kaldırıldı.')
     }
   }
 
@@ -629,13 +640,7 @@ function App() {
     const guestMember = roomMembers.find(m => m.role === 'guest')
     const isGuestReady = guestMember ? guestMember.isReady : false
     const canStartGame = isRoomFull && isGuestReady
-  // Her yerden çağırabileceğin genel fonksiyon
-  const showToast = (message) => {
-    setToast({ show: true, message });
-    setTimeout(() => {
-      setToast({ show: false, message: '' });
-    }, 4500);
-  };
+
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
     
