@@ -375,33 +375,37 @@ function App() {
     if (session) fetchProfile(session.user.id)
   }
 
-  const handleBuyItem = async (item) => {
+const handleBuyItem = async (item) => {
+    // 1. Bakiye kontrolü
     if (!profile || (profile.voxel ?? 0) < item.price) {
-      alert('❌ Yetersiz Voxel ($VXL$) bakiyesi!')
-      return
+      showToast("Yetersiz bakiye! Biraz daha VXL kasman lazım. 💸");
+      return;
     }
 
+    // 2. Zaten sahip olma kontrolü
     if (inventory.includes(item.id)) {
-      alert('⚠️ Bu ürüne zaten sahipsin!')
-      return
+      showToast("⚠️ Bu skine veya ürüne zaten sahipsin!");
+      return;
     }
 
-    const newVoxel = profile.voxel - item.price
-    const newInventory = [...inventory, item.id]
+    const newVoxel = profile.voxel - item.price;
+    const newInventory = [...inventory, item.id];
 
+    // 3. Supabase veritabanı güncellemesi
     const { error } = await supabase
       .from('profiles')
       .update({ voxel: newVoxel, inventory: newInventory })
-      .eq('id', session.user.id)
+      .eq('id', session.user.id);
 
     if (error) {
-      alert('Satın alma başarısız: ' + error.message)
+      showToast("Satın alma başarısız: " + error.message);
     } else {
-      setProfile({ ...profile, voxel: newVoxel })
-      setInventory(newInventory)
-      alert(`🎉 Tebrikler! Başarıyla satın aldın: ${item.name}`)
+      setProfile({ ...profile, voxel: newVoxel });
+      setInventory(newInventory);
+      // Başarılı skin alma mesajı
+      showToast(`🎉 Tebrikler! ${item.name} skini başarıyla açıldı ve envanterine eklendi!`);
     }
-  }
+  };
 
   const handleEquipItem = async (item) => {
     let updatedEquipped = { ...equippedItems }
