@@ -6,6 +6,7 @@ import './App.css'
 function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [toastMessage, setToastMessage] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '' });
   const [inGame, setInGame] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false) // 🌐 Sunucu bekleme / yüklenme ekranı state'i
@@ -629,13 +630,13 @@ function App() {
     const guestMember = roomMembers.find(m => m.role === 'guest')
     const isGuestReady = guestMember ? guestMember.isReady : false
     const canStartGame = isRoomFull && isGuestReady
-  // Her yerden çağırabileceğin genel fonksiyon
-  const showToast = (message) => {
-    setToast({ show: true, message });
-    setTimeout(() => {
-      setToast({ show: false, message: '' });
-    }, 4500);
-  };
+  // showToast fonksiyonun da tam şöyle olsun:
+const showToast = (message) => {
+  setToastMessage(message);
+  setTimeout(() => {
+    setToastMessage(null);
+  }, 4500);
+};
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
     
