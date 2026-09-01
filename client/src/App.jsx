@@ -6,7 +6,7 @@ import './App.css'
 function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: '' });
   const [inGame, setInGame] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false) // 🌐 Sunucu bekleme / yüklenme ekranı state'i
 
@@ -629,20 +629,39 @@ function App() {
     const guestMember = roomMembers.find(m => m.role === 'guest')
     const isGuestReady = guestMember ? guestMember.isReady : false
     const canStartGame = isRoomFull && isGuestReady
-    const handleFeedbackSubmit = (e) => {
-  e.preventDefault();
-  setToastMessage("Geri bildirimin başarıyla gönderildi! Teşekkürler, Ömer'e iletildi. 🚀");
-  e.target.reset();
+  // Her yerden çağırabileceğin genel fonksiyon
+  const showToast = (message) => {
+    setToast({ show: true, message });
+    setTimeout(() => {
+      setToast({ show: false, message: '' });
+    }, 4500);
+  };
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    
+    const playerName = e.target[0].value || "Anonim Oyuncu";
+    const messageContent = e.target[1].value;
 
-  setTimeout(() => {
-    setToastMessage(null);
-  }, 4500);
-};
+    try {
+      const { error } = await supabase
+        .from('feedbacks')
+        .insert([{ player_name: playerName, message: messageContent }]);
+
+      if (error) throw error;
+
+      showToast("Geri bildirimin başarıyla kaydedildi! Teşekkürler, Ömer'e iletildi. 🚀");
+      e.target.reset();
+    } catch (err) {
+      console.error("Hata:", err.message);
+      showToast("Mesaj gönderilirken bir sorun oluştu ama not aldık!");
+    }
+  };
 
     return (
       <div className="lobby-wrap">
       {/* TOAST BİLDİRİMİ EN ÜSTE KOYUYORUZ */}
-      {toastMessage && (
+     {/* Global Toast Görüntüsü */}
+      {toast.show && (
         <div style={{
           position: 'fixed',
           top: '20px',
@@ -663,7 +682,7 @@ function App() {
           gap: '10px',
           animation: 'fadeInOut 4.5s ease forwards'
         }}>
-          <span style={{ color: '#00f5d4' }}>✨</span> {toastMessage}
+          <span style={{ color: '#00f5d4' }}>✨</span> {toast.message}
         </div>
       )}
 
