@@ -23,7 +23,7 @@ function App() {
   // 🛍️ 60 ÜRÜNLÜK DEV MAĞAZA (Özel İkon/Görsel Tanımlarıyla)
   const shopItems = [
     // --- SKİN / KUTU ÇEŞİTLERİ (20 Adet) ---
-    { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7', iconType: 'cube' },
+    { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50000000000, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7', iconType: 'cube' },
     { id: 'skin_gold', type: 'skin', name: 'Altın Kaplama Küp', price: 200, desc: 'Zenginliğin ve ihtişamın zirvesi!', preview: '#ffd700', iconType: 'cube' },
     { id: 'skin_fire_red', type: 'skin', name: 'Cehennem Ateşi Küpü', price: 150, desc: 'Alevler içinde yanan agresif tasarım.', preview: '#e71d36', iconType: 'fire' },
     { id: 'skin_matrix_green', type: 'skin', name: 'Matrix Yeşil Küp', price: 100, desc: 'Dijital kod evreninden fırlamış gibi.', preview: '#00f5d4', iconType: 'cube' },
@@ -377,7 +377,7 @@ function App() {
 
   const handleBuyItem = async (item) => {
     if (!profile || (profile.voxel ?? 0) < item.price) {
-      alert('❌ Yetersiz Voxel ($VXL$) bakiyesi!')
+     showToast("Yetersiz bakiye! Biraz daha VXL kasman lazım.");
       return
     }
 
