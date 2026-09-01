@@ -6,7 +6,6 @@ import './App.css'
 function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [toastMessage, setToastMessage] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '' });
   const [inGame, setInGame] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false) // 🌐 Sunucu bekleme / yüklenme ekranı state'i
@@ -24,7 +23,7 @@ function App() {
   // 🛍️ 60 ÜRÜNLÜK DEV MAĞAZA (Özel İkon/Görsel Tanımlarıyla)
   const shopItems = [
     // --- SKİN / KUTU ÇEŞİTLERİ (20 Adet) ---
-    { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50000000000, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7', iconType: 'cube' },
+    { id: 'skin_neon_purple', type: 'skin', name: 'Siber Mor Küp', price: 50, desc: 'Neon mor parlayan havalı kutu tasarımı.', preview: '#7209b7', iconType: 'cube' },
     { id: 'skin_gold', type: 'skin', name: 'Altın Kaplama Küp', price: 200, desc: 'Zenginliğin ve ihtişamın zirvesi!', preview: '#ffd700', iconType: 'cube' },
     { id: 'skin_fire_red', type: 'skin', name: 'Cehennem Ateşi Küpü', price: 150, desc: 'Alevler içinde yanan agresif tasarım.', preview: '#e71d36', iconType: 'fire' },
     { id: 'skin_matrix_green', type: 'skin', name: 'Matrix Yeşil Küp', price: 100, desc: 'Dijital kod evreninden fırlamış gibi.', preview: '#00f5d4', iconType: 'cube' },
@@ -376,33 +375,33 @@ function App() {
     if (session) fetchProfile(session.user.id)
   }
 
- const handleBuyItem = async (item) => {
+  const handleBuyItem = async (item) => {
     if (!profile || (profile.voxel ?? 0) < item.price) {
-      showToast("Yetersiz bakiye! Biraz daha VXL kasman lazım.");
-      return;
+      alert('❌ Yetersiz Voxel ($VXL$) bakiyesi!')
+      return
     }
 
     if (inventory.includes(item.id)) {
-      showToast("⚠️ Bu ürüne zaten sahipsin!");
-      return;
+      alert('⚠️ Bu ürüne zaten sahipsin!')
+      return
     }
 
-    const newVoxel = profile.voxel - item.price;
-    const newInventory = [...inventory, item.id];
+    const newVoxel = profile.voxel - item.price
+    const newInventory = [...inventory, item.id]
 
     const { error } = await supabase
       .from('profiles')
       .update({ voxel: newVoxel, inventory: newInventory })
-      .eq('id', session.user.id);
+      .eq('id', session.user.id)
 
     if (error) {
-      showToast("Satın alma başarısız: " + error.message);
+      alert('Satın alma başarısız: ' + error.message)
     } else {
-      setProfile({ ...profile, voxel: newVoxel });
-      setInventory(newInventory);
-      showToast(`🎉 Tebrikler! Başarıyla satın aldın: ${item.name}`);
+      setProfile({ ...profile, voxel: newVoxel })
+      setInventory(newInventory)
+      alert(`🎉 Tebrikler! Başarıyla satın aldın: ${item.name}`)
     }
-  };
+  }
 
   const handleEquipItem = async (item) => {
     let updatedEquipped = { ...equippedItems }
@@ -630,13 +629,13 @@ function App() {
     const guestMember = roomMembers.find(m => m.role === 'guest')
     const isGuestReady = guestMember ? guestMember.isReady : false
     const canStartGame = isRoomFull && isGuestReady
-  // showToast fonksiyonun da tam şöyle olsun:
-const showToast = (message) => {
-  setToastMessage(message);
-  setTimeout(() => {
-    setToastMessage(null);
-  }, 4500);
-};
+  // Her yerden çağırabileceğin genel fonksiyon
+  const showToast = (message) => {
+    setToast({ show: true, message });
+    setTimeout(() => {
+      setToast({ show: false, message: '' });
+    }, 4500);
+  };
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
     
