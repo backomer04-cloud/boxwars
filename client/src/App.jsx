@@ -375,33 +375,33 @@ function App() {
     if (session) fetchProfile(session.user.id)
   }
 
-  const handleBuyItem = async (item) => {
+ const handleBuyItem = async (item) => {
     if (!profile || (profile.voxel ?? 0) < item.price) {
-     showToast("Yetersiz bakiye! Biraz daha VXL kasman lazım.");
-      return
+      showToast("Yetersiz bakiye! Biraz daha VXL kasman lazım.");
+      return;
     }
 
     if (inventory.includes(item.id)) {
-      alert('⚠️ Bu ürüne zaten sahipsin!')
-      return
+      showToast("⚠️ Bu ürüne zaten sahipsin!");
+      return;
     }
 
-    const newVoxel = profile.voxel - item.price
-    const newInventory = [...inventory, item.id]
+    const newVoxel = profile.voxel - item.price;
+    const newInventory = [...inventory, item.id];
 
     const { error } = await supabase
       .from('profiles')
       .update({ voxel: newVoxel, inventory: newInventory })
-      .eq('id', session.user.id)
+      .eq('id', session.user.id);
 
     if (error) {
-      alert('Satın alma başarısız: ' + error.message)
+      showToast("Satın alma başarısız: " + error.message);
     } else {
-      setProfile({ ...profile, voxel: newVoxel })
-      setInventory(newInventory)
-      alert(`🎉 Tebrikler! Başarıyla satın aldın: ${item.name}`)
+      setProfile({ ...profile, voxel: newVoxel });
+      setInventory(newInventory);
+      showToast(`🎉 Tebrikler! Başarıyla satın aldın: ${item.name}`);
     }
-  }
+  };
 
   const handleEquipItem = async (item) => {
     let updatedEquipped = { ...equippedItems }
