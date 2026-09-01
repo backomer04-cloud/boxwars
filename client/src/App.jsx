@@ -661,29 +661,30 @@ function App() {
       <div className="lobby-wrap">
       {/* TOAST BİLDİRİMİ EN ÜSTE KOYUYORUZ */}
      {/* Global Toast Görüntüsü */}
-      {toastMessage && (
-  <div style={{
-    position: 'fixed',
-    top: '20px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: 'rgba(0, 245, 212, 0.15)',
-    backdropFilter: 'blur(12px)',
-    border: '1px solid #00f5d4',
-    color: '#fff',
-    padding: '12px 24px',
-    borderRadius: '14px',
-    boxShadow: '0 10px 30px rgba(0, 245, 212, 0.3)',
-    zIndex: 9999,
-    fontWeight: '600',
-    fontSize: '0.95rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px'
-  }}>
-    <span style={{ color: '#00f5d4' }}>✨</span> {toastMessage}
-  </div>
-)}
+      {toast.show && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(0, 245, 212, 0.15)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid #00f5d4',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '14px',
+          boxShadow: '0 10px 30px rgba(0, 245, 212, 0.3)',
+          zIndex: 9999,
+          fontWeight: '600',
+          fontSize: '0.95rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          animation: 'fadeInOut 4.5s ease forwards'
+        }}>
+          <span style={{ color: '#00f5d4' }}>✨</span> {toast.message}
+        </div>
+      )}
 
 
         <header className="lobby-header" >
