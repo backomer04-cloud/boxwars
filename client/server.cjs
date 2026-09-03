@@ -25,6 +25,9 @@ app.get("/", (req, res) => {
     res.send("BOX WARS SUNUCUSU ÇALIŞIYOR 🔥 (Supabase Sync Mode)");
 });
 
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 // --- SOCKET.IO OYUN İLETİŞİM RÖLESİ ---
 io.on("connection", (socket) => {
