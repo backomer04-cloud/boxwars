@@ -6,6 +6,10 @@ import './App.css'
 function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [fullName, setFullName] = useState('')
+const [birthDate, setBirthDate] = useState('')
+const [location, setLocation] = useState('')
   const [toast, setToast] = useState({ show: false, message: '' });
   const [inGame, setInGame] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false) // 🌐 Sunucu bekleme / yüklenme ekranı state'i
@@ -448,54 +452,112 @@ function App() {
     }
   }
 
-  const handleRegister = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
+const handleRegister = async (e) => {
+  e.preventDefault()
 
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    if (error) {
-      setMessage(`❌ ${error.message}`)
-      setLoading(false)
-      return
-    }
+  // Doğum tarihi ve konum güvenlik/mantık kontrolü
+  if (!birthDate) {
+    showToast('❌ Lütfen doğum tarihinizi eksiksiz seçin.')
+    return
+  }
 
-    if (data.user) {
-      const { error: profileErr } = await supabase.from('profiles').insert([
-        { 
-          id: data.user.id, 
-          username, 
-          xp: 0, 
-          level: 1, 
-          wins: 0, 
-          losses: 0, 
-          voxel: 250, 
-          is_online: true,
-          inventory: [],
-          equipped: { skin: 'default_box', bullet: 'default_bullet', trail: 'none' }
-        }
-      ])
-      if (profileErr) setMessage(`❌ ${profileErr.message}`)
-      else {
-        setMessage('✅ Kayıt başarılı! Giriş yapabilirsin.')
-        setIsRegistering(false)
-        setUsername('')
-        setPassword('')
+  const selectedYear = new Date(birthDate).getFullYear()
+  const currentYear = new Date().getFullYear()
+  
+  if (selectedYear < 1920 || selectedYear > currentYear) {
+    showToast('❌ Lütfen geçerli bir doğum yılı girin.')
+    return
+  }
+
+  if (!location.trim() || location.trim().length < 3) {
+    showToast('❌ Lütfen geçerli bir ülke / şehir girin.')
+    return
+  }
+
+  setLoading(true)
+
+  const { data, error } = await supabase.auth.signUp({ 
+    email, 
+    password,
+    options: {
+      data: {
+        username,
+        full_name: fullName,
+        birth_date: birthDate,
+        location
       }
     }
+  })
+  
+  if (error) {
+    showToast(`❌ ${error.message}`)
     setLoading(false)
+    return
   }
 
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setMessage(`❌ ${error.message}`)
-    else if (data.user) await supabase.from('profiles').update({ is_online: true }).eq('id', data.user.id)
-    setLoading(false)
+  if (data.user) {
+    const { error: profileErr } = await supabase.from('profiles').insert([
+      { 
+        id: data.user.id, 
+        username, 
+        full_name: fullName,
+        birth_date: birthDate,
+        location,
+        xp: 0, 
+        level: 1, 
+        wins: 0, 
+        losses: 0, 
+        voxel: 100, 
+        is_online: true,
+        inventory: [],
+        equipped: { skin: 'default_box', bullet: 'default_bullet', trail: 'none' }
+      }
+    ])
+    if (profileErr) {
+      showToast(`❌ ${profileErr.message}`)
+    } else {
+      showToast('✅ Kayıt başarılı! Giriş yapabilirsin.')
+      setIsRegistering(false)
+      setUsername('')
+      setFullName('')
+      setBirthDate('')
+      setLocation('')
+      setPassword('')
+    }
   }
+  setLoading(false)
+}
+
+const handleLogin = async (e) => {
+  e.preventDefault()
+  setLoading(true)
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) {
+    showToast(`❌ ${error.message}`)
+  } else if (data.user) {
+    await supabase.from('profiles').update({ is_online: true }).eq('id', data.user.id)
+    showToast('Giriş başarılı!')
+  }
+  setLoading(false)
+}
+
+const handleForgotPassword = async () => {
+  if (!email || !email.includes('@')) {
+    showToast('❌ Lütfen önce geçerli bir E-posta adresi yazın.')
+    return
+  }
+  
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin,
+  })
+
+  if (error) {
+    showToast('❌ Hata: ' + error.message)
+  } else {
+    showToast('✅ Şifre sıfırlama bağlantısı e-postana gönderildi!')
+  }
+}
 
   const handleLogout = async () => {
     if (currentRoom) await handleLeaveRoom()
@@ -504,6 +566,51 @@ function App() {
     setProfile(null)
     setCurrentRoom(null)
   }
+
+  const handleUpdateProfile = async (e) => {
+  e.preventDefault()
+  if (!session?.user) return
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      full_name: fullName,
+      birth_date: birthDate,
+      location: location
+    })
+    .eq('id', session.user.id)
+
+  if (error) {
+    setToast({ show: true, message: `❌ ${error.message}` })
+  } else {
+    setToast({ show: true, message: '✅ Profil başarıyla güncellendi!' })
+    setProfile(prev => ({ ...prev, full_name: fullName, birth_date: birthDate, location }))
+    setIsProfileOpen(false)
+  }
+}
+
+
+// --- 1. openProfileModal fonksiyonunu bununla değiştir ---
+const openProfileModal = async () => {
+  const { data } = await supabase.from('profiles').select('*')
+  const userProfile = data?.find(p => p.id === session?.user?.id)
+  
+  if (userProfile) {
+    setProfile(userProfile)
+    setFullName(userProfile.full_name || '')
+    setBirthDate(userProfile.birth_date || '')
+    setLocation(userProfile.location || '')
+  }
+  
+  setIsProfileOpen(true)
+  document.body.classList.add('modal-open') // Arka planı kilitler
+}
+
+// --- 2. Modalı kapatmak için bu fonksiyonu kullan ---
+const closeProfileModal = () => {
+  setIsProfileOpen(false)
+  document.body.classList.remove('modal-open') // Kilidi kaldırır
+}
 
   // 🎨 ÜRÜN İKONLARINI ÇİZEN YARDIMCI BİLEŞEN
   const renderItemPreviewIcon = (item) => {
@@ -691,6 +798,48 @@ function App() {
         </div>
       )}
 
+      {/* Profil Modalı (Tüm Veriler Dahil) */}
+{isProfileOpen && (
+  <div className="profile-modal-overlay">
+    <div className="profile-modal-content">
+      <h3 className="profile-modal-title">OYUNCU PROFİLİ</h3>
+      
+      {/* Salt Okunur Tüm İstatistikler ve Oyun Verileri */}
+      <div className="profile-stats-grid">
+        <div className="profile-stat-box">Seviye: <span className="stat-val">{profile?.level}</span></div>
+        <div className="profile-stat-box">XP: <span className="stat-val">{profile?.xp}</span></div>
+        <div className="profile-stat-box">Voxel: <span className="voxel-val">{profile?.voxel} 💎</span></div>
+        <div className="profile-stat-box">Zafer / Yenilgi: <span className="win-val">{profile?.wins}</span> / <span className="loss-val">{profile?.losses}</span></div>
+      </div>
+
+      {/* Düzenlenebilir Bilgiler Formu */}
+      <form onSubmit={handleUpdateProfile} className="profile-form">
+        <div className="profile-input-group">
+          <label className="profile-input-label">Ad Soyad</label>
+          <input className="auth-input" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        </div>
+
+        <div className="profile-input-group">
+          <label className="profile-input-label">Konum (Ülke / Şehir)</label>
+          <input className="auth-input" type="text" value={location} onChange={(e) => setLocation(e.target.value)} />
+        </div>
+
+        <div className="profile-input-group">
+          <label className="profile-input-label">Doğum Tarihi</label>
+          <input className="auth-input" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+        </div>
+
+        <div className="profile-modal-actions">
+          <button type="submit" className="auth-button profile-submit-btn">Güncelle</button>
+         <button type="button" onClick={closeProfileModal} className="profile-close-btn">
+  Kapat
+</button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
 
         <header className="lobby-header" >
           <span className="lobby-logo" style={{ 
@@ -706,30 +855,23 @@ function App() {
             <span style={{ color: '#00f5d4' }}>⬛</span> BOX WARS
           </span>
 
-          <div className="user-badge" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ 
-              background: 'rgba(0, 245, 212, 0.1)', 
-              border: '1px solid rgba(0, 245, 212, 0.3)', 
-              padding: '6px 14px', 
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 0 15px rgba(0, 245, 212, 0.15)'
-            }}>
-              <span style={{ color: '#00f5d4', fontWeight: 'bold' }}>🔷 {profile?.voxel ?? 0} VXL</span>
-            </div>
-            <span className="user-name" style={{ color: '#cbd5e1', fontWeight: '600' }}>⚡ {profile?.username || 'Oyuncu'}</span>
-            <button className="logout-btn" onClick={handleLogout} style={{
-              background: 'rgba(231, 29, 54, 0.15)',
-              border: '1px solid rgba(231, 29, 54, 0.3)',
-              color: '#ff6b6b',
-              padding: '6px 14px',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}>Çıkış</button>
-          </div>
+         {/* Kullanıcı Rozet ve Profil Barı */}
+<div className="user-badge">
+  <div className="voxel-pill">
+    <span className="voxel-text">🔷 {profile?.voxel ?? 0} VXL</span>
+  </div>
+
+  <div className="user-info-area">
+    <span className="user-name">⚡ {profile?.username || 'Oyuncu'}</span>
+    <button className="profile-dots-btn" onClick={openProfileModal}>
+      ⋮
+    </button>
+  </div>
+
+  <button className="logout-btn" onClick={handleLogout}>Çıkış</button>
+</div>
+
+
         </header>
 
 <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', position: 'relative', zIndex: 90, marginTop: '-1px', width: '100%', boxSizing: 'border-box', padding: '0 10px' }}>
@@ -1232,27 +1374,91 @@ function App() {
     )
   }
 
-  return (
+return (
     <div className="auth-container">
+        <div className="floating-brand onyxd">OnYx</div>
+        <div className="floating-brand omerk">Ömer Koçoğlu</div>
+        <div className="floating-brand onyxd-2">OnYx</div>
+        <div className="floating-brand omerk-2">Ömer Koçoğlu</div>
+      
       <div className="auth-panel">
         <div className="auth-title">BOX WARS</div>
         <div className="auth-sub">{isRegistering ? 'KAYIT OL' : 'GİRİŞ YAP'}</div>
 
         <form onSubmit={isRegistering ? handleRegister : handleLogin}>
           {isRegistering && (
-            <input className="auth-input" type="text" placeholder="Kullanıcı Adı" value={username} onChange={(e) => setUsername(e.target.value)} required />
+            <>
+              <input 
+                className="auth-input" 
+                type="text" 
+                placeholder="Kullanıcı Adı" 
+                value={username} 
+                onChange={(e) => setUsername(e.target.value)} 
+                required 
+              />
+              <input 
+                className="auth-input" 
+                type="text" 
+                placeholder="Ad Soyad" 
+                value={fullName} 
+                onChange={(e) => setFullName(e.target.value)} 
+                required 
+              />
+             <input 
+                className="auth-input" 
+                type="date" 
+                min="1920-01-01"
+                max={new Date().toISOString().split('T')[0]} // Bugünden ileri bir tarih seçilemez
+                value={birthDate} 
+                onChange={(e) => setBirthDate(e.target.value)} 
+                required 
+              />
+
+              <input 
+                className="auth-input" 
+                type="text" 
+                placeholder="Ülke / Şehir (Örn: Türkiye, İstanbul)" 
+                value={location} 
+                minLength={3} // En az 3 karakter girilmesini zorunlu kılar
+                onChange={(e) => setLocation(e.target.value)} 
+                required 
+              />
+            </>
           )}
-          <input className="auth-input" type="email" placeholder="E-posta" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input className="auth-input" type="password" placeholder="Şifre" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input 
+            className="auth-input" 
+            type="email" 
+            placeholder="E-posta" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+          />
+          <input 
+            className="auth-input" 
+            type="password" 
+            placeholder="Şifre" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+          />
+
+          {!isRegistering && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', marginBottom: '15px' }}>
+              <span 
+                onClick={handleForgotPassword} 
+                style={{ color: '#00ffcc', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Şifremi Unuttum?
+              </span>
+            </div>
+          )}
 
           <button type="submit" className="auth-button" disabled={loading}>
             {loading ? 'Yükleniyor...' : (isRegistering ? 'KAYIT OL' : 'GİRİŞ YAP')}
           </button>
         </form>
 
-        {message && <div className="auth-message">{message}</div>}
-
-        <button className="toggle-button" onClick={() => { setIsRegistering(!isRegistering); setMessage(''); }}>
+        <button className="toggle-button" onClick={() => { setIsRegistering(!isRegistering); }}>
           {isRegistering ? 'Zaten hesabın var mı? Giriş Yap' : 'Hesabın yok mu? Kayıt Ol'}
         </button>
       </div>
