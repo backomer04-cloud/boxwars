@@ -25,6 +25,31 @@ app.get("/", (req, res) => {
     res.send("BOX WARS SUNUCUSU ÇALIŞIYOR 🔥 (Supabase Sync Mode)");
 });
 
+// --- ADMIN PANEL API ---
+app.post("/api/admin-login", (req, res) => {
+    const { email, password } = req.body;
+    
+    // Kendi belirleyeceğin admin bilgileri (İleride .env veya veritabanına bağlanabilir)
+    const ADMIN_EMAIL = "admin@boxwars.com";
+    const ADMIN_PASS = "admin123";
+
+    if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
+        res.json({ success: true, message: "Giriş başarılı!" });
+    } else {
+        res.status(401).json({ success: false, message: "Geçersiz e-posta veya şifre!" });
+    }
+});
+
+// Anlık bağlı oyuncu sayısını veren API
+app.get("/api/admin-stats", (req, res) => {
+    const activeConnections = io.engine.clientsCount; // Socket.io üzerinden bağlı toplam oyuncu sayısı
+    res.json({
+        activePlayers: activeConnections,
+        serverStatus: "ONLINE",
+        uptime: process.uptime()
+    });
+});
+
 // --- SOCKET.IO OYUN İLETİŞİM RÖLESİ ---
 io.on("connection", (socket) => {
     console.log("Bir oyuncu bağlandı:", socket.id);

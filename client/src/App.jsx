@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import GameCanvas from './GameCanvas'
 import './App.css'
+import AdminPanel from './AdminPanel';
 
 function App() {
   const [session, setSession] = useState(null)
@@ -158,6 +159,8 @@ const [location, setLocation] = useState('')
 
     if (data) setLeaderboardPlayers(data)
   }
+
+  
 
   useEffect(() => {
     if (!session) return
@@ -692,6 +695,12 @@ const closeProfileModal = () => {
     }
 
     return <div style={baseStyle} />
+  }
+
+
+  // Eğer adres çubuğunda /admin yazıyorsa direkt Admin Panelini göster
+  if (window.location.pathname === '/admin') {
+    return <AdminPanel />;
   }
 
   const currentLevelXp = profile?.xp ? profile.xp % 200 : 0
