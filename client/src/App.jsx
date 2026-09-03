@@ -4,6 +4,100 @@ import GameCanvas from './GameCanvas'
 import './App.css'
 import AdminPanel from './AdminPanel';
 
+function AnnouncementBanner() {
+  const [announcement, setAnnouncement] = useState('');
+  const [expiresText, setExpiresText] = useState('');
+
+  useEffect(() => {
+    async function fetchActiveAnnouncement() {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('active', true)
+        .order('id', { ascending: false })
+        .limit(1);
+
+      if (error || !data || data.length === 0) return;
+
+      const item = data[0];
+      const expiry = item.expires_at || item.bitis_tarihi;
+
+      // Süre kontrolü
+      if (expiry) {
+        const expiryDate = new Date(expiry);
+        if (!isNaN(expiryDate.getTime()) && new Date() > expiryDate) {
+          return; // Süre dolmuşsa gösterme
+        }
+      }
+
+      setAnnouncement(item.content || item.mesaj || '');
+
+      // Güvenli tarih formatlama (Invalid Date hatasını kökten çözer)
+      if (expiry) {
+        try {
+          // datetime-local formatı genelde "YYYY-MM-DDTHH:mm" şeklindedir
+          const parts = expiry.split('T');
+          if (parts.length === 2) {
+            const [datePart, timePart] = parts;
+            const [year, month, day] = datePart.split('-');
+            setExpiresText(`${day}.${month}.${year} ${timePart.substring(0, 5)}`);
+          } else {
+            // Eğer ISO formatındaysa standart çeviri
+            const dateObj = new Date(expiry);
+            if (!isNaN(dateObj.getTime())) {
+              setExpiresText(dateObj.toLocaleDateString('tr-TR', { 
+                day: '2-digit', month: '2-digit', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+              }));
+            } else {
+              setExpiresText(expiry); // Çevrilemezse ham halini yaz
+            }
+          }
+        } catch (e) {
+          setExpiresText('');
+        }
+      }
+    }
+    fetchActiveAnnouncement();
+  }, []);
+
+  if (!announcement) return null;
+
+  return (
+    <div style={{
+      background: 'linear-gradient(90deg, #00f5d4, #00b4d8)',
+      color: '#030712',
+      padding: '10px 15px',
+      textAlign: 'center',
+      fontWeight: 'bold',
+      fontFamily: 'monospace',
+      letterSpacing: '1px',
+      width: '100%',
+      zIndex: 9999,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '15px',
+      flexWrap: 'wrap'
+    }}>
+      <span>📢 DUYURU: {announcement}</span>
+      {expiresText && (
+        <span style={{ 
+          fontSize: '0.8rem', 
+          background: 'rgba(3, 7, 18, 0.15)', 
+          padding: '2px 8px', 
+          borderRadius: '4px',
+          border: '1px solid rgba(3, 7, 18, 0.3)'
+        }}>
+          ⏳ Bitiş Tarihi: {expiresText}
+        </span>
+      )}
+    </div>
+  );
+}
+
+
+
 function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -562,6 +656,10 @@ const handleForgotPassword = async () => {
   }
 }
 
+if (window.location.pathname === '/admin') {
+  return <AdminPanel />;
+}
+
   const handleLogout = async () => {
     if (currentRoom) await handleLeaveRoom()
     if (session) await supabase.from('profiles').update({ is_online: false }).eq('id', session.user.id)
@@ -780,7 +878,9 @@ const closeProfileModal = () => {
 
     return (
       <div className="lobby-wrap">
-      {/* TOAST BİLDİRİMİ EN ÜSTE KOYUYORUZ */}
+       {/* 1. En üste duyuru banner'ını koyuyoruz */}
+      <AnnouncementBanner />
+
      {/* Global Toast Görüntüsü */}
       {toast.show && (
         <div style={{
@@ -1470,6 +1570,25 @@ return (
         <button className="toggle-button" onClick={() => { setIsRegistering(!isRegistering); }}>
           {isRegistering ? 'Zaten hesabın var mı? Giriş Yap' : 'Hesabın yok mu? Kayıt Ol'}
         </button>
+        {/* Ana Giriş Ekranına Eklenecek Gizli/Şık Admin Butonu */}
+{/* Admin Paneline Geçiş Butonu */}
+<button 
+  onClick={() => { window.location.href = '/admin'; }}
+  style={{
+    background: 'transparent',
+    border: 'none',
+    color: 'rgba(0, 245, 212, 0.4)',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    fontFamily: 'monospace',
+    marginTop: '20px',
+    transition: 'color 0.2s'
+  }}
+  onMouseEnter={(e) => e.target.style.color = '#00f5d4'}
+  onMouseLeave={(e) => e.target.style.color = 'rgba(0, 245, 212, 0.4)'}
+>
+  ⚡ ADMIN PANEL
+</button>
       </div>
     </div>
   )
