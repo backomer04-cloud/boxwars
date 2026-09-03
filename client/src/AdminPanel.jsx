@@ -27,7 +27,7 @@ export default function AdminPanel() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (email === 'a@a.com' && password === 'a') {
+    if (email === 'backomer04@gmail.com' && password === 'OnYx#1023_0801') {
       setIsLoggedIn(true);
       setError('');
       fetchTableData(activeTable);
