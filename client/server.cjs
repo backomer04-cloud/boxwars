@@ -25,7 +25,9 @@ app.get("/", (req, res) => {
     res.send("BOX WARS SUNUCUSU ÇALIŞIYOR 🔥 (Supabase Sync Mode)");
 });
 
-app.get('*', (req, res) => {
+// Hatalı olan: app.get('*', ...)
+// Doğrusu ve güncel olan:
+app.get(/^(?!\/api).*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
