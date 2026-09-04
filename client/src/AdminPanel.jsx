@@ -331,11 +331,11 @@ const handleFeedbackAction = async (item, actionType) => {
                         );
                       })}
                       <td className="actions-cell">
-                        {activeTable === 'feedbacks' && (
+                      {activeTable === 'feedbacks' && (
                           <div className="feedback-quick-actions">
-                            <button onClick={() => handleFeedbackAction(item, 'read')} className="fb-btn read-btn" title="Okundu Olarak İşaretle">✓ Okundu</button>
-                            <button onClick={() => handleFeedbackAction(item, 'reviewing')} className="fb-btn review-btn" title="Bakılıyor Olarak İşaretle">👁️ Bakılıyor</button>
-                            <button onClick={() => handleFeedbackAction(item, 'thanked')} className="fb-btn thank-btn" title="Teşekkür Et">⭐ Teşekkür Et</button>
+                            <button onClick={() => handleFeedbackAction(item, 'pending')} className="fb-btn read-btn" title="Bekliyor Olarak İşaretle">⏳ Bekliyor</button>
+                            <button onClick={() => handleFeedbackAction(item, 'reviewing')} className="fb-btn review-btn" title="İnceleniyor Olarak İşaretle">🔍 İnceleniyor</button>
+                            <button onClick={() => handleFeedbackAction(item, 'resolved')} className="fb-btn thank-btn" title="Çözüldü Olarak İşaretle">✅ Çözüldü</button>
                           </div>
                         )}
 
