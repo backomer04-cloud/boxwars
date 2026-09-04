@@ -1628,3 +1628,199 @@ body.modal-open {
   66% { transform: translate(100px, 300px) rotate(-8deg); }
   100% { transform: translate(320px, 120px) rotate(10deg); }
 }
+
+/* Gelen Kutusu Butonu (Header içindeki diğer ögelerle uyumlu) */
+.mailbox-trigger-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  padding: 10px 16px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mailbox-trigger-btn:hover {
+  background: rgba(0, 245, 212, 0.1);
+  color: #00f5d4;
+  border-color: rgba(0, 245, 212, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 245, 212, 0.2);
+}
+
+/* Modal Arka Planı (Arkada sitenin kaymasını ve tıklanmasını engeller) */
+.mailbox-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 18, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  overscroll-behavior: contain;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Modal İçerik Kutusu */
+.mailbox-modal-content {
+  background: linear-gradient(145deg, #12121a, #0a0a12);
+  padding: 28px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 450px;
+  border: 1px solid rgba(0, 245, 212, 0.2);
+  color: #fff;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 245, 212, 0.1);
+  animation: scaleUp 0.2s ease-out;
+}
+
+.mailbox-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+}
+
+.mailbox-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.mailbox-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #aaa;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mailbox-close-btn:hover {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  border-color: rgba(255, 68, 68, 0.4);
+}
+
+.mailbox-search-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.mailbox-search-form input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: #fff;
+  outline: none;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.mailbox-search-form input:focus {
+  border-color: #00f5d4;
+  box-shadow: 0 0 10px rgba(0, 245, 212, 0.2);
+}
+
+.mailbox-search-form button {
+  background: linear-gradient(135deg, #00f5d4, #00b4ff);
+  color: #0a0a12;
+  border: none;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.mailbox-search-form button:hover {
+  opacity: 0.9;
+}
+
+.mailbox-reports-list {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+/* Kaydırma çubuğu tasarımı */
+.mailbox-reports-list::-webkit-scrollbar {
+  width: 6px;
+}
+.mailbox-reports-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.mailbox-info-text {
+  color: #777;
+  text-align: center;
+  font-size: 0.9rem;
+  margin: 30px 0;
+}
+
+.mailbox-report-card {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+}
+
+.mailbox-report-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.mailbox-report-msg {
+  margin: 0 0 10px 0;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+.mailbox-report-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.mailbox-report-footer span:last-child {
+  color: #64748b;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

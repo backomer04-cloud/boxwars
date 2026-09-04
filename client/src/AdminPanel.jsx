@@ -125,28 +125,27 @@ export default function AdminPanel() {
       fetchTableData(activeTable);
     }
   };
+const handleFeedbackAction = async (item, actionType) => {
+  let updateData = {};
+  if (actionType === 'pending') updateData = { status: 'Bekliyor' };
+  if (actionType === 'reviewing') updateData = { status: 'İnceleniyor' };
+  if (actionType === 'resolved') updateData = { status: 'Çözüldü' };
 
-  const handleFeedbackAction = async (item, actionType) => {
-    let updateData = {};
-    if (actionType === 'read') updateData = { status: 'Okundu' };
-    if (actionType === 'reviewing') updateData = { status: 'Bakılıyor' };
-    if (actionType === 'thanked') updateData = { status: 'Teşekkür Edildi' };
+  let query = supabase.from('feedbacks').update(updateData);
+  if (item.id !== undefined) {
+    query = query.eq('id', item.id);
+  } else {
+    query = query.eq(Object.keys(item)[0], item[Object.keys(item)[0]]);
+  }
 
-    let query = supabase.from('feedbacks').update(updateData);
-    if (item.id !== undefined) {
-      query = query.eq('id', item.id);
-    } else {
-      query = query.eq(Object.keys(item)[0], item[Object.keys(item)[0]]);
-    }
-
-    const { error } = await query;
-    if (error) {
-      showNotification('İşlem başarısız: ' + error.message, 'error');
-    } else {
-      showNotification(`Mesaj durumu güncellendi: ${updateData.status}`);
-      fetchTableData('feedbacks');
-    }
-  };
+  const { error } = await query;
+  if (error) {
+    showNotification('İşlem başarısız: ' + error.message, 'error');
+  } else {
+    showNotification(`Durum güncellendi: ${updateData.status}`);
+    fetchTableData('feedbacks');
+  }
+};
 
   if (!isLoggedIn) {
     return (

@@ -102,6 +102,10 @@ function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isMailboxOpen, setIsMailOpen] = useState(false);
+  const [searchName, setSearchName] = useState('');
+  const [reports, setReports] = useState([]);
+  const [searched, setSearched] = useState(false);
   const [fullName, setFullName] = useState('')
 const [birthDate, setBirthDate] = useState('')
 const [location, setLocation] = useState('')
@@ -690,6 +694,59 @@ if (window.location.pathname === '/admin') {
   }
 }
 
+const openMailModal = async () => {
+  setIsMailOpen(true);
+  document.body.classList.add('modal-open');
+  await fetchReports(); // Artık hata vermez
+};
+
+const closeMailModal = () => {
+  setIsMailOpen(false);
+  document.body.classList.remove('modal-open');
+};
+
+  
+
+
+// --- email açama bölümü ---
+const fetchReports = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile) return;
+
+  const { data, error } = await supabase
+    .from('feedbacks')
+    .select('*')
+    .eq('player_name', profile.username)
+    .order('created_at', { ascending: false });
+
+  // 🔍 ŞURAYA BAKALIM: Konsola gelen tüm veriyi yazdırıyoruz
+  console.log("Supabase'den gelen raporlar:", data);
+
+  if (!error) {
+    setReports(data || []);
+  }
+};
+
+
+const getStatusBadge = (status) => {
+  switch (status) {
+    case 'Çözüldü':
+      return <span style={{ color: '#00f5d4', fontWeight: 'bold' }}>✅ Çözüldü</span>;
+    case 'İnceleniyor':
+      return <span style={{ color: '#ffaa00', fontWeight: 'bold' }}>🔍 İnceleniyor</span>;
+    default:
+      return <span style={{ color: '#888', fontWeight: 'bold' }}>⏳ Bekliyor</span>;
+  }
+};
+
 
 // --- 1. openProfileModal fonksiyonunu bununla değiştir ---
 const openProfileModal = async () => {
@@ -855,26 +912,26 @@ const closeProfileModal = () => {
     const isGuestReady = guestMember ? guestMember.isReady : false
     const canStartGame = isRoomFull && isGuestReady
 
-  const handleFeedbackSubmit = async (e) => {
-    e.preventDefault();
-    
-    const playerName = e.target[0].value || "Anonim Oyuncu";
-    const messageContent = e.target[1].value;
+ const handleFeedbackSubmit = async (e) => {
+  e.preventDefault();
+  
+  const playerName = e.target[0].value;
+  const messageContent = e.target[1].value;
 
-    try {
-      const { error } = await supabase
-        .from('feedbacks')
-        .insert([{ player_name: playerName, message: messageContent }]);
+  try {
+    const { error } = await supabase
+      .from('feedbacks')
+      .insert([{ player_name: playerName, message: messageContent }]);
 
-      if (error) throw error;
+    if (error) throw error;
 
-      showToast("Geri bildirimin başarıyla kaydedildi! Teşekkürler, Ömer'e iletildi. 🚀");
-      e.target.reset();
-    } catch (err) {
-      console.error("Hata:", err.message);
-      showToast("Mesaj gönderilirken bir sorun oluştu ama not aldık!");
-    }
-  };
+    showToast("Geri bildirimin başarıyla kaydedildi! Teşekkürler, Ömer'e iletildi. 🚀");
+    e.target.reset();
+  } catch (err) {
+    console.error("Hata:", err.message);
+    showToast("Mesaj gönderilirken bir sorun oluştu ama not aldık!");
+  }
+};
 
     return (
       <div className="lobby-wrap">
@@ -906,6 +963,37 @@ const closeProfileModal = () => {
           <span style={{ color: '#00f5d4' }}>✨</span> {toast.message}
         </div>
       )}
+
+{/* 2. Gelen Kutusu Modali Kısmı (Return içinde uygun bir yere ekleyeceksin)*/}
+{isMailboxOpen && (
+  <div className="mailbox-modal-overlay" onClick={closeMailModal}>
+    <div className="mailbox-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="mailbox-modal-header">
+        <h3>📬 Gelen Kutusu</h3>
+        <button onClick={closeMailModal} className="mailbox-close-btn">✕</button>
+      </div>
+
+      <div className="mailbox-reports-list">
+        {reports.length === 0 ? (
+          <p className="mailbox-info-text">Henüz gönderilmiş bir rapor bulunmuyor.</p>
+        ) : (
+          reports.map((rep) => (
+            <div key={rep.id} className="mailbox-report-card">
+              <p className="mailbox-report-msg">{rep.message}</p>
+              <div className="mailbox-report-footer">
+                {getStatusBadge(rep.status)}
+                <span>{new Date(rep.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
+
+
 
       {/* Profil Modalı (Tüm Veriler Dahil) */}
 {isProfileOpen && (
@@ -950,6 +1038,9 @@ const closeProfileModal = () => {
 )}
 
 
+
+
+
         <header className="lobby-header" >
           <span className="lobby-logo" style={{ 
             fontSize: '24px', 
@@ -963,6 +1054,17 @@ const closeProfileModal = () => {
           }}>
             <span style={{ color: '#00f5d4' }}>⬛</span> BOX WARS
           </span>
+
+<button 
+  onClick={ openMailModal}
+  className="mailbox-trigger-btn"
+>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+    <polyline points="22,6 12,13 2,6"></polyline>
+  </svg>
+  Gelen Kutum
+</button>
 
          {/* Kullanıcı Rozet ve Profil Barı */}
 <div className="user-badge">
@@ -1289,13 +1391,14 @@ const closeProfileModal = () => {
         Oyunda bir hata (bug) mı yakaladın, yeni bir özellik mi öneriyorsun yoksa sadece teşekkür etmek mi istiyorsun? Aşağıdaki formu kullanarak doğrudan geliştiriciye mesajını iletebilirsin!
       </p>
 
- <form 
+<form 
   onSubmit={handleFeedbackSubmit}
   style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
 >
   <input 
     type="text" 
-    placeholder="Oyuncu Adın (İsteğe bağlı)" 
+    placeholder="Oyuncu Adın" 
+    required
     style={{ 
       background: 'rgba(0,0,0,0.3)', 
       border: '1px solid rgba(255,255,255,0.1)', 
